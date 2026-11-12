@@ -70,6 +70,10 @@ npm test           # vitest
 | GET | `/api/projects` | 仅返回当前用户参与的项目 | 需 header |
 | GET | `/api/projects/{id}` | 项目详情（需项目成员） | 需 header |
 | GET/POST | `/api/projects/{id}/members` | 成员列表 / 添加成员（仅 owner） | 需 header |
+| POST | `/api/projects/{id}/artifacts` | 上传原始资料（multipart `file`，可选 `kind`/`note`；内容寻址去重） | 需 header + owner/editor |
+| GET | `/api/projects/{id}/artifacts` | 资料列表（元数据） | 需 header + 任意成员 |
+| GET | `/api/projects/{id}/artifacts/{artifactId}` | 单条元数据 | 需 header + 任意成员 |
+| GET | `/api/projects/{id}/artifacts/{artifactId}/content` | 下载原始字节（读时校验 SHA-256） | 需 header + 任意成员 |
 
 > **临时身份来源**：T4 阶段通过 `X-Mammoth-User-Id` 头传递调用者；这不是最终认证方案，登录/会话/CSRF 在认证任务中用 Spring Security 替换，授权判定仍统一走 `AuthorizationService`（ADR-0006）。
 
@@ -90,7 +94,6 @@ npm test           # vitest
 
 ## 已知限制（当前阶段）
 
-- T1–T4 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计；
-- 认证仍是临时的 `X-Mammoth-User-Id` 头，**不得用于多人/网络暴露环境**（T6 接 Spring Security）；
-- 前端仍只有骨架页面，尚未接入 T4 接口；
-- 尚无 Artifact 导入（T5）、知识文档/检索（T6+）、MCP 工具（T9）。
+- T1–T5 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计、Artifact 导入（内容寻址/去重/校验）与最小前端「项目→资料」视图；
+- 认证仍是临时的 `X-Mammoth-User-Id` 头，**不得用于多人/网络暴露环境**（正式认证任务中换 Spring Security）；
+- 尚无知识文档与检索（T6+）、MCP 工具（T9）、前端尚无登录页与知识视图。

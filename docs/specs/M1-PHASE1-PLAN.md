@@ -93,7 +93,7 @@
 | T2 配置与数据根 | 配置化数据根（禁止 `~/.dsh`）、启动自检 | 冷启动创建目录；误配到 DSH home 时启动失败。**已完成（2026-11-12）**：`DataRootBootstrap` 创建 `db/artifacts/cache` + 写读探测；禁止路径（`~/.dsh`、源码仓库）启动即失败，5 个测试覆盖 |
 | T3 迁移基线 | Flyway V1 建第 4 节表 | 空库迁移→回滚演练；重复执行幂等。**已完成（2026-11-12）**：Flyway 13.12.1 + SQLite；`V1__m1_baseline.sql` 建 14 张表；`MigrationTest` 验证迁移+幂等（重复执行 0）；jar 冒烟 `schemaVersion=1`、15 张表（含 history） |
 | T4 主数据与项目 | Customer/Product/Project 的 REST + 领域校验（项目必须绑定客户） | 创建/查询/约束违规用例。**已完成（2026-11-12）**：JPA 实体/仓储 + 4 组 REST（users/customers/products/projects）+ 项目成员管理；项目必须绑定客户、编码唯一、创建者自动成为 owner；`AuthorizationService`（默认拒绝、项目角色）+ 审计落库。验证：`mvn verify` 14 tests；HTTP 冒烟 401/403/409 符合预期，审计记录 user/customer/project 三类 |
-| T5 Artifact 导入 | 上传/登记、SHA-256、不可变、原始名保留 | 重复上传去重；篡改检测；元数据完整 |
+| T5 Artifact 导入 | 上传/登记、SHA-256、不可变、原始名保留 | 重复上传去重；篡改检测；元数据完整。**已完成（2026-11-12）**：`ArtifactStore`（内容寻址、临时文件→原子移动→只读、读时校验 SHA-256、跨项目去重）+ 上传/列表/元数据/下载 REST（成员权限）+ 审计；`mvn verify` 20 tests；Node 端到端冒烟：两次同内容上传去重同 ID、列表 1 条、下载字节一致、非成员 403、落盘文件只读、审计 `artifact.add=1/artifact.reuse=1` |
 | T6 知识文档 | draft→needs_review→verified 状态机、source_refs 必填 | 非法状态跳转被拒；AI 生成内容不能直接 verified |
 | T7 人工审核与审计 | 审核动作记录 reviewer/at；所有写操作落 `audit_log` | 审计可追溯；不可篡改（追加写） |
 | T8 检索 | scope + 权限过滤 + 全文检索 + 片段定位 | 3 份资料中命中目标片段；越权空结果 |

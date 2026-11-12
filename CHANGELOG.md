@@ -1,5 +1,14 @@
 # Changelog
 
+## V0.3.3 — 2026-11-12
+
+- **M1 T5 Artifact 导入**：
+  - `ArtifactStore` 接口 + `LocalArtifactStore`（内容寻址 `artifacts/<sha[0:2]>/<sha[2:4]>/<sha>`、临时文件→原子移动→只读、读时 SHA-256 校验、跨项目去重、平台无关的只读降级）。
+  - `ArtifactRecord` + 上传/列表/元数据/下载 REST（multipart，50MB 上限；owner/editor 可写，任意成员可读）。
+  - 审计：`artifact.add` / `artifact.reuse`。
+- 前端接上最小数据流：临时身份头 + 项目列表 + 资料列表 + 文件上传（错误/加载/空状态）。
+- 验证：后端 `mvn verify` BUILD SUCCESS（**20 tests**）；前端 `npm run build` 与 `npm test`（5 tests）通过。
+
 ## V0.3.2 — 2026-11-12
 
 - **M1 T4 主数据与项目 + 授权骨架**：

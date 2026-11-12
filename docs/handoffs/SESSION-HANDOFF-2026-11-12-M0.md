@@ -65,8 +65,7 @@
 
 ## 下一步最小行动
 
-**执行 M1 T5（Artifact 导入）**：`ArtifactStore`（内容寻址、临时文件→原子移动→只读、sha256 校验、去重）、`POST /api/projects/{id}/artifacts` 上传登记 + 元数据落库（artifact 表已存在）、原始资料不可变与越权测试；随后 T6 知识文档状态机 + 检索。
-注意：当前调用者身份是临时 `X-Mammoth-User-Id` 头（`AuthorizationService` 统一判定），不可用于网络暴露环境；正式认证在后续认证任务替换。
+**执行 M1 T6 + T8/T9**：知识文档（draft→needs_review→verified 状态机、source_refs 必填、AI 生成内容不得直接 verified）与全文检索（`SearchAdapter` + FTS5 trigram + 查询三元组 OR + scope 过滤），再以 MCP stdio 入口暴露只读工具（`search_project_knowledge`）供 DSH 调用。Artifact 上传/下载/去重已可用（T5），knowledge_source_ref 可引用 artifact。
 
 ## 新会话必须先阅读
 
