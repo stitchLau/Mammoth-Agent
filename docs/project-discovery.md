@@ -152,7 +152,7 @@
 | 7 | 允许 M0 顺带补 `.gitignore` 与最小 CI | ✅ 已授权（未实施） | M0 第一项小任务 |
 | 8 | `~/.dsh/.credentials.yaml` 列入"Agent 禁止读取"；DSH Profile 目录不进 RAG 白名单 | ✅ 记录 | 需落到 `AGENTS.md` 与 `docs/08-SECURITY-AND-TRUST.md`（待确认后编辑） |
 | 9 | 启用 Git Worktree 可选 bundle | ✅ 已执行并验证 | `set_bundle` → `applied`；`create_worktree` 已注入；见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` |
-| 10 | ADR-0001 草案落盘方式选 (b)：新建 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` | ✅ 已落盘 | 草案含 ADR-0001 v0.3 + 实测发现 F1–F7；ADR 状态仍 Proposed |
+| 10 | ADR-0001 草案落盘方式选 (b)：新建 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` | ✅ 已落盘并**已批准** | ADR-0001 v1.0 = Accepted；`decisions/ADR-0001-DSH-INTEGRATION.md` §6 记录决策结果与证据 |
 | 11 | Domain API 与 DSH 的桥接方向由 Lead 自行决定 | ✅ 已决定（建议） | MCP 优先（规避外部 bundle 依赖解析问题）；详见 Spike 报告 §8，最终由 ADR-0002 确认 |
 
 ## 11. 推荐 Spike 与下一步

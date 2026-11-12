@@ -76,7 +76,7 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 - **F6（已验证）Worktree 能力可用**：`create_worktree` 工具已注入；注意 rc.2 起归档会话默认清理干净工作树（`retainOnArchive` 默认关），忽略文件/`skip-worktree` 改动会被丢弃，需归档前提交或 `git worktree lock`。
 - **F7（已验证）沙箱 shell 完整性级别限制**：shell 以 Low IL 运行，只能写带 Low 标签的对象；工作区根目录被 DSH 打 Low 标签，但既有子目录（`.git`、`docs`）仍是 Medium → shell 写这些目录被拒（Git 提交需完全权限）；宿主文件工具不受此限制。
 
-## 5. ADR-0001 草案（按 `docs/templates/ADR.md`）
+## 5. ADR-0001（已批准，按 `docs/templates/ADR.md`）
 
 ### ADR-0001: DeepSeek Harness 集成策略（Spike 结论草案）
 
