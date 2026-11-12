@@ -42,10 +42,14 @@ public class SecurityConfig {
             // rotation that clears the XSRF cookie on every authenticated request) must not run.
             .sessionAuthenticationStrategy((authentication, request, response) -> { }))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/health", "/api/meta", "/api/auth/login", "/api/auth/csrf").permitAll()
+            .requestMatchers("/api/health", "/api/meta", "/api/auth/login", "/api/auth/csrf",
+                "/api/setup/status").permitAll()
             // First-user bootstrap: the controller enforces "only while the org has no users".
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
             .requestMatchers("/", "/index.html", "/assets/**", "/favicon.ico", "/error").permitAll()
+            // SPA deep links must load the app shell; the SPA then renders login/setup or redirects.
+            .requestMatchers("/login", "/setup", "/projects", "/projects/**", "/settings", "/403",
+                "/404").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(handling -> handling.authenticationEntryPoint(
             (request, response, error) -> response.sendError(401, "authentication required")))

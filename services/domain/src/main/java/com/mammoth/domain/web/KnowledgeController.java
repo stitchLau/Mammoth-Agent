@@ -12,6 +12,7 @@ import java.util.Set;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -109,6 +110,20 @@ public class KnowledgeController {
     AppUser actor = CurrentUser.require(authorizationService);
     authorizationService.requireProjectRole(actor, projectId, ANY_ROLE);
     return toResponse(knowledgeService.requireDocument(projectId, documentId));
+  }
+
+  @PutMapping("/{documentId}")
+  public KnowledgeResponse updateDraft(@PathVariable String projectId,
+      @PathVariable String documentId, @RequestBody CreateKnowledgeRequest request) {
+    AppUser actor = CurrentUser.require(authorizationService);
+    authorizationService.requireProjectRole(actor, projectId, EDIT_ROLES);
+    List<KnowledgeService.SourceRefInput> refs = request.sourceRefs() == null
+        ? List.of()
+        : request.sourceRefs().stream()
+            .map(ref -> new KnowledgeService.SourceRefInput(ref.artifactId(), ref.locator(), ref.note()))
+            .toList();
+    return toResponse(knowledgeService.updateDraft(
+        actor, projectId, documentId, request.docType(), request.title(), request.body(), refs));
   }
 
   @PostMapping("/{documentId}/submit-review")

@@ -108,6 +108,23 @@ npm test           # vitest
 
 **注意**：本地可复现同一组命令，但 GitHub Actions 是否真正运行需推送后在仓库页面确认；本地验证不等于远端 CI 已验证。
 
+## UI 路由与浏览器 E2E
+
+- **路由**：`/login`、`/setup`（仅空库）、`/projects`、`/projects/:id/artifacts|knowledge|knowledge/:docId|search|members`、`/settings`、`/403`、`/404`；SPA 深链接由后端回退 `index.html`。
+- **角色**：owner/editor 可写资料与知识；owner 管理成员；owner/reviewer 可审核且**不能自审**；viewer 只读。
+- **浏览器 E2E**（Playwright，需先构建 dist 并使用空数据根启动后端）：
+  ```powershell
+  cd apps/web && npm install          # 首次
+  npx playwright install chromium     # 首次
+  cd ../..
+  mvn -B -ntp -f services/domain/pom.xml package
+  java -jar services/domain/target/mammoth-domain-service.jar --server.port=18130 `
+    --mammoth.data-root="$env:TEMP\mammoth-e2e"
+  # 另一个终端：
+  cd apps/web && npm run test:e2e
+  ```
+  也可用 `MAMMOTH_E2E_BASE` 指向已有环境；E2E 会创建临时客户/项目/知识，**不要在真实数据根运行**。
+
 ## DSH 集成与演示
 
 - **生产/本地一体化启动**：先 `cd apps/web && npm run build`，再从仓库根目录 `java -jar services/domain/target/mammoth-domain-service.jar` —— 后端会自动探测 `apps/web/dist` 并托管 SPA（`GET /` 返回页面，`/api/**` 为接口）；也可用 `MAMMOTH_WEB_DIST` 显式指定目录。开发模式仍用 `npm run dev` + 代理。

@@ -177,6 +177,10 @@ export function listKnowledge(projectId: string): Promise<KnowledgeDocument[]> {
   return request<KnowledgeDocument[]>(`/api/projects/${projectId}/knowledge`)
 }
 
+export function getKnowledge(projectId: string, documentId: string): Promise<KnowledgeDocument> {
+  return request<KnowledgeDocument>(`/api/projects/${projectId}/knowledge/${documentId}`)
+}
+
 export interface CreateKnowledgeInput {
   docType: string
   title: string
@@ -205,4 +209,57 @@ export function searchKnowledge(projectId: string, query: string): Promise<Knowl
   return request<KnowledgeHit[]>(
     `/api/projects/${projectId}/knowledge/search?q=${encodeURIComponent(query)}&topK=5`,
   )
+}
+
+export interface SetupStatus {
+  initialized: boolean
+  userCount: number
+}
+
+export function setupStatus(): Promise<SetupStatus> {
+  return request<SetupStatus>('/api/setup/status')
+}
+
+export interface UserSummary {
+  id: string
+  username: string
+  displayName: string
+  status: string
+  createdAt: string
+}
+
+export function listUsers(): Promise<UserSummary[]> {
+  return request<UserSummary[]>('/api/users')
+}
+
+/** First-run bootstrap: only succeeds while the organization has no users. */
+export function createFirstAdmin(username: string, displayName: string, password: string): Promise<{ id: string }> {
+  return request<{ id: string }>('/api/users', jsonBody({ username, displayName, password }))
+}
+
+export interface Member {
+  projectId: string
+  userId: string
+  role: string
+  createdAt: string
+}
+
+export function listMembers(projectId: string): Promise<Member[]> {
+  return request<Member[]>(`/api/projects/${projectId}/members`)
+}
+
+export function addMember(projectId: string, userId: string, role: string): Promise<Member> {
+  return request<Member>(`/api/projects/${projectId}/members`, jsonBody({ userId, role }))
+}
+
+export function updateKnowledge(
+  projectId: string,
+  documentId: string,
+  input: CreateKnowledgeInput,
+): Promise<KnowledgeDocument> {
+  return request<KnowledgeDocument>(`/api/projects/${projectId}/knowledge/${documentId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 }

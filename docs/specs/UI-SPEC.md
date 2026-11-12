@@ -1,6 +1,6 @@
 # M1 UI 规格（草案）— 正式产品 UI 基座
 
-- **状态**：Draft v0.1（待负责人确认）
+- **状态**：Approved & Implemented v0.2（2026-11-12，M1.5 首批已落地；见 §13）
 - **日期**：2026-11-12
 - **定位**：当前 SPA 作为**正式产品 UI 的基座**演进（路线 A），不是一次性演示壳；技术形态沿用 ADR-0002（独立 SPA + Domain Service 托管）。
 - **依据**：`decisions/ADR-0002-TECH-STACK.md`、`docs/00-MASTER-GUIDE.md`、`docs/04-MVP-STRATEGY.md`、`docs/specs/M1-PHASE1-PLAN.md`、`docs/M1-ACCEPTANCE.md`
@@ -161,3 +161,36 @@ src/
 - [ ] 上传去重、409 冲突、空态/加载/错误态均有一致表现；
 - [ ] 浏览器 E2E 冒烟通过并纳入 CI（若环境允许）；
 - [ ] 前端 build + 单元测试通过；后端测试不回归。
+
+## 13. 实施记录（M1.5 首批，2026-11-12）
+
+### 已交付
+
+| 规格项 | 实现 | 证据 |
+|---|---|---|
+| 路由 + AppShell + 项目上下文导航 | `src/App.tsx`、`src/app/AppShell.tsx`、`src/pages/ProjectLayout.tsx`；react-router 7 | 浏览器 E2E 全流程通过 |
+| SPA 深链接回退 | 后端 `SpaRouteController` + Security 放行 SPA 路由 | `GET /projects` → **200** 且返回 index.html |
+| 首次引导（P02） | `SetupPage` + `GET /api/setup/status`（空库才可用） | E2E：创建管理员并自动登录 |
+| 项目列表/创建（P03） | `ProjectsPage`（客户/产品/项目） | E2E：创建客户与项目并进入项目 |
+| 项目资料（P04） | `ArtifactsPage`（多文件上传、去重展示、只读权限控制） | E2E：上传后列表出现 `notes.md`；上传接口 200 |
+| 知识列表（P05） | `KnowledgePage`（状态筛选、新建草稿、提交审核） | E2E：创建草稿 → 提交审核 → 待审核 |
+| 知识详情/审核（P06） | `KnowledgeDetailPage`（草稿编辑、来源引用、审核按钮与不可自审原因） | E2E：创建者按钮禁用并提示不可自审；reviewer 审核成功 |
+| 知识检索（P07） | `SearchPage`（命中片段 + 引用数 + 文档链接） | E2E：检索命中并显示"引用 N 项" |
+| 成员与角色（P08） | `MembersPage`（owner 添加 viewer/editor/reviewer/owner；角色显示） | E2E：API 添加 reviewer 后审核成功 |
+| 统一状态组件 | `components/ui.tsx`（StatusBadge/RoleBadge/Loading/Empty/ErrorBanner/PageHeader/BackLink） | 各页面统一使用 |
+| 权限感知 UI | `lib/permissions.ts` + 单元测试；verify 禁用原因 | 13 个前端单元测试通过 |
+| 浏览器 E2E | `apps/web/e2e/m1-ui.spec.ts` + `playwright.config.ts` | **1 passed**（覆盖 setup→项目→资料→知识→审核→检索） |
+| 后端支持 | `PUT /api/projects/{id}/knowledge/{doc}`（草稿编辑）、`GET /api/setup/status`、SPA 深链接 | 后端 **44 tests** 通过 |
+
+### 本轮修复的真实缺陷
+
+1. **SPA 深链接 401**：安全过滤器先于 SPA 路由拦截 `/projects` 等路径 → 放行 SPA 路由，由前端处理登录跳转。
+2. **上传丢文件**：把 `FileList` 交给异步处理后立刻清空 input，导致列表被清空 → 先复制数组再清空；E2E 首次发现该问题。
+
+### 仍待办（后续阶段）
+
+- P09 账号设置目前只读（改密/通知未实现）；
+- 列表全量加载，**分页尚未实现**（数据量大时需后端分页参数）；
+- 成员角色变更/移除未实现（需后端端点，M2）；
+- E2E 目前需手动启动后端（未接入 CI；如需接入需配置 Java+Playwright CI 环境）；
+- 视觉品牌规范未定，暂沿用中性色 + `#247bbf`。

@@ -128,4 +128,12 @@ public class KnowledgeDocument {
     this.status = DRAFT;
     this.updatedAt = updatedAt;
   }
+
+  /** Edit a draft in place (UI-SPEC P06); status stays draft until it is submitted for review. */
+  public void updateDraft(String docType, String title, String body, String updatedAt) {
+    this.docType = docType;
+    this.title = title;
+    this.body = body;
+    this.updatedAt = updatedAt;
+  }
 }

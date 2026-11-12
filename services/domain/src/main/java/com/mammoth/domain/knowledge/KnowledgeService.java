@@ -86,6 +86,40 @@ public class KnowledgeService {
     return document;
   }
 
+  /** Edit a draft in place; only draft documents can change and evidence refs are replaced. */
+  @Transactional
+  public KnowledgeDocument updateDraft(AppUser actor, String projectId, String documentId,
+      String docType, String title, String body, List<SourceRefInput> sourceRefs) {
+    KnowledgeDocument document = requireDocument(projectId, documentId);
+    requireEditor(actor, projectId, document);
+    if (!KnowledgeDocument.DRAFT.equals(document.getStatus())) {
+      throw ApiException.conflict("only draft documents can be edited");
+    }
+    String normalizedTitle = requireText(title, "title");
+    String normalizedBody = requireText(body, "body");
+    if (sourceRefs == null || sourceRefs.isEmpty()) {
+      throw ApiException.badRequest("knowledge document must cite at least one artifact");
+    }
+    document.updateDraft(
+        docType == null || docType.isBlank() ? "note" : docType.trim(),
+        normalizedTitle, normalizedBody, Ids.nowIso());
+    documentRepository.save(document);
+
+    sourceRefRepository.deleteByKnowledgeDocumentId(documentId);
+    sourceRefRepository.flush();
+    for (SourceRefInput ref : sourceRefs) {
+      if (ref == null || ref.artifactId() == null || ref.artifactId().isBlank()) {
+        throw ApiException.badRequest("source reference requires an artifactId");
+      }
+      artifactService.require(projectId, ref.artifactId());
+      sourceRefRepository.save(new KnowledgeSourceRef(
+          Ids.newId(), documentId, ref.artifactId(), ref.locator(), ref.note()));
+    }
+    reindex(document);
+    auditService.record(actor.getId(), "knowledge.update", "knowledge_document", documentId, null);
+    return document;
+  }
+
   @Transactional
   public KnowledgeDocument submitForReview(AppUser actor, String projectId, String documentId) {
     KnowledgeDocument document = requireDocument(projectId, documentId);

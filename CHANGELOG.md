@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.7.0 — 2026-11-12
+
+- **M1.5 UI 产品化（路线 A）**：按 `docs/specs/UI-SPEC.md` 重构为路由化产品壳：react-router + AppShell + 项目上下文侧栏导航；新增首次引导页（空库创建管理员并自动登录）、成员与角色页面（owner 添加成员）、知识详情/草稿编辑/提交审核/审核通过（含"不可自审"禁用原因）、统一状态组件与权限感知 UI。
+- **后端支持**：`GET /api/setup/status`；`PUT /api/projects/{id}/knowledge/{docId}`（仅草稿可编辑、引用替换、重新分块、审计 `knowledge.update`）；SPA 深链接回退（`/projects/**` 等返回 index.html）并放行对应安全路径。
+- **修复**：SPA 深链接被安全过滤器 401 拦截；多文件上传因清空 input 导致 `FileList` 丢失（E2E 发现）。
+- **验证**：后端 `mvn verify` **44 tests**；前端 build + **13 tests**；Playwright 浏览器 E2E **1 passed**（setup→项目→资料→知识→审核→检索）；API 演示 14/14 不回归。
+
 ## V0.6.0 — 2026-11-12
 
 - 新增 [`docs/specs/UI-SPEC.md`](docs/specs/UI-SPEC.md)（草案 v0.1）：确认当前 UI 定位为**正式产品 UI 基座（路线 A）**，给出信息架构与路由、页面清单、角色 × 动作权限矩阵与 UI 表现规则、统一状态/交互规范、组件基线、后端契约补充、M1.5 交付清单与验收标准，以及 5 个待负责人确认项。

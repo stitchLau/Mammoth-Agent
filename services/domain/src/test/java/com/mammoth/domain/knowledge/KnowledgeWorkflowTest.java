@@ -197,4 +197,30 @@ class KnowledgeWorkflowTest {
     assertThat(hits).allSatisfy(hit -> assertThat(hit.documentId()).isEqualTo(verified.getId()));
     assertThat(searchAdapter.indexedChunkCount()).isPositive();
   }
+
+  @Test
+  void draftCanBeEditedButNotAfterSubmit() {
+    AppUser owner = user("owner5");
+    Project project = project(owner);
+    ArtifactRecord artifact = artifact(owner, project, "原始资料：盘点差异处理。");
+
+    KnowledgeDocument draft = knowledgeService.create(owner, project.getId(), "process", "旧标题",
+        "旧正文内容。", List.of(new KnowledgeService.SourceRefInput(artifact.getId(), "§1", null)));
+
+    KnowledgeDocument updated = knowledgeService.updateDraft(owner, project.getId(), draft.getId(),
+        "process", "新标题", "新的正文内容，用于验证草稿编辑与引用替换。",
+        List.of(new KnowledgeService.SourceRefInput(artifact.getId(), "§2", "更新后的引用")));
+
+    assertThat(updated.getTitle()).isEqualTo("新标题");
+    assertThat(knowledgeService.sourceRefs(draft.getId())).hasSize(1);
+    assertThat(knowledgeService.sourceRefs(draft.getId()).get(0).getLocator()).isEqualTo("§2");
+    assertThat(knowledgeService.chunkCount(draft.getId())).isPositive();
+
+    knowledgeService.submitForReview(owner, project.getId(), draft.getId());
+    assertThatThrownBy(() -> knowledgeService.updateDraft(owner, project.getId(), draft.getId(),
+        "process", "再改", "提交后不可编辑",
+        List.of(new KnowledgeService.SourceRefInput(artifact.getId(), null, null))))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("only draft documents can be edited");
+  }
 }

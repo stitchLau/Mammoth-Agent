@@ -8,4 +8,6 @@ public interface KnowledgeSourceRefRepository extends JpaRepository<KnowledgeSou
   List<KnowledgeSourceRef> findByKnowledgeDocumentIdOrderByIdAsc(String knowledgeDocumentId);
 
   long countByKnowledgeDocumentId(String knowledgeDocumentId);
+
+  void deleteByKnowledgeDocumentId(String knowledgeDocumentId);
 }
