@@ -1,5 +1,13 @@
 # Changelog
 
+## V0.3.2 — 2026-11-12
+
+- **M1 T4 主数据与项目 + 授权骨架**：
+  - JPA 实体/仓储（organization/app_user/customer/product/project/project_member/audit_log）+ `hibernate-community-dialects`（SQLite）。
+  - REST：`/api/users`、`/api/customers`、`/api/products`、`/api/projects`、`/api/projects/{id}/members`；项目必须绑定客户、编码唯一并规范化大写、创建者自动成为 owner。
+  - `AuthorizationService`（默认拒绝、项目角色 owner/editor/reviewer/viewer）、`AuditService`（追加写）、`ApiException`→RFC 9457 错误映射；密码 BCrypt(12)。
+- 验证：`mvn verify` BUILD SUCCESS（**14 tests**）；HTTP 冒烟：无身份 401、非成员 403、重复编码 409、成员可见项目 1 个、审计 `user.create=2/customer.create=1/project.create=1`。
+
 ## V0.3.1 — 2026-11-12
 
 - **M1 T2 数据根自检**：`DataRootBootstrap` 启动时创建 `db/artifacts/cache` 并做写读探测；禁止路径（`~/.dsh`、源码仓库）启动即失败；新增 `DataRootBootstrapTest`。

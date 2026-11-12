@@ -58,6 +58,21 @@ npm test           # vitest
 - 手动核对：`sqlite3 <数据根>/db/mammoth.db "SELECT version, description, success FROM flyway_schema_history;"`
 - 迁移不可在已有库上手工修改；新增变更一律新增 `V<n>__*.sql`。
 
+## M1 API（当前实现）
+
+| 方法 | 路径 | 说明 | 身份 |
+|---|---|---|---|
+| POST | `/api/users` | 创建本地账号（用户名/显示名/密码，BCrypt 存储） | 无（首次 setup） |
+| GET | `/api/users` | 列出当前组织用户 | 无（T6 收紧） |
+| POST/GET | `/api/customers` | 客户主数据 | 写需用户，读开放（T6 收紧） |
+| POST/GET | `/api/products` | 产品主数据 | 同上 |
+| POST | `/api/projects` | 创建项目（必须绑定客户、编码唯一；创建者成为 owner） | 需 `X-Mammoth-User-Id` |
+| GET | `/api/projects` | 仅返回当前用户参与的项目 | 需 header |
+| GET | `/api/projects/{id}` | 项目详情（需项目成员） | 需 header |
+| GET/POST | `/api/projects/{id}/members` | 成员列表 / 添加成员（仅 owner） | 需 header |
+
+> **临时身份来源**：T4 阶段通过 `X-Mammoth-User-Id` 头传递调用者；这不是最终认证方案，登录/会话/CSRF 在认证任务中用 Spring Security 替换，授权判定仍统一走 `AuthorizationService`（ADR-0006）。
+
 ## 数据根目录规则（ADR-0002/0004）
 
 - 默认：`%LOCALAPPDATA%\Mammoth\data`（Windows）
@@ -75,6 +90,7 @@ npm test           # vitest
 
 ## 已知限制（当前阶段）
 
-- T2（数据根自检）与 T3（SQLite/Flyway 迁移基线）已完成；
-- 仍无认证（T4）、无业务接口；前端只有骨架页面与一个单元测试；
-- PostgreSQL 方言迁移脚本尚未建立（ADR-0003 计划在服务端阶段添加 `db/migration-pg`）。
+- T1–T4 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计；
+- 认证仍是临时的 `X-Mammoth-User-Id` 头，**不得用于多人/网络暴露环境**（T6 接 Spring Security）；
+- 前端仍只有骨架页面，尚未接入 T4 接口；
+- 尚无 Artifact 导入（T5）、知识文档/检索（T6+）、MCP 工具（T9）。

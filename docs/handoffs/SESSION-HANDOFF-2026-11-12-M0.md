@@ -65,7 +65,8 @@
 
 ## 下一步最小行动
 
-**执行 M1 T4（主数据与项目 + 授权骨架）**：Customer/Product/Project 的 REST、领域校验（项目必须绑定客户）、`AuthorizationService` 与项目成员模型、审计落库；随后 T5 Artifact 导入（`ArtifactStore` 内容寻址）。基线：SQLite `V1` 迁移已建 14 表，Flyway 启动即迁移（`schemaVersion=1`）。
+**执行 M1 T5（Artifact 导入）**：`ArtifactStore`（内容寻址、临时文件→原子移动→只读、sha256 校验、去重）、`POST /api/projects/{id}/artifacts` 上传登记 + 元数据落库（artifact 表已存在）、原始资料不可变与越权测试；随后 T6 知识文档状态机 + 检索。
+注意：当前调用者身份是临时 `X-Mammoth-User-Id` 头（`AuthorizationService` 统一判定），不可用于网络暴露环境；正式认证在后续认证任务替换。
 
 ## 新会话必须先阅读
 
