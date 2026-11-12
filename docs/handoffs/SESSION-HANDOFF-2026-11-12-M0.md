@@ -65,12 +65,10 @@
 
 ## 下一步最小行动
 
-**M1 已完成并通过验收**（`docs/M1-ACCEPTANCE.md`）。下一步：
-1. 在浏览器中对 UI 做一次人工点击验收（登录/项目/资料/知识审核/检索），补齐真实交互证据；
-2. 生产化加固：TLS、共享会话/限速存储、MCP 专用只读账号；
-3. 进入 **M2（需求与方案）**：按 `docs/04-MVP-STRATEGY.md` Phase 2 更新 `docs/specs/` 与 ADR，再按垂直切片实施。
+**M1.5（UI 产品化，路线 A）**：按 [`docs/specs/UI-SPEC.md`](specs/UI-SPEC.md) 实施首批 UI 重构——路由 + AppShell + 项目上下文导航、首次管理员引导、成员与角色页面、知识详情/编辑/审核页、统一状态组件、SPA 深链接回退、浏览器 E2E 冒烟。
+开工前需负责人确认 UI-SPEC §11 的 5 个待决项（路由依赖、Markdown/富文本、视觉基线、Playwright 安装、是否内嵌 DSH 侧栏）。
 
-当前基线：后端 43 tests；前端 build + 7 tests；认证版演示 14/14；SPA 由后端托管（`/` 200）；DSH MCP 接入已实测。
+基线：M1 已验收；后端 43 tests；前端 build + 7 tests；SPA 由后端托管；MCP 接入已实测。
 
 ## 新会话必须先阅读
 
