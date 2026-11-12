@@ -65,7 +65,7 @@
 
 ## 下一步最小行动
 
-**执行 ADR-0005 检索/RAG Spike**（全文 vs 向量、中文切分、索引版本与重建、检索接口抽象；结合 S4 已证的 SQLite FTS5 trigram 与 PG pg_trgm 结论），产出 ADR-0005 草案。ADR-0002/0003/0004/0006 四份 Proposed 草案已产出，批准后作为实施基线。
+**等待负责人批准 5 份 Proposed ADR（0002/0003/0004/0005/0006）**；批准后开始 **M1 T1 工程骨架**：Spring Boot 4.1.2 + Java 17 + Maven、SQLite/Flyway、独立 SPA 骨架、`SearchAdapter`/`ArtifactStore` 接口、最小 CI，并按 `docs/specs/M1-PHASE1-PLAN.md` 依次实现 T2–T11。
 
 ## 新会话必须先阅读
 

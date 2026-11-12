@@ -81,7 +81,7 @@
 | 2 | **ADR-0003 数据库/迁移** | PostgreSQL vs SQLite（单机优先）、迁移工具（Flyway/Liquibase）、访问层（JPA / jOOQ / JDBC） | 建 3 表 + 迁移往返 + 中文全文检索对比；备份恢复演练。**已完成**：见 `docs/spikes/S4-DATABASE-SPIKE.md` 与 `decisions/ADR-0003-DATABASE-MIGRATION.md`（Proposed，待批准） |
 | 3 | **ADR-0004 Artifact Storage** | 本地内容寻址目录、命名与去重、配额、备份 | 上传/哈希/去重/只读校验最小实现。**已完成**：见 `docs/spikes/S5-ARTIFACT-STORAGE-SPIKE.md` 与 `decisions/ADR-0004-ARTIFACT-STORAGE.md`（Proposed，待批准） |
 | 4 | **ADR-0006 身份授权** | 单机最小认证（本地账号/token）、角色矩阵、项目级授权 | 两个用户 + 一个越权用例。**已完成**：见 `docs/spikes/S6-IDENTITY-AUTH-SPIKE.md` 与 `decisions/ADR-0006-IDENTITY-AUTHORIZATION.md`（Proposed，待批准） |
-| 5 | **ADR-0005 RAG** | 全文 vs 向量、中文分词、切分与索引版本 | 10 份样例文档的召回对比；接口抽象与重建 |
+| 5 | **ADR-0005 RAG** | 全文 vs 向量、中文分词、切分与索引版本 | 10 份样例文档的召回对比；接口抽象与重建。**已完成**：见 `docs/spikes/S7-RETRIEVAL-SPIKE.md` 与 `decisions/ADR-0005-RETRIEVAL-RAG.md`（Proposed，待批准） |
 
 未完成上述 ADR 前，不进入 M1 Slice-1 编码（Spike 可以编码，但必须是临时代码）。
 

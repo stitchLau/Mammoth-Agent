@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.2.6 — 2026-11-12
+
+- 新增 `docs/spikes/S7-RETRIEVAL-SPIKE.md`：12 文档/10 中文查询的检索对比（FTS5 trigram+BM25 recall@1 9/10 vs hash 向量基线 6/10 vs hybrid 9/10；scope 0 泄漏；重建 71 ms）；关键坑：trigram 整句 MATCH 为 0 命中。
+- 新增 `decisions/ADR-0005-RETRIEVAL-RAG.md`（Proposed）：M1 全文检索 + `SearchAdapter` 抽象；向量/混合延后到真实 embedding Spike。
+- 新增 `spike/adr-0005-retrieval/` 一次性探针。
+- 更新 `docs/13-OPEN-DECISIONS.md`、`docs/specs/M1-PHASE1-PLAN.md`、`docs/handoffs/`。
+
 ## V0.2.5 — 2026-11-12
 
 - 新增 `docs/spikes/S6-IDENTITY-AUTH-SPIKE.md`：PBKDF2 vs BCrypt 成本（226/56 ms vs 214/205 ms）、服务端不透明会话令牌（可撤销）vs HMAC（58 µs 校验）、10 条项目级 RBAC 用例全通过。
