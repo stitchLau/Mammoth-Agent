@@ -1,0 +1,3 @@
+- insert:
+    - id: mammoth-spike
+      name: '@local/mammoth-spike'

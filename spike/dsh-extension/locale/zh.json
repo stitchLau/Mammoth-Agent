@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Mammoth 验证包",
+    "description": "一次性 M0 验证夹具：提供 mammoth_spike_probe Agent 工具、输入框停靠位徽标，以及只写入一个计数器的 Host 侧存储探测。"
+  }
+}

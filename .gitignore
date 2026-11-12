@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Tooling caches
+.pnpm-store/
+.turbo/
+.cache/
+
+# OS and editor noise
+Thumbs.db
+.DS_Store
+desktop.ini
+.idea/
+.vscode/
+
+# Test and coverage output
+coverage/
+*.log
