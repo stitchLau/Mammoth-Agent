@@ -65,7 +65,7 @@
 
 ## 下一步最小行动
 
-**执行 M1 T2/T3**：T2 完成数据根目录自检（创建目录、可写探测、错误信息与启动失败测试；当前 `DataRootResolver` 已做禁止路径校验）；T3 接入 SQLite + Flyway 迁移基线（`V1` 建 M1 表，CI 中双库迁移检查）。随后按 `docs/specs/M1-PHASE1-PLAN.md` 实现 T4–T11。ADR-0002/0003/0004/0005/0006 已于 2026-11-12 批准（Accepted v1.0）。
+**执行 M1 T4（主数据与项目 + 授权骨架）**：Customer/Product/Project 的 REST、领域校验（项目必须绑定客户）、`AuthorizationService` 与项目成员模型、审计落库；随后 T5 Artifact 导入（`ArtifactStore` 内容寻址）。基线：SQLite `V1` 迁移已建 14 表，Flyway 启动即迁移（`schemaVersion=1`）。
 
 ## 新会话必须先阅读
 

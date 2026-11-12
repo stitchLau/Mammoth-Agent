@@ -62,6 +62,8 @@
 
 已执行（2026-11-12）：Flyway 双库迁移/幂等、中文检索对比、SQLite 文件备份恢复、PG `pg_dump`/`pg_restore`（8,669 B / 161 ms / 恢复 3 行）。证据：`docs/spikes/S4-DATABASE-SPIKE.md`。
 
+M1 T3 落地（2026-11-12）：14 张基线表迁移 `V1__m1_baseline.sql` 已入仓；因 Spring Boot 4 将 Flyway 自动配置拆为独立模块，项目改为**显式 Flyway bean**（Flyway 固定 13.12.1），迁移在 HTTP 服务启动前执行；`MigrationTest` 验证幂等，jar 冒烟 `schemaVersion=1`。
+
 待补充：CI 双库迁移测试、失败迁移修复演练、WAL 在线备份验证、并发写基准。
 
 ## 回滚或替代路径

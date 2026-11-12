@@ -49,6 +49,15 @@ npm test           # vitest
 - `MAMMOTH_DATA_ROOT`（留空 = OS 应用数据目录；**禁止**位于源码仓库或 `~/.dsh`，启动会失败）
 - `VITE_API_BASE_URL`（前端开发代理目标）
 
+## 数据库（M1）
+
+- 位置：`<数据根>/db/mammoth.db`（SQLite，WAL；`<数据根>/artifacts`、`<数据根>/cache` 同时创建）。
+- 迁移：**Flyway 13.12.1**，脚本位于 `services/domain/src/main/resources/db/migration/`；`V1__m1_baseline.sql` 建 14 张 M1 基线表。
+- 由于 Spring Boot 4 将 Flyway 自动配置拆到独立模块，本项目**显式声明 `Flyway` bean**（版本固定），迁移在 HTTP 服务开始接受请求前完成；失败即启动失败（fail fast）。
+- `GET /api/meta` 返回 `dataRoot`、`database`、`schemaVersion`（当前为 `1`）。
+- 手动核对：`sqlite3 <数据根>/db/mammoth.db "SELECT version, description, success FROM flyway_schema_history;"`
+- 迁移不可在已有库上手工修改；新增变更一律新增 `V<n>__*.sql`。
+
 ## 数据根目录规则（ADR-0002/0004）
 
 - 默认：`%LOCALAPPDATA%\Mammoth\data`（Windows）
@@ -64,8 +73,8 @@ npm test           # vitest
 
 **注意**：本地可复现同一组命令，但 GitHub Actions 是否真正运行需推送后在仓库页面确认；本地验证不等于远端 CI 已验证。
 
-## 已知限制（T1 阶段）
+## 已知限制（当前阶段）
 
-- 尚无数据库迁移（T3 接入 Flyway + SQLite）、无认证（T4）、无业务接口；
-- 前端只有骨架页面与一个单元测试；
-- 数据根目录只做了禁止路径校验，尚未创建目录/写入测试（T2）。
+- T2（数据根自检）与 T3（SQLite/Flyway 迁移基线）已完成；
+- 仍无认证（T4）、无业务接口；前端只有骨架页面与一个单元测试；
+- PostgreSQL 方言迁移脚本尚未建立（ADR-0003 计划在服务端阶段添加 `db/migration-pg`）。

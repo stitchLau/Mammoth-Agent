@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.3.1 — 2026-11-12
+
+- **M1 T2 数据根自检**：`DataRootBootstrap` 启动时创建 `db/artifacts/cache` 并做写读探测；禁止路径（`~/.dsh`、源码仓库）启动即失败；新增 `DataRootBootstrapTest`。
+- **M1 T3 迁移基线**：接入 Flyway 13.12.1 + SQLite（WAL、外键、busy timeout）；`V1__m1_baseline.sql` 建 14 张 M1 基线表（organization/app_user/role_assignment/customer/product/project/project_product/project_member/artifact/knowledge_document/knowledge_source_ref/knowledge_chunk/audit_log/session）；`MigrationTest` 验证迁移与幂等。
+- 明确 Flyway bean（Spring Boot 4 自动配置已拆分，显式声明保证版本固定与启动前迁移）；`/api/meta` 增加 `database` 与 `schemaVersion`。
+- 验证：`mvn verify` BUILD SUCCESS（10 tests）；jar 冒烟 `schemaVersion=1`、15 张表（含 history）、Flyway `executed=1`。
+
 ## V0.3.0 — 2026-11-12
 
 - **ADR 批准**：ADR-0002（Spring Boot 4.1.2 + Java 17 + Maven、独立 SPA、可配置数据根目录）、ADR-0003（SQLite+Flyway 主库，PG 为团队阶段目标）、ADR-0004（内容寻址 Artifact 存储）、ADR-0005（M1 全文检索 + SearchAdapter）、ADR-0006（BCrypt + 服务端会话 + 项目级 RBAC）全部置为 **Accepted v1.0**。
