@@ -119,7 +119,19 @@ public final class McpServerMain {
                 "properties", McpJson.orderedMap(
                     "projectId", McpJson.orderedMap("type", "string", "description", "Project identifier."),
                     "documentId", McpJson.orderedMap("type", "string", "description", "Knowledge document identifier.")),
-                "required", List.of("projectId", "documentId"))));
+                "required", List.of("projectId", "documentId"))),
+        McpJson.orderedMap(
+            "name", "get_requirement_context",
+            "description",
+            "Read one requirement work item with its evidence batches, 11-dimension readiness "
+                + "assessment and the currently approved solution summary. Read-only: agents cannot "
+                + "change requirements or solutions; non-member projects are not exposed.",
+            "inputSchema", McpJson.orderedMap(
+                "type", "object",
+                "properties", McpJson.orderedMap(
+                    "projectId", McpJson.orderedMap("type", "string", "description", "Project identifier."),
+                    "workItemId", McpJson.orderedMap("type", "string", "description", "Requirement work item identifier.")),
+                "required", List.of("projectId", "workItemId"))));
   }
 
   private static void handleToolCall(PrintStream out, Object id, Map<?, ?> message,
@@ -170,6 +182,43 @@ public final class McpServerMain {
               "reviewer", document.reviewer(),
               "reviewedAt", document.reviewedAt(),
               "sourceRefs", refs);
+          sendResult(out, id, McpJson.orderedMap(
+              "content", List.of(McpJson.orderedMap("type", "text", "text", McpJson.write(payload))),
+              "isError", Boolean.FALSE));
+        }
+        case "get_requirement_context" -> {
+          McpToolService.RequirementContextView context = tools.getRequirementContext(
+              agentUserId,
+              asString(arguments.get("projectId")),
+              asString(arguments.get("workItemId")));
+          List<Object> evidence = context.evidence().stream().map(entry -> (Object) McpJson.orderedMap(
+              "batchNo", entry.batchNo(),
+              "type", entry.type(),
+              "text", entry.text(),
+              "artifactId", entry.artifactId(),
+              "locator", entry.locator(),
+              "capturedAt", entry.capturedAt())).toList();
+          List<Object> assessments = context.assessments().stream().map(entry -> (Object) McpJson.orderedMap(
+              "dimension", entry.dimension(),
+              "critical", entry.critical(),
+              "state", entry.state(),
+              "note", entry.note(),
+              "assumptionNote", entry.assumptionNote(),
+              "decisionOwner", entry.decisionOwner())).toList();
+          Object payload = McpJson.orderedMap(
+              "workItemId", context.workItemId(),
+              "itemNo", context.itemNo(),
+              "title", context.title(),
+              "summary", context.summary(),
+              "status", context.status(),
+              "priority", context.priority(),
+              "readinessOk", context.readinessOk(),
+              "blocking", context.blocking(),
+              "contextSnapshotId", context.contextSnapshotId(),
+              "approvedSolutionVersion", context.approvedSolutionVersion(),
+              "approvedSolutionTitle", context.approvedSolutionTitle(),
+              "evidence", evidence,
+              "assessments", assessments);
           sendResult(out, id, McpJson.orderedMap(
               "content", List.of(McpJson.orderedMap("type", "text", "text", McpJson.write(payload))),
               "isError", Boolean.FALSE));

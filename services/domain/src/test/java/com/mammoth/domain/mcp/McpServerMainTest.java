@@ -36,6 +36,7 @@ class McpServerMainTest {
     assertThat(lines[0]).contains("\"protocolVersion\":\"2024-11-05\"");
     assertThat(lines[1]).contains("search_project_knowledge");
     assertThat(lines[1]).contains("get_knowledge_document");
+    assertThat(lines[1]).contains("get_requirement_context");
   }
 
   @Test

@@ -63,6 +63,9 @@ class McpToolServiceTest {
   @Autowired
   private McpToolService mcpToolService;
 
+  @Autowired
+  private com.mammoth.domain.workitem.WorkItemService workItemService;
+
   private String unique(String prefix) {
     return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
   }
@@ -151,5 +154,35 @@ class McpToolServiceTest {
         .isEqualTo("\"条码重\" OR \"码重复\"");
     assertThat(com.mammoth.domain.knowledge.SqliteKnowledgeSearchAdapter.trigramQuery("收货"))
         .isEmpty();
+  }
+
+  @Test
+  void agentReadsRequirementContextButOutsiderIsRejected() {
+    Fixture fixture = fixture();
+    var item = workItemService.create(fixture.owner(), fixture.project().getId(),
+        "扫码重复入库", "客户口头描述", "high", "现场会议");
+    workItemService.addEvidence(fixture.owner(), fixture.project().getId(), item.getId(),
+        "conversation", "同一托盘重复扫码会重复入库。", null, null, null);
+    workItemService.assess(fixture.owner(), fixture.project().getId(), item.getId(),
+        com.mammoth.domain.workitem.RequirementDimension.BACKGROUND,
+        com.mammoth.domain.workitem.RequirementDimension.CONFIRMED, "已确认", null, null);
+
+    var context = mcpToolService.getRequirementContext(fixture.reviewer().getId(),
+        fixture.project().getId(), item.getId());
+
+    assertThat(context.itemNo()).isEqualTo("REQ-0001");
+    assertThat(context.status()).isEqualTo("collecting");
+    assertThat(context.evidence()).hasSize(1);
+    assertThat(context.assessments()).hasSize(11);
+    assertThat(context.assessments().stream()
+        .filter(entry -> entry.dimension().equals("background"))
+        .findFirst().orElseThrow().state()).isEqualTo("confirmed");
+    assertThat(context.readinessOk()).isFalse();
+    assertThat(context.blocking()).isNotEmpty();
+
+    assertThatThrownBy(() -> mcpToolService.getRequirementContext(fixture.outsider().getId(),
+        fixture.project().getId(), item.getId()))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("no access to project");
   }
 }
