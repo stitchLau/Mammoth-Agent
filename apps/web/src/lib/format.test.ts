@@ -2,9 +2,17 @@ import { describe, expect, it } from 'vitest'
 import {
   canSubmitReview,
   canVerify,
+  dimensionLabel,
+  dimensionStateLabel,
+  evidenceTypeLabel,
   formatBytes,
   formatProjectCode,
   knowledgeStatusLabel,
+  readinessHeadline,
+  READINESS_DIMENSIONS,
+  solutionStatusLabel,
+  workItemPriorityLabel,
+  workItemStatusLabel,
 } from './format'
 
 describe('formatProjectCode', () => {
@@ -49,5 +57,48 @@ describe('knowledge lifecycle helpers', () => {
     expect(canVerify('needs_review')).toBe(true)
     expect(canVerify('draft')).toBe(false)
     expect(canVerify('verified')).toBe(false)
+  })
+})
+
+describe('M2 requirement and solution labels', () => {
+  it('maps requirement statuses to Chinese labels', () => {
+    expect(workItemStatusLabel('draft')).toBe('草稿')
+    expect(workItemStatusLabel('collecting')).toBe('收集中')
+    expect(workItemStatusLabel('ready_for_analysis')).toBe('待分析')
+    expect(workItemStatusLabel('solution_review')).toBe('方案评审')
+    expect(workItemStatusLabel('approved')).toBe('已批准')
+    expect(workItemStatusLabel('blocked')).toBe('阻塞')
+    expect(workItemStatusLabel('unknown')).toBe('unknown')
+  })
+
+  it('maps priorities and solution statuses', () => {
+    expect(workItemPriorityLabel('critical')).toBe('紧急')
+    expect(workItemPriorityLabel('normal')).toBe('普通')
+    expect(solutionStatusLabel('in_review')).toBe('评审中')
+    expect(solutionStatusLabel('superseded')).toBe('已被替代')
+  })
+
+  it('keeps exactly 11 readiness dimensions with 4 critical ones', () => {
+    expect(READINESS_DIMENSIONS).toHaveLength(11)
+    expect(READINESS_DIMENSIONS.filter((entry) => entry.critical).map((entry) => entry.key)).toEqual([
+      'background',
+      'goals',
+      'target_process',
+      'acceptance',
+    ])
+    expect(dimensionLabel('exceptions')).toBe('异常场景')
+    expect(dimensionLabel('made_up')).toBe('made_up')
+  })
+
+  it('maps assessment states and evidence types', () => {
+    expect(dimensionStateLabel('missing')).toBe('缺失')
+    expect(dimensionStateLabel('conflict')).toBe('冲突')
+    expect(evidenceTypeLabel('conversation')).toBe('沟通')
+    expect(evidenceTypeLabel('artifact')).toBe('资料')
+  })
+
+  it('explains readiness in one line', () => {
+    expect(readinessHeadline(true)).toContain('已就绪')
+    expect(readinessHeadline(false)).toContain('阻断')
   })
 })

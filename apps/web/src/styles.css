@@ -559,3 +559,63 @@ button:disabled {
   border-radius: 8px;
   padding: 0.4rem 0.7rem;
 }
+
+/* ---------- M2 requirements and solutions ---------- */
+
+.status-collecting,
+.status-ready_for_analysis,
+.status-analyzing {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.status-solution_review,
+.status-in_review {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.status-approved {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.status-on_hold,
+.status-blocked,
+.status-rejected,
+.status-withdrawn,
+.status-superseded {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.comment-input {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.dual-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.dual-view pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  margin: 0.5rem 0 0;
+  max-height: 520px;
+  overflow: auto;
+}
+
+.dual-view h3 {
+  margin-bottom: 0.25rem;
+}
+
+.table select,
+.table input {
+  width: 100%;
+  min-width: 90px;
+}

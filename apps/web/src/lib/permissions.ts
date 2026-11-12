@@ -66,3 +66,42 @@ export function verifyBlockedReason(
   }
   return '当前状态不可审核'
 }
+
+/** M2: requirements are edited by owner/editor (mirrors the server rule). */
+export function canEditRequirement(role: Role | null | undefined): boolean {
+  return role === 'owner' || role === 'editor'
+}
+
+/** M2: readiness confirmation and rejection need owner/reviewer. */
+export function canDecideRequirement(role: Role | null | undefined): boolean {
+  return role === 'owner' || role === 'reviewer'
+}
+
+/** M2 four-eyes: solution approval needs owner/reviewer and must not be the author. */
+export function canApproveSolution(
+  status: string,
+  role: Role | null | undefined,
+  isAuthor: boolean,
+): boolean {
+  return status === 'in_review' && canDecideRequirement(role) && !isAuthor
+}
+
+export function solutionApproveBlockedReason(
+  status: string,
+  role: Role | null | undefined,
+  isAuthor: boolean,
+): string | null {
+  if (canApproveSolution(status, role, isAuthor)) {
+    return null
+  }
+  if (status !== 'in_review') {
+    return '只有评审中的方案可以批准'
+  }
+  if (isAuthor) {
+    return '方案作者不能批准自己的方案（四眼原则）'
+  }
+  if (!canDecideRequirement(role)) {
+    return '需要项目负责人或审核人角色'
+  }
+  return '当前状态不可批准'
+}

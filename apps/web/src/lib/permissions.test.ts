@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canApproveSolution,
+  canDecideRequirement,
   canEditKnowledge,
+  canEditRequirement,
   canManageMembers,
   canSubmitForReview,
   canVerify,
   canWriteArtifacts,
   roleLabel,
+  solutionApproveBlockedReason,
   verifyBlockedReason,
 } from './permissions'
 
@@ -51,5 +55,36 @@ describe('role permissions', () => {
     expect(roleLabel('owner')).toBe('负责人')
     expect(roleLabel('reviewer')).toBe('审核人')
     expect(roleLabel(null)).toBe('—')
+  })
+})
+
+describe('M2 requirement and solution permissions', () => {
+  it('only owner/editor edit requirements', () => {
+    expect(canEditRequirement('owner')).toBe(true)
+    expect(canEditRequirement('editor')).toBe(true)
+    expect(canEditRequirement('reviewer')).toBe(false)
+    expect(canEditRequirement('viewer')).toBe(false)
+    expect(canEditRequirement(null)).toBe(false)
+  })
+
+  it('owner/reviewer decide readiness and approval', () => {
+    expect(canDecideRequirement('owner')).toBe(true)
+    expect(canDecideRequirement('reviewer')).toBe(true)
+    expect(canDecideRequirement('editor')).toBe(false)
+  })
+
+  it('solution approval is four-eyes and only while in review', () => {
+    expect(canApproveSolution('in_review', 'reviewer', false)).toBe(true)
+    expect(canApproveSolution('in_review', 'owner', false)).toBe(true)
+    expect(canApproveSolution('in_review', 'reviewer', true)).toBe(false)
+    expect(canApproveSolution('in_review', 'editor', false)).toBe(false)
+    expect(canApproveSolution('draft', 'reviewer', false)).toBe(false)
+  })
+
+  it('explains blocked solution approval', () => {
+    expect(solutionApproveBlockedReason('in_review', 'reviewer', false)).toBeNull()
+    expect(solutionApproveBlockedReason('draft', 'reviewer', false)).toContain('评审中')
+    expect(solutionApproveBlockedReason('in_review', 'reviewer', true)).toContain('四眼')
+    expect(solutionApproveBlockedReason('in_review', 'editor', false)).toContain('负责人或审核人')
   })
 })

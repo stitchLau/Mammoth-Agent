@@ -19,6 +19,7 @@ export function useProject(): ProjectContext {
 const NAV = [
   { to: 'artifacts', label: '项目资料' },
   { to: 'knowledge', label: '知识文档' },
+  { to: 'requirements', label: '需求与方案' },
   { to: 'search', label: '知识检索' },
   { to: 'members', label: '成员与角色' },
 ]

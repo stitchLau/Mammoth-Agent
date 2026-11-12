@@ -290,3 +290,409 @@ export function changeMemberRole(projectId: string, userId: string, role: string
 export function removeMember(projectId: string, userId: string): Promise<void> {
   return request<void>(`/api/projects/${projectId}/members/${userId}`, { method: 'DELETE' })
 }
+
+/* ------------------------------------------------------------------ */
+/* M2: requirements and solutions                                      */
+/* ------------------------------------------------------------------ */
+
+export interface WorkItem {
+  id: string
+  projectId: string
+  itemType: string
+  itemNo: string
+  title: string
+  summary: string | null
+  status: string
+  priority: string
+  sourceNote: string | null
+  ownerUserId: string | null
+  createdBy: string | null
+  priorStatus: string | null
+  readyConfirmedBy: string | null
+  readyConfirmedAt: string | null
+  contextSnapshotId: string | null
+  approvedSolutionVersionId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RequirementEvidence {
+  id: string
+  batchNo: number
+  evidenceType: string
+  text: string
+  artifactId: string | null
+  locator: string | null
+  capturedAt: string
+  addedBy: string | null
+  createdAt: string
+}
+
+export interface DimensionAssessment {
+  dimension: string
+  critical: boolean
+  state: string
+  note: string | null
+  assumptionNote: string | null
+  decisionOwner: string | null
+  updatedBy: string | null
+  updatedAt: string | null
+}
+
+export interface Readiness {
+  workItemId: string
+  ready: boolean
+  blocking: string[]
+  warnings: string[]
+  catalogVersion: number
+  confirmedBy: string | null
+  confirmedAt: string | null
+  snapshotId: string | null
+  dimensions: DimensionAssessment[]
+}
+
+export interface RequirementSnapshot {
+  id: string
+  version: number
+  payloadJson: string
+  createdBy: string | null
+  createdAt: string
+}
+
+export interface SolutionVersion {
+  id: string
+  version: number
+  status: string
+  title: string
+  changeSummary: string | null
+  contextSnapshotId: string | null
+  createdBy: string | null
+  submittedAt: string | null
+  approverUserId: string | null
+  approvedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RequirementDetail {
+  item: WorkItem
+  readiness: Readiness
+  evidence: RequirementEvidence[]
+  assessments: DimensionAssessment[]
+  solutionVersions: SolutionVersion[]
+  snapshots: RequirementSnapshot[]
+}
+
+export interface DesignItem {
+  id: string
+  itemKind: string
+  parentId: string | null
+  title: string
+  body: string
+  ordinal: number
+}
+
+export interface AcceptanceCriterion {
+  id: string
+  designItemId: string
+  text: string
+  ordinal: number
+}
+
+export interface SolutionTaskItem {
+  id: string
+  designItemId: string | null
+  acceptanceCriterionId: string | null
+  title: string
+  description: string | null
+  doneWhen: string | null
+  dependsOnTaskId: string | null
+  ordinal: number
+}
+
+export interface ConsistencyIssue {
+  code: string
+  message: string
+  objectId: string | null
+}
+
+export interface ConsistencyReport {
+  ok: boolean
+  issues: ConsistencyIssue[]
+  counts: {
+    businessItems: number
+    technicalItems: number
+    sharedItems: number
+    acceptanceCriteria: number
+    tasks: number
+    uncoveredGoals: number
+  }
+}
+
+export interface ApprovalRecordView {
+  id: string
+  action: string
+  actorUserId: string | null
+  comment: string | null
+  at: string
+}
+
+export interface SolutionDetail {
+  version: SolutionVersion
+  designItems: DesignItem[]
+  acceptanceCriteria: AcceptanceCriterion[]
+  tasks: SolutionTaskItem[]
+  report: ConsistencyReport
+  approvals: ApprovalRecordView[]
+}
+
+export interface TraceRow {
+  goal: string
+  designItems: string
+  tasks: string
+  criteria: string
+}
+
+export interface RenderResult {
+  view: string
+  markdown: string
+  designItemCount: number
+  taskCount: number
+  criterionCount: number
+  traceability: TraceRow[]
+}
+
+export function listWorkItems(projectId: string, status?: string): Promise<WorkItem[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : ''
+  return request<WorkItem[]>(`/api/projects/${projectId}/work-items${query}`)
+}
+
+export function createWorkItem(
+  projectId: string,
+  input: { title: string; summary: string | null; priority: string; sourceNote: string | null },
+): Promise<WorkItem> {
+  return request<WorkItem>(`/api/projects/${projectId}/work-items`, jsonBody(input))
+}
+
+export function getWorkItem(projectId: string, workItemId: string): Promise<RequirementDetail> {
+  return request<RequirementDetail>(`/api/projects/${projectId}/work-items/${workItemId}`)
+}
+
+export function updateWorkItem(
+  projectId: string,
+  workItemId: string,
+  input: { title: string; summary: string | null; priority: string; ownerUserId: string | null },
+): Promise<WorkItem> {
+  return request<WorkItem>(`/api/projects/${projectId}/work-items/${workItemId}`, {
+    ...jsonBody(input),
+    method: 'PUT',
+  })
+}
+
+export function addRequirementEvidence(
+  projectId: string,
+  workItemId: string,
+  input: {
+    evidenceType: string
+    text: string
+    artifactId: string | null
+    locator: string | null
+    capturedAt: string | null
+  },
+): Promise<RequirementEvidence> {
+  return request<RequirementEvidence>(`/api/projects/${projectId}/work-items/${workItemId}/evidence`, jsonBody(input))
+}
+
+export function assessDimension(
+  projectId: string,
+  workItemId: string,
+  dimension: string,
+  input: {
+    state: string
+    note: string | null
+    assumptionNote: string | null
+    decisionOwner: string | null
+  },
+): Promise<DimensionAssessment> {
+  return request<DimensionAssessment>(
+    `/api/projects/${projectId}/work-items/${workItemId}/assessments/${dimension}`,
+    { ...jsonBody(input), method: 'PUT' },
+  )
+}
+
+export function confirmReadiness(projectId: string, workItemId: string): Promise<Readiness> {
+  return request<Readiness>(`/api/projects/${projectId}/work-items/${workItemId}/confirm-readiness`, {
+    method: 'POST',
+  })
+}
+
+export function transitionWorkItem(
+  projectId: string,
+  workItemId: string,
+  target: string,
+  comment: string | null,
+): Promise<WorkItem> {
+  return request<WorkItem>(`/api/projects/${projectId}/work-items/${workItemId}/transitions`, jsonBody({ target, comment }))
+}
+
+export function listSolutionVersions(projectId: string, workItemId: string): Promise<SolutionVersion[]> {
+  return request<SolutionVersion[]>(`/api/projects/${projectId}/work-items/${workItemId}/solutions`)
+}
+
+export function createSolutionVersion(
+  projectId: string,
+  workItemId: string,
+  input: { title: string; changeSummary: string | null },
+): Promise<SolutionVersion> {
+  return request<SolutionVersion>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions`,
+    jsonBody(input),
+  )
+}
+
+export function getSolutionVersion(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+): Promise<SolutionDetail> {
+  return request<SolutionDetail>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}`,
+  )
+}
+
+export function addDesignItem(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  input: { itemKind: string; parentId: string | null; title: string; body: string },
+): Promise<DesignItem> {
+  return request<DesignItem>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/design-items`,
+    jsonBody(input),
+  )
+}
+
+export function addAcceptanceCriterion(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  input: { designItemId: string; text: string },
+): Promise<AcceptanceCriterion> {
+  return request<AcceptanceCriterion>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/acceptance-criteria`,
+    jsonBody(input),
+  )
+}
+
+export function addSolutionTask(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  input: {
+    designItemId: string | null
+    acceptanceCriterionId: string | null
+    title: string
+    description: string | null
+    doneWhen: string | null
+    dependsOnTaskId: string | null
+  },
+): Promise<SolutionTaskItem> {
+  return request<SolutionTaskItem>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/tasks`,
+    jsonBody(input),
+  )
+}
+
+export function renderSolution(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  view: 'business' | 'technical',
+): Promise<RenderResult> {
+  return request<RenderResult>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/render?view=${view}`,
+  )
+}
+
+export function submitSolution(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+): Promise<SolutionVersion> {
+  return request<SolutionVersion>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/submit`,
+    { method: 'POST' },
+  )
+}
+
+export function approveSolution(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  comment: string | null,
+): Promise<SolutionVersion> {
+  return request<SolutionVersion>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/approve`,
+    jsonBody({ comment }),
+  )
+}
+
+export function requestSolutionChanges(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  comment: string,
+): Promise<SolutionVersion> {
+  return request<SolutionVersion>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/request-changes`,
+    jsonBody({ comment }),
+  )
+}
+
+export function newSolutionVersion(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  changeSummary: string | null,
+): Promise<SolutionVersion> {
+  return request<SolutionVersion>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/new-version`,
+    jsonBody({ changeSummary }),
+  )
+}
+
+export function deleteDesignItem(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  itemId: string,
+): Promise<void> {
+  return request<void>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/design-items/${itemId}`,
+    { method: 'DELETE' },
+  )
+}
+
+export function deleteAcceptanceCriterion(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  criterionId: string,
+): Promise<void> {
+  return request<void>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/acceptance-criteria/${criterionId}`,
+    { method: 'DELETE' },
+  )
+}
+
+export function deleteSolutionTask(
+  projectId: string,
+  workItemId: string,
+  versionId: string,
+  taskId: string,
+): Promise<void> {
+  return request<void>(
+    `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/tasks/${taskId}`,
+    { method: 'DELETE' },
+  )
+}

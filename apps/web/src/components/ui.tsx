@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import { knowledgeStatusLabel } from '../lib/format'
 import { roleLabel } from '../lib/permissions'
 
-export function StatusBadge(props: { status: string }) {
+export function StatusBadge(props: { status: string; label?: string }) {
   return (
     <span className={`status status-${props.status}`} title={props.status}>
-      {knowledgeStatusLabel(props.status)}
+      {props.label ?? knowledgeStatusLabel(props.status)}
     </span>
   )
 }

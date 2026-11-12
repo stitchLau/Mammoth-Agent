@@ -9,9 +9,12 @@ import LoginPage from './pages/LoginPage'
 import MembersPage from './pages/MembersPage'
 import ProjectLayout from './pages/ProjectLayout'
 import ProjectsPage from './pages/ProjectsPage'
+import RequirementDetailPage from './pages/RequirementDetailPage'
+import RequirementsPage from './pages/RequirementsPage'
 import SearchPage from './pages/SearchPage'
 import SettingsPage from './pages/SettingsPage'
 import SetupPage from './pages/SetupPage'
+import SolutionPage from './pages/SolutionPage'
 import { LoadingState } from './components/ui'
 
 function RequireAuth() {
@@ -40,6 +43,12 @@ export default function App() {
             <Route path="artifacts" element={<ArtifactsPage />} />
             <Route path="knowledge" element={<KnowledgePage />} />
             <Route path="knowledge/:documentId" element={<KnowledgeDetailPage />} />
+            <Route path="requirements" element={<RequirementsPage />} />
+            <Route path="requirements/:workItemId" element={<RequirementDetailPage />} />
+            <Route
+              path="requirements/:workItemId/solutions/:versionId"
+              element={<SolutionPage />}
+            />
             <Route path="search" element={<SearchPage />} />
             <Route path="members" element={<MembersPage />} />
           </Route>
