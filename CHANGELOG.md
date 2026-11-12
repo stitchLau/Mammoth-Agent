@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.2.4 — 2026-11-12
+
+- 新增 `docs/spikes/S5-ARTIFACT-STORAGE-SPIKE.md`：内容寻址目录 vs SQLite BLOB 实测（写 37/296 ms、读 19/43 ms、备份 6/22 ms；只读属性阻止删除；去重与哈希校验）。
+- 新增 `decisions/ADR-0004-ARTIFACT-STORAGE.md`（Proposed）：本地内容寻址 + 关系库元数据；`ArtifactStore` 接口；备份/删除/迁移规则。
+- 新增 `spike/adr-0004-artifact/` 一次性探针。
+- 更新 `docs/13-OPEN-DECISIONS.md`、`docs/specs/M1-PHASE1-PLAN.md`、`docs/handoffs/`。
+
 ## V0.2.3 — 2026-11-12
 
 - 新增 `docs/spikes/S4-DATABASE-SPIKE.md`：SQLite 3.54 vs PostgreSQL 17 实测（Flyway 13.12.1 双库迁移幂等、中文检索 FTS5 trigram vs pg_trgm、`tsvector('simple')` 对中文 0 命中、备份恢复）。
