@@ -55,7 +55,7 @@
 ## 方法、角色与提示词
 
 - [`10-VIBE-CODING-PLAYBOOK.md`](10-VIBE-CODING-PLAYBOOK.md)、[`11-DEEPSEEK-HARNESS-GUIDE.md`](11-DEEPSEEK-HARNESS-GUIDE.md)、[`AGENT-USAGE-QUICKSTART.md`](AGENT-USAGE-QUICKSTART.md)
-- [`agents/`](agents/)（角色定义与编排）、[`prompts/`](prompts/)（任务提示词）、[`checklists/`](checklists/)（DoD/安全/发布）、[`templates/`](templates/)（ADR/Spec/Review/Handoff）
+- [`agents/`](agents/)（角色定义与编排）、[`prompts/`](prompts/)（任务提示词，M2 启动用 [`prompts/09-M2-KICKOFF.md`](prompts/09-M2-KICKOFF.md)）、[`checklists/`](checklists/)（DoD/安全/发布）、[`templates/`](templates/)（ADR/Spec/Review/Handoff）
 - [`spikes/`](spikes/)（S1–S7 Spike 报告）、[`project-discovery.md`](project-discovery.md)（初始勘察）
 
 ## 新会话推荐阅读顺序
