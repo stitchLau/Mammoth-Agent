@@ -6,14 +6,15 @@
 
 ## 1. 它做什么
 
-把 Mammoth Domain Service 的两项**只读**能力通过 MCP stdio 暴露给 DSH Agent：
+把 Mammoth Domain Service 的**只读**能力通过 MCP stdio 暴露给 DSH Agent：
 
 | 工具 | 作用 |
 |---|---|
 | `mcp__mammoth_domain__search_project_knowledge` | 在指定项目内检索已验证知识，返回可引用 chunk（documentId/chunkId/ordinal/text/sourceRefCount） |
 | `mcp__mammoth_domain__get_knowledge_document` | 读取一篇已验证知识文档及其来源引用 |
+| `mcp__mammoth_domain__get_requirement_context` | 读取一个需求工作项的证据批次、11 维就绪评估摘要与当前批准方案摘要（M2 新增） |
 
-边界：**只读**、**仅 verified**、**仅项目成员**、**不返回草稿**。
+边界：**只读**、**仅 verified 知识**、**仅项目成员**、**不返回草稿**。需求上下文包含项目内部需求/证据，不包含知识草稿；Agent 没有写需求或方案的路径（M2 明确不做 Agent 直写，见 `docs/specs/M2-PHASE2-PLAN.md` §7）。
 
 ## 2. 接入步骤
 

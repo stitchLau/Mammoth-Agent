@@ -40,18 +40,18 @@
 
 | 文档 | 内容 |
 |---|---|
-| [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) | 提交级执行时间线 |
-| [`quality/M1-BUGS.md`](quality/M1-BUGS.md) | 缺陷台账（根因/修复/回归） |
-| [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图 |
-| [`handoffs/`](handoffs/) | 会话交接（M0 历史快照 + M1.5 当前快照） |
+| [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) | 提交级执行时间线 |
+| [`quality/M1-BUGS.md`](quality/M1-BUGS.md) / [`quality/M2-BUGS.md`](quality/M2-BUGS.md) | 缺陷台账（根因/修复/回归） |
+| [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图 |
+| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5 历史快照 + M2 当前快照） |
 
 ## 运行与集成
 
 | 文档 | 内容 |
 |---|---|
 | [`dev-setup.md`](dev-setup.md) | 构建/启动/接口/数据根/CI/E2E |
-| [`dsh-mcp-integration.md`](dsh-mcp-integration.md) | DSH ↔ Domain Service MCP 接入 |
-| [`demos/M1-DEMO.md`](demos/M1-DEMO.md) | 端到端演示脚本说明 |
+| [`dsh-mcp-integration.md`](dsh-mcp-integration.md) | DSH ↔ Domain Service MCP 接入（含 M2 `get_requirement_context`） |
+| [`demos/M1-DEMO.md`](demos/M1-DEMO.md) / [`demos/M2-DEMO.md`](demos/M2-DEMO.md) | 端到端演示脚本说明 |
 | [`../integrations/dsh/`](../integrations/dsh/) | DSH bundle 模板 |
 
 ## 方法、角色与提示词
@@ -63,6 +63,6 @@
 ## 新会话推荐阅读顺序
 
 1. `AGENTS.md` → `docs/00-MASTER-GUIDE.md`
-2. 本索引 → `docs/handoffs/SESSION-HANDOFF-2026-11-12-M1.5.md`
-3. 按 M2 任务读 `docs/04`、`docs/13`、`docs/12` 与相关领域文档
-4. 需要实现细节时读 `docs/dev-setup.md`、`docs/evidence/M1-VERIFICATION.md`、代码与测试
+2. 本索引 → `docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`
+3. 按 M3 任务读 `docs/04`、`docs/13`、`docs/12`、`docs/03`、`docs/07` 与 `docs/specs/M2-PHASE2-PLAN.md`
+4. 需要实现细节时读 `docs/dev-setup.md`、`docs/evidence/M2-VERIFICATION.md`、代码与测试

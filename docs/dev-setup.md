@@ -114,8 +114,8 @@ npm test           # vitest
 
 ## UI 路由与浏览器 E2E
 
-- **路由**：`/login`、`/setup`（仅空库）、`/projects`、`/projects/:id/artifacts|knowledge|knowledge/:docId|search|members`、`/settings`、`/403`、`/404`；SPA 深链接由后端回退 `index.html`。
-- **角色**：owner/editor 可写资料与知识；owner 管理成员；owner/reviewer 可审核且**不能自审**；viewer 只读。
+- **路由**：`/login`、`/setup`（仅空库）、`/projects`、`/projects/:id/artifacts|knowledge|knowledge/:docId|requirements|requirements/:workItemId|requirements/:workItemId/solutions/:versionId|search|members`、`/settings`、`/403`、`/404`；SPA 深链接由后端回退 `index.html`。
+- **角色**：owner/editor 可写资料、知识与需求/方案；owner 管理成员；owner/reviewer 可审核（不能自审）、可确认需求就绪、可批准方案（方案作者不可自批）；viewer 只读。
 - **浏览器 E2E**（Playwright，需先构建 dist 并使用空数据根启动后端）：
   ```powershell
   cd apps/web && npm install          # 首次
@@ -127,21 +127,23 @@ npm test           # vitest
   # 另一个终端：
   cd apps/web && npm run test:e2e
   ```
-  也可用 `MAMMOTH_E2E_BASE` 指向已有环境；E2E 会创建临时客户/项目/知识，**不要在真实数据根运行**。
+  也可用 `MAMMOTH_E2E_BASE` 指向已有环境；E2E 会创建临时客户/项目/知识/需求/方案，**不要在真实数据根运行**。
+  E2E 现含 2 个场景（M1 知识闭环、M2 需求→方案批准）；同一空数据根下顺序执行，拆分运行需独立数据根（见 `docs/evidence/M2-VERIFICATION.md` §2）。
 - **CI**：E2E 已加入 `.github/workflows/ci.yml` 的 `e2e` job（远端 Runner 尚未在本机验证）。
 
 ## DSH 集成与演示
 
 
 - **生产/本地一体化启动**：先 `cd apps/web && npm run build`，再从仓库根目录 `java -jar services/domain/target/mammoth-domain-service.jar` —— 后端会自动探测 `apps/web/dist` 并托管 SPA（`GET /` 返回页面，`/api/**` 为接口）；也可用 `MAMMOTH_WEB_DIST` 显式指定目录。开发模式仍用 `npm run dev` + 代理。
-- **接入 DSH**：见 [`docs/dsh-mcp-integration.md`](dsh-mcp-integration.md)（配置型 bundle 模板在 `integrations/dsh/mammoth-domain-mcp/`）；两个只读 MCP 工具 `search_project_knowledge` / `get_knowledge_document`，仅 verified、仅项目成员。
-- **端到端演示**：`node scripts/demo-m1.mjs http://127.0.0.1:8080`，说明见 [`docs/demos/M1-DEMO.md`](demos/M1-DEMO.md)。
+- **接入 DSH**：见 [`docs/dsh-mcp-integration.md`](dsh-mcp-integration.md)（配置型 bundle 模板在 `integrations/dsh/mammoth-domain-mcp/`）；三个只读 MCP 工具 `search_project_knowledge` / `get_knowledge_document` / `get_requirement_context`，仅 verified 知识、仅项目成员、无写路径。
+- **端到端演示**：`node scripts/demo-m1.mjs http://127.0.0.1:8080`（[`docs/demos/M1-DEMO.md`](demos/M1-DEMO.md)）与 `node scripts/demo-m2.mjs http://127.0.0.1:8080`（[`docs/demos/M2-DEMO.md`](demos/M2-DEMO.md)，需空数据根）。
 - MCP 入口与 Web 入口共用同一数据根；MCP 进程会持有 jar（Windows 上重建 jar 前需卸载 bundle）。
 
 ## 已知限制（当前阶段）
 
-- M1 T1–T13 已完成并通过验收（API/服务级闭环 + UI 功能实现；见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)）；
-- UI 已有登录、客户/产品/项目创建、资料上传、知识创建/审核/引用查看、知识检索；**浏览器点击级验证未执行**（本环境无浏览器控制）；
+- M1 / M1.5 / M2 已完成本地验收（见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)、[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md)）；UI 已由 Playwright 真实浏览器流程覆盖（2 场景）；
+- 应用内无 LLM 调用；AI 参与仅限 MCP 只读工具（ADR-0011 未立）；
 - 本地 localhost 为 HTTP（无 TLS）；局域网/服务端部署必须先做 TLS；
 - 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
-- 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充。
+- 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充；
+- 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）。

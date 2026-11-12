@@ -229,4 +229,34 @@ draft ──evidence──> collecting ──confirm-readiness──> ready_for_
 
 ## 13. 实施记录（2026-11-12）
 
-（见文件末尾"实施结果"一节，随切片推进更新。）
+### 13.1 结果
+
+| 项 | 结果 |
+|---|---|
+| 后端 | `mvn -B -ntp -f services/domain/pom.xml verify` → **BUILD SUCCESS，62 tests**（M1 48 不回归 + 需求 6 + 方案 7 + MCP 1） |
+| 迁移 | `V4__m2_requirements.sql`，V1–V4 幂等，23 张业务表 |
+| 前端 | build 通过；`npm test` → **25 tests** |
+| 浏览器 E2E | 空数据根 + `npm run test:e2e` → **2 passed（8.8s）** |
+| API 演示 | `node scripts/demo-m2.mjs` → **26/26** |
+| 证据 | `docs/evidence/M2-VERIFICATION.md`、`docs/process/M2-TIMELINE.md`、`docs/quality/M2-BUGS.md` |
+
+### 13.2 实现位置
+
+- 后端：`services/domain/src/main/java/com/mammoth/domain/workitem/`（WorkItem/状态机/11 维目录/就绪引擎/评估/证据/快照）、`.../solution/`（版本/设计项/任务/验收/一致性/渲染/审批）、`.../web/WorkItemController.java`、`.../web/SolutionController.java`、`.../mcp/McpToolService.java`、`support/JsonLite.java`、`db/migration/V4__m2_requirements.sql`。
+- 前端：`apps/web/src/pages/RequirementsPage.tsx`、`RequirementDetailPage.tsx`、`SolutionPage.tsx`；`lib/api.ts`、`lib/format.ts`、`lib/permissions.ts`；`App.tsx` 路由；`e2e/m1-ui.spec.ts` 新增 M2 场景。
+- 演示：`scripts/demo-m2.mjs`、`docs/demos/M2-DEMO.md`。
+
+### 13.3 与计划的偏差（均已记录在文档）
+
+1. **就绪状态增加 `partial`**：为表达"部分覆盖"，但仍视为未确认；`07` §4 的四种状态为其子集。
+2. **`approved` 可经 `new-version` 回到 `analyzing`**：满足"批准后修订"，批准版本本身仍不可编辑。
+3. **设计项支持混合层级**：技术项可挂在业务目标下，使"目标→设计项→任务→验收"由树结构表达（承接 `SolutionConsistency` 规则 4）。
+4. **E2E 单文件两测试**：CI 单后端空数据根约束下，M2 场景复用 M1 账号；单独运行会 `test.skip`（见 `docs/evidence/M2-VERIFICATION.md` §2）。
+5. **MCP 工具落地**：`get_requirement_context` 只读实现并测试；未在本轮真实 DSH 会话复测。
+
+### 13.4 未完成/后续
+
+- 应用内 LLM 与 Agent 草案写入（ADR-0011 待立）；
+- 需求评论/讨论、通知、后端分页；
+- 真实 DSH 会话复测 M2 工具、M2 截图与人工视觉验收；
+- ADR-0007/0008/0009 仍未定案，M3 前处理。

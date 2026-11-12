@@ -26,6 +26,15 @@
 
 退出条件：模糊工单可逐步澄清并输出一致、可评审、可追溯的方案。
 
+**状态：已完成（2026-11-12）** — 证据：
+
+- 规格与验收：`docs/specs/M2-PHASE2-PLAN.md`（AC-1–AC-8、状态机、就绪规则、一致性规则）
+- 决策：`decisions/ADR-0010-M2-CONTEXT-BASELINE.md`（Accepted）；ADR-0007/0008/0009 保持 OPEN
+- 验证：`docs/evidence/M2-VERIFICATION.md`（后端 62 tests、前端 25 tests、E2E 2 passed、演示 26/26）
+- 过程/缺陷：`docs/process/M2-TIMELINE.md`、`docs/quality/M2-BUGS.md`
+- 交接：`docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`
+- 限制：CI 远端未运行；应用内 LLM/文档解析/生产化未做（已登记）
+
 ## M3：实施回收与知识闭环
 
 产出：开发交接包、实施记录、Git diff 关联、方案偏差分析、As-built 文档、知识更新。

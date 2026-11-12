@@ -1,5 +1,18 @@
 # Changelog
 
+## V0.9.0 — 2026-11-12
+
+- **M2 需求与方案（第一轮完整闭环）**：
+  - 需求工作项（`REQ-000n`）+ 多批次证据只追加（可引用 Artifact）+ 11 维就绪检查（关键维度阻断、非关键维度需"假设 + 决策责任人"）+ 负责人确认门槛与不可变上下文快照（ADR-0010）。
+  - 统一 SolutionModel（业务/技术/共享设计项，支持混合层级）→ 业务/技术双视图由同一模型渲染；6 条一致性规则阻断评审；任务拆解 + 验收标准 + 追溯矩阵。
+  - 方案评审与版本：提交评审、四眼批准（作者不可自批）、要求修改、批准版本不可覆盖、`new-version` 复制结构并将旧批准版本置为 `superseded`。
+  - MCP 只读工具 `get_requirement_context`（证据/评估/批准方案摘要，无写路径）。
+  - UI：需求池、需求详情（证据/就绪面板/方案版本）、方案编辑与双视图/一致性面板/评审记录。
+- **数据**：`V4__m2_requirements.sql`（9 表：work_item、requirement_evidence/assessment/snapshot、solution_version/design_item/task、acceptance_criterion、approval_record）。
+- **验证**：后端 `mvn verify` **62 tests**；前端 build + **25 tests**；Playwright E2E **2 passed**；API 演示 `demo-m2.mjs` **26/26**。
+- **文档**：M2 计划、ADR-0010、验证证据、时间线、缺陷台账、演示说明、交接；README/ROADMAP/13-OPEN-DECISIONS/DECISION-LOG 同步。
+- **已知限制**：CI 远端未运行；不接应用内 LLM（ADR-0011 待立）；文档解析（ADR-0009）与 Git 基线（ADR-0007）未定；TLS/PG 方言/后端分页未做。
+
 ## V0.8.2 — 2026-11-12
 
 - 新增 M2 新会话启动指令 `docs/prompts/09-M2-KICKOFF.md`（背景、必读文档、工作规则、首步方案要求、验证命令、环境备注），并在 `docs/README.md` 索引中引用。

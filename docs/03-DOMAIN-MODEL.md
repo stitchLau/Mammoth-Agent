@@ -77,3 +77,21 @@
 `ProjectCreated`、`ProjectBaselineCaptured`、`ArtifactAdded`、`KnowledgeDocumentPublished`、`WorkItemCreated`、`EvidenceAdded`、`ReadinessReassessed`、`SolutionVersionCreated`、`SolutionApproved`、`TaskHandoffCreated`、`ExecutionRecorded`、`KnowledgeSyncRequested`、`DeliverySnapshotPublished`、`WorkItemClosed`。
 
 第一版可用应用服务内部事件，不必先引入消息中间件。
+
+## 9. M2 实现映射（2026-11-12）
+
+本节记录本阶段把上述概念落成的表/服务，避免文档与代码脱节；详细规则见 `docs/specs/M2-PHASE2-PLAN.md`。
+
+| 领域概念 | 实现 |
+|---|---|
+| WorkItem | `work_item` + `WorkItem`/`WorkItemService`（M2 仅 `requirement` 类型；状态机见 `WorkItemStatus`） |
+| RequirementEvidence | `requirement_evidence`（追加写、批次号、可引用 Artifact，无更新/删除） |
+| 需求信息完整度 | `requirement_assessment`（11 维、`missing/partial/confirmed/inferred/conflict`）+ `ReadinessService` |
+| 版本化上下文/项目基线 | `requirement_snapshot`（ADR-0010 轻量快照；真实 `ProjectBaseline` 待 ADR-0007） |
+| SolutionVersion | `solution_version` + `SolutionVersion`（draft/in_review/approved/superseded，批准不可覆盖） |
+| SolutionModel | `solution_design_item`（business/technical/shared，可混合层级）+ `SolutionRenderer` 双视图 |
+| DevelopmentTask | `solution_task`（必须追溯到设计项或验收标准） |
+| 验收矩阵 | `acceptance_criterion` + `SolutionRenderer.traceability`（派生，不建冗余表） |
+| ApprovalRecord | `approval_record`（submit/approve/request_changes；与 `audit_log` 互补） |
+
+尚未实现且保持为领域概念：`ProjectBaseline`、`DevelopmentTask` 与 Git commit 映射、`ExecutionRecord`、`DeliverySnapshot`（M3）。
