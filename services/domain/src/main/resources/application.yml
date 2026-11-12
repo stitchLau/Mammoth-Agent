@@ -28,6 +28,9 @@ mammoth:
     # Temporary agent identity for the MCP stdio entrypoint (pre-authentication stage).
     # The user must be an active project member; only verified knowledge is exposed.
     agent-user-id: ${MAMMOTH_MCP_AGENT_USER_ID:}
+  web:
+    # Optional explicit SPA dist directory; empty probes apps/web/dist relative to the working dir.
+    dist: ${MAMMOTH_WEB_DIST:}
 
 logging:
   level:

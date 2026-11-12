@@ -110,14 +110,15 @@ npm test           # vitest
 
 ## DSH 集成与演示
 
+- **生产/本地一体化启动**：先 `cd apps/web && npm run build`，再从仓库根目录 `java -jar services/domain/target/mammoth-domain-service.jar` —— 后端会自动探测 `apps/web/dist` 并托管 SPA（`GET /` 返回页面，`/api/**` 为接口）；也可用 `MAMMOTH_WEB_DIST` 显式指定目录。开发模式仍用 `npm run dev` + 代理。
 - **接入 DSH**：见 [`docs/dsh-mcp-integration.md`](dsh-mcp-integration.md)（配置型 bundle 模板在 `integrations/dsh/mammoth-domain-mcp/`）；两个只读 MCP 工具 `search_project_knowledge` / `get_knowledge_document`，仅 verified、仅项目成员。
 - **端到端演示**：`node scripts/demo-m1.mjs http://127.0.0.1:8080`，说明见 [`docs/demos/M1-DEMO.md`](demos/M1-DEMO.md)。
 - MCP 入口与 Web 入口共用同一数据根；MCP 进程会持有 jar（Windows 上重建 jar 前需卸载 bundle）。
 
 ## 已知限制（当前阶段）
 
-- M1 T1–T13 已完成（含正式认证、审计不可篡改、MCP 只读工具、演示脚本）；验收记录见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)；
-- 前端已有登录、项目/资料、已验证知识检索；知识创建/审核/来源详情视图尚未实现；
+- M1 T1–T13 已完成并通过验收（API/服务级闭环 + UI 功能实现；见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)）；
+- UI 已有登录、客户/产品/项目创建、资料上传、知识创建/审核/引用查看、知识检索；**浏览器点击级验证未执行**（本环境无浏览器控制）；
 - 本地 localhost 为 HTTP（无 TLS）；局域网/服务端部署必须先做 TLS；
 - 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
 - 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充。

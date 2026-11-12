@@ -28,3 +28,27 @@ export function formatBytes(bytes: number): string {
   }
   return `${value.toFixed(1)} ${units[unit]}`
 }
+
+/** Chinese label for the M1 knowledge lifecycle states. */
+export function knowledgeStatusLabel(status: string): string {
+  switch (status) {
+    case 'draft':
+      return '草稿'
+    case 'needs_review':
+      return '待审核'
+    case 'verified':
+      return '已验证'
+    default:
+      return status
+  }
+}
+
+/** Only drafts can be submitted for review (mirrors the server rule). */
+export function canSubmitReview(status: string): boolean {
+  return status === 'draft'
+}
+
+/** Only needs_review documents can be verified by a human reviewer. */
+export function canVerify(status: string): boolean {
+  return status === 'needs_review'
+}

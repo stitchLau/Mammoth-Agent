@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatBytes, formatProjectCode } from './format'
+import {
+  canSubmitReview,
+  canVerify,
+  formatBytes,
+  formatProjectCode,
+  knowledgeStatusLabel,
+} from './format'
 
 describe('formatProjectCode', () => {
   it('joins customer, product and year with hyphens', () => {
@@ -26,5 +32,22 @@ describe('formatBytes', () => {
   it('handles invalid input defensively', () => {
     expect(formatBytes(-1)).toBe('-')
     expect(formatBytes(Number.NaN)).toBe('-')
+  })
+})
+
+describe('knowledge lifecycle helpers', () => {
+  it('maps statuses to Chinese labels', () => {
+    expect(knowledgeStatusLabel('draft')).toBe('草稿')
+    expect(knowledgeStatusLabel('needs_review')).toBe('待审核')
+    expect(knowledgeStatusLabel('verified')).toBe('已验证')
+    expect(knowledgeStatusLabel('unknown')).toBe('unknown')
+  })
+
+  it('only allows review transitions from the expected states', () => {
+    expect(canSubmitReview('draft')).toBe(true)
+    expect(canSubmitReview('needs_review')).toBe(false)
+    expect(canVerify('needs_review')).toBe(true)
+    expect(canVerify('draft')).toBe(false)
+    expect(canVerify('verified')).toBe(false)
   })
 })

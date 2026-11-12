@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.5.1 — 2026-11-12
+
+- **M1 完成**：前端补齐客户/产品/项目创建、知识文档创建/提交审核/审核通过/来源引用查看，并新增知识生命周期辅助函数与测试；SPA 由 Domain Service 托管（自动探测 `apps/web/dist`，可用 `MAMMOTH_WEB_DIST` 指定）。
+- 验证：后端 `mvn verify` **43 tests**；前端 build + **7 tests**；SPA `GET /` 与 `/assets/*.js` 均 200；认证版演示 **14/14**。
+- 验收记录更新：`docs/M1-ACCEPTANCE.md`（UI 功能完成，浏览器点击级验证因环境限制未执行并如实登记）。
+- 文档：M1 计划 T12 完成并去除重复行；dev-setup 增加一体化启动方式；CHANGELOG/交接同步。
+
 ## V0.5.0 — 2026-11-12
 
 - **M1 收尾：正式认证（ADR-0006）**：Spring Security + 服务端不透明会话 Cookie（HttpOnly/SameSite=Lax）+ CSRF（`XSRF-TOKEN`/`X-XSRF-TOKEN`，登录与 csrf 端点豁免）+ 登录限速（5 次失败 → 429）+ 注销即时撤销 + 首次账号 bootstrap；移除临时 `X-Mammoth-User-Id` 身份。修复两个真实安全集成缺陷：CSRF 被 `SessionManagementFilter` 轮换清空（调整过滤器顺序）、SPA 需明文 CSRF 请求处理器。

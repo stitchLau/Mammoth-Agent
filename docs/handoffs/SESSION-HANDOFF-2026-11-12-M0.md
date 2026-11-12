@@ -65,12 +65,12 @@
 
 ## 下一步最小行动
 
-**M1 已通过验收（见 `docs/M1-ACCEPTANCE.md`），下一阶段建议**：
-1. 前端补齐知识文档创建/审核/来源详情视图与项目创建流程（当前仅检索视图）；
-2. 生产化安全：TLS、共享会话/限速存储、MCP 专用只读账号；
-3. 进入 **M2（需求与方案）规划**：先更新 `docs/specs/` 与 ADR，再按垂直切片实施；M2 前需回顾 `docs/04-MVP-STRATEGY.md` Phase 2 范围。
+**M1 已完成并通过验收**（`docs/M1-ACCEPTANCE.md`）。下一步：
+1. 在浏览器中对 UI 做一次人工点击验收（登录/项目/资料/知识审核/检索），补齐真实交互证据；
+2. 生产化加固：TLS、共享会话/限速存储、MCP 专用只读账号；
+3. 进入 **M2（需求与方案）**：按 `docs/04-MVP-STRATEGY.md` Phase 2 更新 `docs/specs/` 与 ADR，再按垂直切片实施。
 
-当前基线：M1 T1–T13 完成；`mvn verify` 39 tests；前端 build + 5 tests；认证版演示 14/14；DSH MCP 接入已实测（`docs/dsh-mcp-integration.md`）。
+当前基线：后端 43 tests；前端 build + 7 tests；认证版演示 14/14；SPA 由后端托管（`/` 200）；DSH MCP 接入已实测。
 
 ## 新会话必须先阅读
 
