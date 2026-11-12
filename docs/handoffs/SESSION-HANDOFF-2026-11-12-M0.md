@@ -65,7 +65,8 @@
 
 ## 下一步最小行动
 
-**执行 M1 T6 + T8/T9**：知识文档（draft→needs_review→verified 状态机、source_refs 必填、AI 生成内容不得直接 verified）与全文检索（`SearchAdapter` + FTS5 trigram + 查询三元组 OR + scope 过滤），再以 MCP stdio 入口暴露只读工具（`search_project_knowledge`）供 DSH 调用。Artifact 上传/下载/去重已可用（T5），knowledge_source_ref 可引用 artifact。
+**执行 M1 T9（MCP 只读工具）**：把 `KnowledgeSearchAdapter` 包装为独立 MCP stdio 入口（复用 S2 的 Java MCP 服务器模式：`initialize`/`tools/list`/`tools/call`，工具名如 `search_project_knowledge`、`get_knowledge_document`），由 DSH 配置型 bundle 接入；工具必须强制项目 scope 与只读，并返回引用结构。随后 T10 权限隔离专项 + T11 演示脚本。
+注意：调用者身份仍是临时 `X-Mammoth-User-Id` 头（MCP 场景需明确"Agent 以哪个用户身份检索"的策略，AD-0006 后续正式认证时一并解决）。
 
 ## 新会话必须先阅读
 

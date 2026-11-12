@@ -94,9 +94,9 @@
 | T3 迁移基线 | Flyway V1 建第 4 节表 | 空库迁移→回滚演练；重复执行幂等。**已完成（2026-11-12）**：Flyway 13.12.1 + SQLite；`V1__m1_baseline.sql` 建 14 张表；`MigrationTest` 验证迁移+幂等（重复执行 0）；jar 冒烟 `schemaVersion=1`、15 张表（含 history） |
 | T4 主数据与项目 | Customer/Product/Project 的 REST + 领域校验（项目必须绑定客户） | 创建/查询/约束违规用例。**已完成（2026-11-12）**：JPA 实体/仓储 + 4 组 REST（users/customers/products/projects）+ 项目成员管理；项目必须绑定客户、编码唯一、创建者自动成为 owner；`AuthorizationService`（默认拒绝、项目角色）+ 审计落库。验证：`mvn verify` 14 tests；HTTP 冒烟 401/403/409 符合预期，审计记录 user/customer/project 三类 |
 | T5 Artifact 导入 | 上传/登记、SHA-256、不可变、原始名保留 | 重复上传去重；篡改检测；元数据完整。**已完成（2026-11-12）**：`ArtifactStore`（内容寻址、临时文件→原子移动→只读、读时校验 SHA-256、跨项目去重）+ 上传/列表/元数据/下载 REST（成员权限）+ 审计；`mvn verify` 20 tests；Node 端到端冒烟：两次同内容上传去重同 ID、列表 1 条、下载字节一致、非成员 403、落盘文件只读、审计 `artifact.add=1/artifact.reuse=1` |
-| T6 知识文档 | draft→needs_review→verified 状态机、source_refs 必填 | 非法状态跳转被拒；AI 生成内容不能直接 verified |
-| T7 人工审核与审计 | 审核动作记录 reviewer/at；所有写操作落 `audit_log` | 审计可追溯；不可篡改（追加写） |
-| T8 检索 | scope + 权限过滤 + 全文检索 + 片段定位 | 3 份资料中命中目标片段；越权空结果 |
+| T6 知识文档 | draft→needs_review→verified 状态机、source_refs 必填 | 非法状态跳转被拒；AI 生成内容不能直接 verified。**已完成（2026-11-12）**：状态机（draft → needs_review → verified）、`source_refs` 必填且必须引用本项目 artifact、**四眼原则**（创建者不能审核自己的文档）、审核需 owner/reviewer 角色、chunk 派生 + FTS 触发器维护、审计 knowledge.create/submit_review/verify；`mvn verify` 24 tests；冒烟 409/403/verified 均符合预期 |
+| T7 人工审核与审计 | 审核动作记录 reviewer/at；所有写操作落 `audit_log` | 审计可追溯；不可篡改（追加写）。**部分完成**：审核字段与知识/项目/用户/资料写操作审计已实现；审计查询接口与不可篡改测试待 T7 收尾 |
+| T8 检索 | scope + 权限过滤 + 全文检索 + 片段定位 | 3 份资料中命中目标片段；越权空结果。**已完成（2026-11-12）**：`SearchAdapter` + FTS5 trigram（查询三元组 OR + BM25）；仅返回 verified + 项目 scope；引用结构（document/chunk/ordinal/text/sourceRefCount）；冒烟「条码重复怎么处理」命中验证文档、排除草稿、越权 403 |
 | T9 Agent 只读工具 | MCP `search_project_knowledge`、`get_project_facts`，输出含引用结构 | DSH 会话真实调用；引用可回到 Artifact/文档版本 |
 | T10 权限隔离 | 越权检索、跨项目引用、未授权 Artifact 访问 | 403/空结果 + 审计；安全测试通过 |
 | T11 演示与样例 | 合成样例项目 + 演示脚本 + 验收记录 | 第 2 节脚本可重复执行 |

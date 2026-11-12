@@ -1,5 +1,11 @@
 # Changelog
 
+## V0.3.4 — 2026-11-12
+
+- **M1 T6 知识文档**：`draft → needs_review → verified` 状态机；`source_refs` 必填且必须引用本项目 artifact；**四眼原则**（创建者不可审核自己的文档）；审核需 owner/reviewer；chunk 派生 + FTS5 触发器索引；审计 `knowledge.create/submit_review/verify`。
+- **M1 T8 检索**：`KnowledgeSearchAdapter` + SQLite FTS5 trigram（查询三元组 OR + BM25），仅返回 verified 且限定项目 scope；引用结构含 document/chunk/ordinal/text/来源数；V2 迁移（外部内容 FTS + 三个同步触发器）。
+- 验证：`mvn verify` BUILD SUCCESS（**24 tests**）；HTTP 冒烟：创建→draft、复审前 verify→**409**、提交后 needs_review、创建者自审→**403**、reviewer 审核→verified、检索命中 1 条且排除草稿、越权→**403**；迁移 1→2 已应用。
+
 ## V0.3.3 — 2026-11-12
 
 - **M1 T5 Artifact 导入**：

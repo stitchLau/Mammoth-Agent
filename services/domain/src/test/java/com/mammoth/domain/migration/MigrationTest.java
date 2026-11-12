@@ -38,8 +38,8 @@ class MigrationTest {
         .load();
 
     MigrateResult first = flyway.migrate();
-    assertThat(first.migrationsExecuted).isEqualTo(1);
-    assertThat(first.targetSchemaVersion).isEqualTo("1");
+    assertThat(first.migrationsExecuted).isEqualTo(2);
+    assertThat(first.targetSchemaVersion).isEqualTo("2");
 
     MigrateResult second = flyway.migrate();
     assertThat(second.migrationsExecuted).isZero();
@@ -59,7 +59,7 @@ class MigrationTest {
   }
 
   @Test
-  void migrationHistoryRecordsVersionOne() throws Exception {
+  void migrationHistoryRecordsEveryVersion() throws Exception {
     String url = "jdbc:sqlite:" + tempDir.resolve("history-test.db").toAbsolutePath();
     Flyway flyway = Flyway.configure()
         .dataSource(url, null, null)
@@ -71,10 +71,12 @@ class MigrationTest {
          Statement statement = connection.createStatement();
          ResultSet resultSet = statement.executeQuery(
              "SELECT version, success FROM flyway_schema_history ORDER BY installed_rank")) {
-      assertThat(resultSet.next()).isTrue();
-      assertThat(resultSet.getString("version")).isEqualTo("1");
-      assertThat(resultSet.getBoolean("success")).isTrue();
-      assertThat(resultSet.next()).isFalse();
+      List<String> versions = new ArrayList<>();
+      while (resultSet.next()) {
+        versions.add(resultSet.getString("version"));
+        assertThat(resultSet.getBoolean("success")).isTrue();
+      }
+      assertThat(versions).containsExactly("1", "2");
     }
   }
 }

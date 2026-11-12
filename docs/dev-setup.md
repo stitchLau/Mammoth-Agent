@@ -74,6 +74,12 @@ npm test           # vitest
 | GET | `/api/projects/{id}/artifacts` | 资料列表（元数据） | 需 header + 任意成员 |
 | GET | `/api/projects/{id}/artifacts/{artifactId}` | 单条元数据 | 需 header + 任意成员 |
 | GET | `/api/projects/{id}/artifacts/{artifactId}/content` | 下载原始字节（读时校验 SHA-256） | 需 header + 任意成员 |
+| POST | `/api/projects/{id}/knowledge` | 创建知识文档（draft；`sourceRefs` 必填且须引用本项目 artifact） | 需 header + owner/editor |
+| GET | `/api/projects/{id}/knowledge?status=` | 知识文档列表 | 需 header + 任意成员 |
+| GET | `/api/projects/{id}/knowledge/{docId}` | 文档详情（含 sourceRefs） | 需 header + 任意成员 |
+| POST | `/api/projects/{id}/knowledge/{docId}/submit-review` | draft → needs_review（须有来源引用） | 需 header（创建者或 owner/editor） |
+| POST | `/api/projects/{id}/knowledge/{docId}/verify` | needs_review → verified（**创建者不可自审**；需 owner/reviewer 角色） | 需 header + owner/reviewer |
+| GET | `/api/projects/{id}/knowledge/search?q=&topK=` | 全文检索（**仅 verified**、仅本项目；返回 chunk 引用） | 需 header + 任意成员 |
 
 > **临时身份来源**：T4 阶段通过 `X-Mammoth-User-Id` 头传递调用者；这不是最终认证方案，登录/会话/CSRF 在认证任务中用 Spring Security 替换，授权判定仍统一走 `AuthorizationService`（ADR-0006）。
 
@@ -94,6 +100,7 @@ npm test           # vitest
 
 ## 已知限制（当前阶段）
 
-- T1–T5 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计、Artifact 导入（内容寻址/去重/校验）与最小前端「项目→资料」视图；
-- 认证仍是临时的 `X-Mammoth-User-Id` 头，**不得用于多人/网络暴露环境**（正式认证任务中换 Spring Security）；
-- 尚无知识文档与检索（T6+）、MCP 工具（T9）、前端尚无登录页与知识视图。
+- T1–T6、T8 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计、Artifact 导入、知识文档状态机与四眼审核、项目内全文检索（仅 verified）；
+- 检索为全文（FTS5 trigram），语义改写能力有限；向量/混合检索按 ADR-0005 延后；
+- 认证仍是临时的 `X-Mammoth-User-Id` 头，**不得用于多人/网络暴露环境**；
+- 尚未提供 MCP 只读工具（T9）、权限隔离专项测试（T10）、演示脚本（T11）；前端尚无知识视图。
