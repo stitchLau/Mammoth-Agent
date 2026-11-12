@@ -1,5 +1,13 @@
 # Changelog
 
+## V0.8.1 — 2026-11-12
+
+- **修复**：路由重构时 `main.tsx` 遗漏 `import './styles.css'`，导致整站无样式（截图评审发现）；恢复导入并重跑构建/E2E/截图。
+- **资料归档补齐**（M1/M1.5 过程资料）：
+  - 新增 `docs/process/M1-TIMELINE.md`（提交级执行时间线）、`docs/decisions/DECISION-LOG.md`（负责人确认的决策与待决项）、`docs/quality/M1-BUGS.md`（缺陷台账）、`docs/evidence/M1-VERIFICATION.md` + `docs/evidence/screenshots/`（6 张真实 UI 截图与复现脚本）、`docs/README.md`（文档索引）；
+  - 新增当前交接 `docs/handoffs/SESSION-HANDOFF-2026-11-12-M1.5.md`，旧 M0 交接标记为历史快照；
+  - 修正 `docs/13-OPEN-DECISIONS.md` 中 ADR 进度脚注与状态表矛盾（Proposed → Accepted），更新 UI-SPEC 待决项为“已确认”。
+
 ## V0.8.0 — 2026-11-12
 
 - **M1.5 收尾**：账号设置（显示名、修改密码并撤销全部会话）、成员角色变更/移除（保护最后一名 owner、owner-only、审计）、成员页新建用户并加入、资料/知识/成员列表客户端分页（10 条/页）。
