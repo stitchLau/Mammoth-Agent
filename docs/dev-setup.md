@@ -98,6 +98,12 @@ npm test           # vitest
 
 **注意**：本地可复现同一组命令，但 GitHub Actions 是否真正运行需推送后在仓库页面确认；本地验证不等于远端 CI 已验证。
 
+## DSH 集成与演示
+
+- **接入 DSH**：见 [`docs/dsh-mcp-integration.md`](dsh-mcp-integration.md)（配置型 bundle 模板在 `integrations/dsh/mammoth-domain-mcp/`）；两个只读 MCP 工具 `search_project_knowledge` / `get_knowledge_document`，仅 verified、仅项目成员。
+- **端到端演示**：`node scripts/demo-m1.mjs http://127.0.0.1:8080`，说明见 [`docs/demos/M1-DEMO.md`](demos/M1-DEMO.md)。
+- MCP 入口与 Web 入口共用同一数据根；MCP 进程会持有 jar（Windows 上重建 jar 前需卸载 bundle）。
+
 ## 已知限制（当前阶段）
 
 - T1–T6、T8 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计、Artifact 导入、知识文档状态机与四眼审核、项目内全文检索（仅 verified）；

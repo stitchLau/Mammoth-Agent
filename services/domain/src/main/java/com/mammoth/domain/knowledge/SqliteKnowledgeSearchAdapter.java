@@ -62,7 +62,7 @@ public class SqliteKnowledgeSearchAdapter implements KnowledgeSearchAdapter {
   }
 
   /** Character trigrams OR-joined, quoted for FTS5 phrase matching; empty for queries under 3 chars. */
-  static String trigramQuery(String query) {
+  public static String trigramQuery(String query) {
     if (query == null) {
       return "";
     }

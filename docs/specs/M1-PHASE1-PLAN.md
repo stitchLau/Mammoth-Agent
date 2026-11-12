@@ -97,9 +97,9 @@
 | T6 知识文档 | draft→needs_review→verified 状态机、source_refs 必填 | 非法状态跳转被拒；AI 生成内容不能直接 verified。**已完成（2026-11-12）**：状态机（draft → needs_review → verified）、`source_refs` 必填且必须引用本项目 artifact、**四眼原则**（创建者不能审核自己的文档）、审核需 owner/reviewer 角色、chunk 派生 + FTS 触发器维护、审计 knowledge.create/submit_review/verify；`mvn verify` 24 tests；冒烟 409/403/verified 均符合预期 |
 | T7 人工审核与审计 | 审核动作记录 reviewer/at；所有写操作落 `audit_log` | 审计可追溯；不可篡改（追加写）。**部分完成**：审核字段与知识/项目/用户/资料写操作审计已实现；审计查询接口与不可篡改测试待 T7 收尾 |
 | T8 检索 | scope + 权限过滤 + 全文检索 + 片段定位 | 3 份资料中命中目标片段；越权空结果。**已完成（2026-11-12）**：`SearchAdapter` + FTS5 trigram（查询三元组 OR + BM25）；仅返回 verified + 项目 scope；引用结构（document/chunk/ordinal/text/sourceRefCount）；冒烟「条码重复怎么处理」命中验证文档、排除草稿、越权 403 |
-| T9 Agent 只读工具 | MCP `search_project_knowledge`、`get_project_facts`，输出含引用结构 | DSH 会话真实调用；引用可回到 Artifact/文档版本 |
-| T10 权限隔离 | 越权检索、跨项目引用、未授权 Artifact 访问 | 403/空结果 + 审计；安全测试通过 |
-| T11 演示与样例 | 合成样例项目 + 演示脚本 + 验收记录 | 第 2 节脚本可重复执行 |
+| T9 Agent 只读工具 | MCP `search_project_knowledge`、`get_project_facts`，输出含引用结构 | DSH 会话真实调用；引用可回到 Artifact/文档版本。**已完成（2026-11-12）**：`--mcp` 独立入口（Spring 上下文 + stdio JSON-RPC，强制 UTF-8 输出）；工具 `search_project_knowledge` / `get_knowledge_document`；仅 verified、仅项目成员、只读；配置型 bundle（`integrations/dsh/mammoth-domain-mcp/`）实测 `application: applied`，DSH 会话真实调用返回中文与引用；接入指南见 `docs/dsh-mcp-integration.md` |
+| T10 权限隔离 | 越权检索、跨项目引用、未授权 Artifact 访问 | 403/空结果 + 审计；安全测试通过。**已完成（2026-11-12）**：`PermissionIsolationTest` 覆盖跨项目 artifact/knowledge 不泄漏（404）、viewer 不可写、检索不泄漏草稿/他项目、非成员全表面拒绝；另修复知识创建缺少服务层角色校验（controller+service 双重） |
+| T11 演示与样例 | 合成样例项目 + 演示脚本 + 验收记录 | 第 2 节脚本可重复执行。**已完成（2026-11-12）**：`scripts/demo-m1.mjs` + `docs/demos/M1-DEMO.md`；实跑 **14/14 步骤通过**（健康/用户/主数据/成员/资料去重/知识草稿/409/needs_review/403 自审/审核通过/检索引用/403 越权/读文档/403 未授权上传），审计 9 类动作全部落库 |
 | T12 文档与交接 | 更新产品/领域/架构文档、ADR、Session Handoff | DoD 通过 |
 
 **Slice-1 最小子集建议**：T1→T2→T3→T4→T5→T6→T8→T9→T10→T11（T7 审计先以最小实现纳入 T4/T6）。其余进入 M1 后续切片。

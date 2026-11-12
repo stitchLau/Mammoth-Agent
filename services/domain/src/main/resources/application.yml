@@ -24,6 +24,10 @@ mammoth:
   # Set MAMMOTH_DATA_ROOT or this property to choose an explicit data directory.
   data-root: ${MAMMOTH_DATA_ROOT:}
   default-org-name: ${MAMMOTH_ORG_NAME:Mammoth Demo}
+  mcp:
+    # Temporary agent identity for the MCP stdio entrypoint (pre-authentication stage).
+    # The user must be an active project member; only verified knowledge is exposed.
+    agent-user-id: ${MAMMOTH_MCP_AGENT_USER_ID:}
 
 logging:
   level:

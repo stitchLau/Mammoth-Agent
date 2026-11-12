@@ -65,8 +65,13 @@
 
 ## 下一步最小行动
 
-**执行 M1 T9（MCP 只读工具）**：把 `KnowledgeSearchAdapter` 包装为独立 MCP stdio 入口（复用 S2 的 Java MCP 服务器模式：`initialize`/`tools/list`/`tools/call`，工具名如 `search_project_knowledge`、`get_knowledge_document`），由 DSH 配置型 bundle 接入；工具必须强制项目 scope 与只读，并返回引用结构。随后 T10 权限隔离专项 + T11 演示脚本。
-注意：调用者身份仍是临时 `X-Mammoth-User-Id` 头（MCP 场景需明确"Agent 以哪个用户身份检索"的策略，AD-0006 后续正式认证时一并解决）。
+**M1 收尾（顺序建议）**：
+1. **正式认证**：用 Spring Security 会话/Cookie/CSRF/登录限速替换临时的 `X-Mammoth-User-Id` 与 `MAMMOTH_MCP_AGENT_USER_ID`（ADR-0006 后续行动），并让 MCP 使用受限只读服务账号；
+2. **T7 收尾**：审计查询接口 + 不可篡改（追加写）测试；
+3. 前端补齐知识视图（文档列表/审核/检索引用展示）与登录页；
+4. 运行 `node scripts/demo-m1.mjs` 全量回归 + 生成 M1 验收记录，再进入 M2（需求与方案）。
+
+当前基线：M1 T1–T6、T8–T11 已完成；`mvn verify` 35 tests；DSH MCP 接入与演示脚本已实测。
 
 ## 新会话必须先阅读
 

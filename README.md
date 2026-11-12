@@ -42,8 +42,10 @@ AgentTeam 是可选的会话级协调能力。它的任务板不提供文件系�
 产品代码已开始（ADR-0002 Accepted）：
 
 - `apps/web/`：Vite 7 + React 19 + TypeScript SPA（独立 UI，由 Domain Service 托管）。
-- `services/domain/`：Spring Boot 4.1.2 + Java 17 Domain Service（REST；后续增加 MCP stdio 入口）。
-- 本地启动、配置项、数据根目录规则与 CI 说明见 [docs/dev-setup.md](docs/dev-setup.md)。
+- `services/domain/`：Spring Boot 4.1.2 + Java 17 Domain Service（REST；`--mcp` 模式提供 DSH 只读 MCP 工具）。
+- `integrations/dsh/`：DSH 配置型 bundle 模板（Domain MCP 接入）。
+- `scripts/`：演示与运维脚本（`demo-m1.mjs` 端到端演示）。
+- 本地启动、配置项、数据根目录规则与 CI 说明见 [docs/dev-setup.md](docs/dev-setup.md)；DSH 接入见 [docs/dsh-mcp-integration.md](docs/dsh-mcp-integration.md)。
 
 ## 当前资料的性质
 

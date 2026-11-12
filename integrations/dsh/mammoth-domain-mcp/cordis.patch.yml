@@ -1,0 +1,25 @@
+# Mammoth Domain MCP bridge (configuration-only bundle).
+#
+# Replace the placeholders before installing:
+#   <JAVA_EXE>        absolute path to java.exe (JDK 17+)
+#   <MAMMOTH_JAR>     absolute path to services/domain/target/mammoth-domain-service.jar
+#   <DATA_ROOT>       the Mammoth data root used by the web service (must match!)
+#   <AGENT_USER_ID>   local Mammoth user id the agent acts as (must be a project member)
+#
+# Security: the agent identity is a temporary pre-authentication mechanism (see ADR-0006 and
+# docs/dsh-mcp-integration.md); only verified knowledge is exposed and the tools are read-only.
+- insert:
+    - id: mammoth-domain-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: mammoth_domain
+        transport: stdio
+        command: '<JAVA_EXE>'
+        args:
+          - '-jar'
+          - '<MAMMOTH_JAR>'
+          - '--mcp'
+        env:
+          MAMMOTH_DATA_ROOT: '<DATA_ROOT>'
+          MAMMOTH_MCP_AGENT_USER_ID: '<AGENT_USER_ID>'
+        failOnStartupError: false

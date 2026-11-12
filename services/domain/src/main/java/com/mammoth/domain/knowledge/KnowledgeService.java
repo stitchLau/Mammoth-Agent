@@ -59,6 +59,7 @@ public class KnowledgeService {
   @Transactional
   public KnowledgeDocument create(AppUser actor, String projectId, String docType, String title,
       String body, List<SourceRefInput> sourceRefs) {
+    requireEditorRole(actor, projectId);
     String normalizedTitle = requireText(title, "title");
     String normalizedBody = requireText(body, "body");
     if (sourceRefs == null || sourceRefs.isEmpty()) {
@@ -154,6 +155,11 @@ public class KnowledgeService {
     if (actor.getId().equals(document.getCreatedBy())) {
       return;
     }
+    requireEditorRole(actor, projectId);
+  }
+
+  /** Creating or editing knowledge requires owner/editor on the project (defense in depth). */
+  private void requireEditorRole(AppUser actor, String projectId) {
     ProjectMember membership = projectMemberRepository
         .findByProjectIdAndUserId(projectId, actor.getId())
         .orElseThrow(() -> ApiException.forbidden("no access to project " + projectId));

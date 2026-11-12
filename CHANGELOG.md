@@ -1,5 +1,14 @@
 # Changelog
 
+## V0.4.0 — 2026-11-12
+
+- **M1 T9 Agent 只读工具（MCP）**：`java -jar ... --mcp` 独立 stdio 入口，复用 Spring 上下文与领域服务；工具 `search_project_knowledge`、`get_knowledge_document`；强制**仅 verified、仅项目成员、只读**；配置型 DSH bundle 模板与接入指南落地（`integrations/dsh/mammoth-domain-mcp/`、`docs/dsh-mcp-integration.md`）。
+  - 修复真实缺陷：MCP 输出曾使用平台编码（GBK），导致 DSH 侧中文乱码 → 强制 UTF-8 输出并加回归测试（`McpServerMainTest`）。
+  - DSH 会话实测：bundle `application: applied`，真实调用返回中文与引用结构；验证后已卸载恢复环境。
+- **M1 T10 权限隔离**：新增 `PermissionIsolationTest`（跨项目不泄漏、viewer 不可写、草稿/他项目不出现在检索、非成员全表面拒绝）；补齐知识创建的服务层角色校验（controller + service 双重防护）。
+- **M1 T11 演示**：新增 `scripts/demo-m1.mjs` 与 `docs/demos/M1-DEMO.md`；实跑 **14/14 步骤通过**，审计 9 类动作落库。
+- 验证：`mvn verify` BUILD SUCCESS（**35 tests**）；演示脚本可重复执行。
+
 ## V0.3.4 — 2026-11-12
 
 - **M1 T6 知识文档**：`draft → needs_review → verified` 状态机；`source_refs` 必填且必须引用本项目 artifact；**四眼原则**（创建者不可审核自己的文档）；审核需 owner/reviewer；chunk 派生 + FTS5 触发器索引；审计 `knowledge.create/submit_review/verify`。
