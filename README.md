@@ -26,6 +26,9 @@
 - `docs/templates/`：Feature Spec、任务、ADR、会话交接、评审报告模板。
 - `docs/prompts/`：仓库勘察、Spike、规划、实施、评审、结项、SubAgent 委派提示词。
 - `docs/checklists/`：需求就绪、DoD、安全、发布和 SubAgent 使用检查表。
+- `docs/spikes/`：DSH 扩展与 MCP 边界 Spike 记录（含 ADR-0001 证据）。
+- `docs/handoffs/`：会话交接记录（新会话恢复入口）。
+- `docs/specs/`：阶段计划与 Feature Spec（当前含 M1 Phase 1 计划）。
 - `decisions/`：正式架构决策记录。
 
 ## 非常重要：Role Markdown 与 DSH SubAgent 的关系

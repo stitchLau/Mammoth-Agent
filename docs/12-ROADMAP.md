@@ -6,6 +6,14 @@
 
 退出条件：可重复安装/运行；项目文档可被 DSH 读取；明确插件扩展边界和主要技术风险。
 
+**状态：已完成（2026-11-12）** — 证据：
+
+- 勘察与能力清单：`docs/project-discovery.md`
+- 扩展 Spike 与 ADR-0001（Accepted v1.0）：`docs/spikes/S1-DSH-EXTENSION-SPIKE.md`
+- MCP 边界与 Java 桥接：`docs/spikes/S2-DOMAIN-API-MCP-BOUNDARY.md`
+- 交接记录：`docs/handoffs/SESSION-HANDOFF-2026-11-12-M0.md`
+- 未完成/未验证项（UI 渲染、进程重启、权限负向测试）见交接记录，不阻塞 M1 规划。
+
 ## M1：项目知识底座
 
 产出：客户/产品/项目档案、资料导入、项目代码基线、知识文档模型、知识审核、检索与证据引用。
