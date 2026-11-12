@@ -135,6 +135,7 @@
 | 中 | 文档包与产品代码同仓，`manifest.json` 手工维护 | 文档漂移、清单失真 | 目录约定 + manifest 脚本化 |
 | 中 | 子 Agent/Fork 能力与授权未被证明等同父级 | 委派静默降级或越权 | 每次委派显式声明只读/写入范围，结论回主会话核验 |
 | 高 | 沙箱 shell 以低完整性级别（Low IL）运行；既有子目录（`.git`、`docs` 等）仍是 Medium → shell 无法写这些目录 | `git commit`、脚本写 docs/ 会 Permission denied；宿主文件工具不受影响 | 需要写入时用完全权限并留审批记录；建议向上游反馈统一重打标签 |
+| 中 | 外部 out-of-tree bundle 必须自带**精确版本**的 `@deepseek-ai/*` 依赖并在自身目录安装，否则模块无法解析 | 插件与 DSH 版本强耦合，升级 DSH 需同步升级插件依赖；依赖树变大 | 在 ADR-0001 §6.3 记录约束；插件依赖锁定到 `0.2.2-rc.2` 并随 DSH 升级同步 |
 | 中 | 安装/更新插件需 Full access 或审批；不满足 `engines.dsh` 的包会被拒绝安装/加载 | Spike 实施与后续交付流程受约束 | 在 ADR-0001 记录引擎范围、安装审批与回滚方式 |
 | 低 | `~/.dsh/.credentials.yaml` 存模型凭据 | 泄露即凭据风险 | 见 §10-8 决策：明确"Agent 禁止读取"，Profile 目录不进 RAG |
 
@@ -143,7 +144,7 @@
 | # | 决策 | 状态 | 后续动作 |
 |---|---|---|---|
 | 1 | 批准新增 `docs/project-discovery.md` | ✅ 已执行（本文件） | 待提交 Git |
-| 2 | 按 `docs/prompts/01-DSH-EXTENSION-SPIKE.md` 进入 DSH 扩展 Spike | ✅ 完成（含最小 bundle 实测） | 结果与 ADR-0001 v0.3 草案见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` |
+| 2 | 按 `docs/prompts/01-DSH-EXTENSION-SPIKE.md` 进入 DSH 扩展 Spike | ✅ 完成（S1 只读研究 + S1b 依赖方案与官方存储缝实测） | 结果与 ADR-0001 v1.0（Accepted）见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` |
 | 3 | 接受"本轮不验证 Fork 继承" | ✅ 记录 | 后续有"已完成轮次"时再取正例 |
 | 4 | 技术栈无硬约束；**团队主要使用 Java** | ✅ 记录 | ADR-0002 候选集需纳入 Java/JVM 生态评估（不作为默认答案） |
 | 5 | 对齐 DSH 版本到文档记录的 rc.2 | ✅ **已满足，无需升级**：桌面外壳与 payload 均为 `0.2.2-rc.2`，build commit `a6b1b85`；`runtime.json` 的 `rc.1` 属陈旧记录 | 不执行升级；在 ADR-0001/Spike 中固定记录 `0.2.2-rc.2 + a6b1b85` |

@@ -42,3 +42,25 @@ UI、API、文件存储、检索、Agent Tools、导出和通知都必须执行�
 ## 7. 审计要求
 
 记录用户、项目、工作项、AgentRun、工具操作、输入/输出引用、审批人、时间和结果。日志应避免记录秘密值和完整敏感正文；采用脱敏和访问控制。
+
+## 8. DSH 宿主环境边界（2026-11-12 负责人确认）
+
+Mammoth 以 DSH 作为 Vibe Coding 工具与候选 Runtime，DSH Host 环境本身不属于 Mammoth 业务数据域。
+
+### 8.1 凭据禁止读取
+
+- `~/.dsh/.credentials.yaml`、`~/.dsh/llm-deepseek/**`、任何包含 API Key/token/私钥的文件，**禁止被 Agent 读取、复制、摘要、索引或写入日志**。
+- 需要凭据时使用 DSH 官方凭据服务（`ctx.credentials`）或环境变量注入；不得把秘密值放入提示词、插件配置明文、ADR、Issue、截图或提交记录。
+- 若工具输出意外包含秘密值，按泄露事件处理：终止该操作、记录范围、轮换凭据，并报告负责人。
+
+### 8.2 DSH Profile 目录不进入 RAG / 知识库
+
+- `$DSH_HOME`（默认 `~/.dsh`）下的 `profiles/`、`storages/`、`sessions/`、`cache/`、`attachments/` 均**不得**作为 Mammoth 资料导入对象，也不得进入向量索引、全文索引、测试夹具或演示数据。
+- 允许读取的例外仅限环境核对所需的清单文件（如 `runtime.json`、`package.json`、`cordis.patch.yml`、`app-update.yml`），且只读取元数据，不落库、不外发。
+- 会话记录（session log）属于运行时事实，不是项目知识；需要沉淀的内容必须经人工确认后写入项目知识对象。
+
+### 8.3 插件与宿主变更
+
+- 安装/启用/停用/卸载 DSH 插件是对运行环境的实质变更：需负责人批准、记录来源与版本、提供卸载/回滚方式。
+- 插件代码运行在 Host 进程且可访问工作区与网络：引入前审查来源、许可证、`engines.dsh` 兼容性与所需权限。
+- 插件不得把业务权威状态写入 DSH storage；DSH storage 仅用于非权威的本地状态（见 ADR-0001）。

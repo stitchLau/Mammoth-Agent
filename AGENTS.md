@@ -24,6 +24,12 @@
 - AgentTeam 共享任务板不等于隔离工作区或文件锁。确认当前 DSH 版本/Profile 的工具是否实际可用。
 - Independent Reviewer 默认只读，不得自行修复其发现的问题。
 
+## 安全边界（2026-11-12 负责人确认）
+
+- **禁止读取或导出** `~/.dsh/.credentials.yaml` 及任何 DSH/模型凭据、令牌、密钥文件。确需凭据时使用 DSH 官方凭据服务，不得把秘密值写入提示词、工具参数、日志、截图或仓库。
+- **`~/.dsh`（DSH Home：Profile、storages、sessions、cache、attachments）不属于 Mammoth 产品知识范围**：不得导入 RAG、知识库、向量索引、测试样例或交付物。仅允许按需读取明确的版本/清单文件用于环境核对（如 `runtime.json`、`package.json`、`cordis.patch.yml`），读取后不得复制其中业务数据。
+- 安装、启用、停用、卸载 DSH 插件属于对运行环境的实质变更：需负责人批准并有回滚方式；插件安装会执行 Host 代码，注意供应链来源与 `engines.dsh` 兼容性。
+
 ## 指令权威性
 
 文档冲突时，按 `docs/00-MASTER-GUIDE.md` 中的文档优先级处理。若发现两个有效文档矛盾，暂停受影响实现，报告冲突并提出修订建议，不自行选择对自己最方便的一条。
