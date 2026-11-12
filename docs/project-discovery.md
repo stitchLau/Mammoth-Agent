@@ -65,6 +65,7 @@
 | 默认模型路由 | provider `deepseek-account`；model `deepseek-flash`；reasoningEffort `high` | `~/.dsh/profiles/desktop/cordis.patch.yml` |
 | 会话策略 | `workspace-write`，工作区 = 仓库根；审批提示开启 | 会话运行上下文 |
 | Shell | **Windows PowerShell 5.1.19041（Desktop 版，非 pwsh 7）** | `$PSVersionTable` |
+| Shell 完整性级别 | **Low（S-1-16-4096）**，Administrators 为 deny-only → 只能写带 Low 标签的对象；工作区根目录是 Low，但 `.git`、`docs` 等既有子目录仍是 Medium | `whoami /groups`、`icacls`、写入探测 |
 | `.ps1` 执行策略 | **禁止直接运行 .ps1**（首次 ACL 修复脚本被 SecurityError 拦截） | 修复过程记录 |
 | 其他 | `DSH_HOME=C:\Users\Lau\.dsh`；`DSH_WEB_URL=http://127.0.0.1:6102`；`dsh` CLI 不在 PATH；`app.asar` 为单文件（原生 shell 不可遍历，仅 Host 文件工具可读） | 环境变量与文件探测 |
 
@@ -77,7 +78,7 @@
 | `list_agents` | ✅ 已确认 | 返回根代理 `lead [running]` |
 | `send_message` | ✅ 已确认 | 向运行中子 Agent 追加指令，返回 `message delivered` 且子 Agent 追加作答 |
 | AgentTeam 任务板 | ✅ 工具可用（未做写操作） | `team_task_create/get/list/update` 存在；`team_task_list` 返回空任务板 `{"tasks":[]}`；多成员并发/依赖阻塞行为未实测 |
-| Worktree（Agent 工具） | ❌ **未挂载**（更正：不是"不存在"） | 根与子 Agent 工具目录均无 worktree 工具；`@deepseek-ai/dsh-experimental-worktree`、`dsh-experimental-tool-worktree`、`dsh-experimental-forge*` 已随包安装，并被 `@deepseek-ai/dsh-official-bundles/src/bundles.ts:47-72` 列为"可选、默认关闭、由插件管理器提供开关"的 bundle（`selected by no shipped template, and offered switched off`）。启用方式：`plugin_manager` 的 `set_bundle`，或按 `plugin-development.md` 写工作区 bundle patch 后 `install_bundle`；安装插件需 Full access 或审批 |
+| Worktree（Agent 工具） | ✅ **已启用并验证**（2026-11-12） | `plugin_manager set_bundle(@deepseek-ai/dsh-experimental-tool-worktree)` → `application: applied`；`list_bundles` 显示 `enabled=true, optional=true`，rows = `worktree` + `tool-worktree`；当前会话立即出现 `create_worktree` 工具（参数 `name`/`from`）。详见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` |
 | `workflow` | ✅ 工具存在（未调用） | 工具目录 |
 | 文件工具 read/write/edit/glob/grep | ✅ 已确认 | 本轮勘察依赖；可读 `app.asar` 内路径，但 glob/grep 不能遍历 asar |
 | Shell（`pwsh` 工具） | ✅ 已确认（修复后） | 底层 Windows PowerShell 5.1；首轮曾被 ACL 阻断 |
@@ -133,6 +134,7 @@
 | 中 | 无 `.gitignore` / CI / 测试基线 | 装依赖后误提交；无质量门禁 | M0 补最小 `.gitignore` + CI（已获准，未实施） |
 | 中 | 文档包与产品代码同仓，`manifest.json` 手工维护 | 文档漂移、清单失真 | 目录约定 + manifest 脚本化 |
 | 中 | 子 Agent/Fork 能力与授权未被证明等同父级 | 委派静默降级或越权 | 每次委派显式声明只读/写入范围，结论回主会话核验 |
+| 高 | 沙箱 shell 以低完整性级别（Low IL）运行；既有子目录（`.git`、`docs` 等）仍是 Medium → shell 无法写这些目录 | `git commit`、脚本写 docs/ 会 Permission denied；宿主文件工具不受影响 | 需要写入时用完全权限并留审批记录；建议向上游反馈统一重打标签 |
 | 中 | 安装/更新插件需 Full access 或审批；不满足 `engines.dsh` 的包会被拒绝安装/加载 | Spike 实施与后续交付流程受约束 | 在 ADR-0001 记录引擎范围、安装审批与回滚方式 |
 | 低 | `~/.dsh/.credentials.yaml` 存模型凭据 | 泄露即凭据风险 | 见 §10-8 决策：明确"Agent 禁止读取"，Profile 目录不进 RAG |
 
@@ -141,13 +143,16 @@
 | # | 决策 | 状态 | 后续动作 |
 |---|---|---|---|
 | 1 | 批准新增 `docs/project-discovery.md` | ✅ 已执行（本文件） | 待提交 Git |
-| 2 | 按 `docs/prompts/01-DSH-EXTENSION-SPIKE.md` 进入 DSH 扩展 Spike | ✅ 只读研究完成 | ADR-0001 草案已产出（见对话交付物，待批准落盘） |
+| 2 | 按 `docs/prompts/01-DSH-EXTENSION-SPIKE.md` 进入 DSH 扩展 Spike | ✅ 完成（含最小 bundle 实测） | 结果与 ADR-0001 v0.3 草案见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` |
 | 3 | 接受"本轮不验证 Fork 继承" | ✅ 记录 | 后续有"已完成轮次"时再取正例 |
 | 4 | 技术栈无硬约束；**团队主要使用 Java** | ✅ 记录 | ADR-0002 候选集需纳入 Java/JVM 生态评估（不作为默认答案） |
 | 5 | 对齐 DSH 版本到文档记录的 rc.2 | ✅ **已满足，无需升级**：桌面外壳与 payload 均为 `0.2.2-rc.2`，build commit `a6b1b85`；`runtime.json` 的 `rc.1` 属陈旧记录 | 不执行升级；在 ADR-0001/Spike 中固定记录 `0.2.2-rc.2 + a6b1b85` |
 | 6 | 产品代码继续放本仓库（与 `docs/` 同仓） | ✅ 记录 | M0 定义目录约定（如 `apps/`、`packages/`、`docs/`） |
 | 7 | 允许 M0 顺带补 `.gitignore` 与最小 CI | ✅ 已授权（未实施） | M0 第一项小任务 |
 | 8 | `~/.dsh/.credentials.yaml` 列入"Agent 禁止读取"；DSH Profile 目录不进 RAG 白名单 | ✅ 记录 | 需落到 `AGENTS.md` 与 `docs/08-SECURITY-AND-TRUST.md`（待确认后编辑） |
+| 9 | 启用 Git Worktree 可选 bundle | ✅ 已执行并验证 | `set_bundle` → `applied`；`create_worktree` 已注入；见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` |
+| 10 | ADR-0001 草案落盘方式选 (b)：新建 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` | ✅ 已落盘 | 草案含 ADR-0001 v0.3 + 实测发现 F1–F7；ADR 状态仍 Proposed |
+| 11 | Domain API 与 DSH 的桥接方向由 Lead 自行决定 | ✅ 已决定（建议） | MCP 优先（规避外部 bundle 依赖解析问题）；详见 Spike 报告 §8，最终由 ADR-0002 确认 |
 
 ## 11. 推荐 Spike 与下一步
 
