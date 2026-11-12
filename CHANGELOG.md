@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.2.5 — 2026-11-12
+
+- 新增 `docs/spikes/S6-IDENTITY-AUTH-SPIKE.md`：PBKDF2 vs BCrypt 成本（226/56 ms vs 214/205 ms）、服务端不透明会话令牌（可撤销）vs HMAC（58 µs 校验）、10 条项目级 RBAC 用例全通过。
+- 新增 `decisions/ADR-0006-IDENTITY-AUTHORIZATION.md`（Proposed）：BCrypt + 服务端会话 Cookie + 默认拒绝的项目级 RBAC；首次启动 setup；审计必落库；OIDC 迁移路径。
+- 新增 `spike/adr-0006-auth/` 一次性探针。
+- 更新 `docs/13-OPEN-DECISIONS.md`、`docs/specs/M1-PHASE1-PLAN.md`、`docs/handoffs/`。
+
 ## V0.2.4 — 2026-11-12
 
 - 新增 `docs/spikes/S5-ARTIFACT-STORAGE-SPIKE.md`：内容寻址目录 vs SQLite BLOB 实测（写 37/296 ms、读 19/43 ms、备份 6/22 ms；只读属性阻止删除；去重与哈希校验）。
