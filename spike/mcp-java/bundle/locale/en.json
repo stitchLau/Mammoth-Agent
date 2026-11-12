@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Mammoth MCP domain stub",
+    "description": "Disposable ADR-0002 probe: a Java MCP server exposing one synthetic project-summary tool as the Domain API boundary."
+  }
+}

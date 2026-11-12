@@ -153,9 +153,9 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 
 1. ~~`ctx.storageDomain` 在外部 bundle 中可用（依赖解析阻断）~~ → **S1b 已验证**（见 §10）。
 2. UI slot 实际渲染效果。
-3. 跨 DSH 重启后的工具可用性与持久化读回。
-4. `engines.dsh` 不满足时安装被拒绝的负向测试。
-5. MCP 连接、权限/审批策略（`tools/pre-execute`、guard、restrict）在真实插件中的行为。
+3. 跨 DSH **进程重启**后的工具可用性与读回（插件重载后的磁盘读回已由 S1c 验证，见 §11）。
+4. ~~`engines.dsh` 不满足时安装被拒绝的负向测试~~ → **S1c 已验证**（见 §11）。
+5. ~~MCP 连接~~ → **S2 已验证**（`docs/spikes/S2-DOMAIN-API-MCP-BOUNDARY.md`）；权限/审批策略（`tools/pre-execute`、guard、restrict）在真实插件中的行为仍未验证。
 6. bundle 卸载后 Client 侧资源释放。
 
 ## 7. 清理与回滚
@@ -238,5 +238,17 @@ mammoth_spike_probe({note:"S1b second"}) → persistence=storage-domain count=2
 
 - **官方存储缝在 out-of-tree bundle 中可用**，前提是插件自带精确版本的 DSH 依赖并在自身目录安装（方案 a 成立）。
 - 代价：插件体积与依赖树显著变大（21 包），且与 DSH 版本**强耦合**（必须逐版本同步 `0.2.2-rc.2`）；这使"声明依赖 + 锁定版本"成为产品化必须的工程约束，也意味着升级 DSH 时必须同步升级插件依赖。
-- 仍未验证：跨重启读回（未重启 DSH）；UI slot 视觉渲染；`engines.dsh` 负向拒绝；MCP 端到端。
+- 仍未验证：进程重启读回；UI slot 视觉渲染；权限/审批策略在真实插件中的行为。
+
+## 11. S1c — 补充验证（2026-11-12）
+
+| 项 | 做法 | 结果 |
+|---|---|---|
+| `engines.dsh` 负向拒绝 | 临时包声明 `engines.dsh: ">=9.0.0 <10.0.0"`，尝试 `install_bundle` | **拒绝安装**：`installation rejected: Plugin @local/mammoth-engines-negative@0.0.1 is incompatible with dsh 0.2.2-rc.2: requirements {"engines.dsh":">=9.0.0 <10.0.0"}` + `nothing was installed`，错误码 `incompatible-version` |
+| 持久化磁盘读回 | 卸载探针 → 重装 → 调用工具 | 卸载前磁盘值 `count=3`；重装后首次调用返回 **`count=4`**（`persistence=storage-domain`）→ 插件重载后从磁盘 storage 域读回成功 |
+| UI slot 渲染 | 无浏览器控制 | **未验证**。人工核验方法：打开任一会话，查看输入框停靠位（composer dock）是否出现 Mammoth 徽标；若未出现需看插件面板 `mammoth-spike` 行状态 |
+| 进程重启读回 | 需重启 DSH Desktop（会终止本会话） | **未验证**，留待负责人重启后核对 |
+
+补充说明：S1c 期间探针包与 MCP 验证包均已卸载，环境已清理（见 `docs/project-discovery.md` §14）。
+
 

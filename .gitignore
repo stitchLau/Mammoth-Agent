@@ -26,3 +26,7 @@ desktop.ini
 # Test and coverage output
 coverage/
 *.log
+
+# Spike build output and temporary fixtures
+spike/**/classes/
+spike/.tmp-*/

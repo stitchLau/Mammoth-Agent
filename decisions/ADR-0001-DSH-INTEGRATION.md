@@ -73,7 +73,8 @@ AgentTeam 共享任务板不等于文件系统隔离。任何并行代码写入�
   3. 官方 Host 持久化缝 `ctx.storageDomain` 可打开 schema 校验域并落盘（`~/.dsh/storages/mammoth_spike.json`）；
   4. `set_bundle` 可启用可选能力（Git Worktree，`create_worktree` 工具）；
   5. profile 组成可由 `list_bundles` 核对。
-- 未验证（不据此宣称已验证）：UI slot 视觉渲染；跨重启读回；`engines.dsh` 负向拒绝；MCP 端到端；权限/审批策略在真实插件中的行为。
+- 未验证（不据此宣称已验证）：UI slot 视觉渲染；DSH **进程**重启后的读回；权限/审批策略在真实插件中的行为；bundle 卸载后 Client 资源释放。
+  已由后续验证补齐：`engines.dsh` 负向拒绝（S1c）、插件重载后磁盘读回（S1c）、MCP 端到端（S2）。
 
 ### 6.3 由此产生的工程约束
 

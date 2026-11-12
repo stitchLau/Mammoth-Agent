@@ -197,3 +197,27 @@
 - 影响面：仅给当前用户（`S-1-5-21-...-1001`）在工作区根添加 FullControl 允许项；未改文件内容、所有者、拒绝项、SACL。
 - 产物：`E:\MyProj\MommothAgent\code\dsh-acl-recovery\`（`acl-report-*.jsonl`、`acl-backup-*.json`、`acl-backup-*.json.ps1`）。
 - 回滚：`pwsh -NoProfile -File '<...>\acl-backup-ad60918ff28f40f782d5e013821ea9e1.json.ps1' -Path '<workspace>' -AllowRoot '<workspace>' -Restore '<...>\acl-backup-ad60918ff28f40f782d5e013821ea9e1.json'`
+
+## 14. 追加验证（2026-11-12 晚间，S1c + S2）
+
+### 14.1 S1c 补充验证（详见 `docs/spikes/S1-DSH-EXTENSION-SPIKE.md` §11）
+
+| 项 | 结果 |
+|---|---|
+| `engines.dsh` 负向拒绝 | **已确认**：声明 `>=9.0.0` 的包被拒绝安装，错误码 `incompatible-version`，`nothing was installed` |
+| 插件重载后磁盘读回 | **已确认**：卸载→重装探针后，计数从落盘值 `3` 继续为 `4`（`persistence=storage-domain`） |
+| UI slot 视觉渲染 | **未验证**（无浏览器控制）；人工核验方法已写入 Spike 报告 |
+| DSH 进程重启读回 | **未验证**（需重启 Desktop，会终止会话） |
+
+### 14.2 S2 MCP 边界验证（详见 `docs/spikes/S2-DOMAIN-API-MCP-BOUNDARY.md`）
+
+- 方案：Java 17 单文件 MCP server（stdio、换行 JSON-RPC）+ **配置型 bundle** 插入 `@deepseek-ai/dsh-mcp-client`。
+- 结果：`install_bundle` → `application: applied`；模型侧出现 `mcp__mammoth__mammoth_project_summary` 与 MCP 资源工具；端到端调用返回合成 JSON；卸载正常。
+- 结论：**ADR-0001 采纳的 MCP 边界可行**，且插件层零 DSH 依赖（规避 S1 的 F2 版本耦合）。ADR-0002 技术栈本身仍 **OPEN**。
+
+### 14.3 环境清理结果
+
+- 已卸载 `@local/mammoth-spike` 与 `@local/mammoth-mcp-domain`；Worktree bundle（`@deepseek-ai/dsh-experimental-tool-worktree`）保留启用。
+- 已删除：`spike/.tmp-engines-negative`、`~/.dsh/cache/mammoth-spike`、`~/.dsh/storages/mammoth_spike.json`、`E:\.pnpm-store\v11`、`spike/dsh-extension/node_modules`、`spike/mcp-java/classes`。
+- 仓库仅保留可复现的源码/文档（`pnpm-lock.yaml` 保留，`node_modules`/`classes` 由 `.gitignore` 覆盖）。
+

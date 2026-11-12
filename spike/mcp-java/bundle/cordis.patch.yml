@@ -1,0 +1,14 @@
+# Mammoth ADR-0002 probe — Java Domain API over MCP.
+# Paths are machine-specific on purpose: this is a disposable spike fixture.
+- insert:
+    - id: mammoth-mcp-client
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: mammoth
+        transport: stdio
+        command: 'D:\Tools\Java\jdk-17.0.15\bin\java.exe'
+        args:
+          - '-cp'
+          - 'E:\MyProj\MommothAgent\code\Mammoth-Agent\spike\mcp-java\classes'
+          - 'MammothMcpServer'
+        failOnStartupError: false
