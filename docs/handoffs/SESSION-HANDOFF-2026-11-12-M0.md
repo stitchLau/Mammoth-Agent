@@ -65,7 +65,7 @@
 
 ## 下一步最小行动
 
-**执行 ADR-0003 数据库/迁移 Spike**（PostgreSQL vs SQLite：Flyway 迁移往返、备份恢复、中文全文检索对比），产出 ADR-0003 草案。ADR-0002 技术栈 Spike 已完成并产出草案（`decisions/ADR-0002-TECH-STACK.md`，Proposed 待批准），其结论默认作为后续 Spike 的实施基线。
+**执行 ADR-0004 Artifact Storage Spike**（原始资料不可变存储：内容寻址、去重、只读校验、备份与容量；候选：本地内容寻址目录 vs 对象存储/SQLite BLOB 对比），产出 ADR-0004 草案。ADR-0002（技术栈）与 ADR-0003（SQLite+Flyway，PG 为团队阶段目标）Spike 均已完成并产出 Proposed 草案，批准后作为实施基线。
 
 ## 新会话必须先阅读
 

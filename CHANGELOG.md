@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.2.3 — 2026-11-12
+
+- 新增 `docs/spikes/S4-DATABASE-SPIKE.md`：SQLite 3.54 vs PostgreSQL 17 实测（Flyway 13.12.1 双库迁移幂等、中文检索 FTS5 trigram vs pg_trgm、`tsvector('simple')` 对中文 0 命中、备份恢复）。
+- 新增 `decisions/ADR-0003-DATABASE-MIGRATION.md`（Proposed）：建议 SQLite（WAL）+ Flyway 为 M1 主库，PostgreSQL 为团队阶段目标；访问层 JPA + 独立 SearchAdapter；双方言迁移目录。
+- 新增 `spike/adr-0003-db/` 一次性探针（Flyway/JDBC/中文检索/备份恢复）。
+- 更新 `docs/13-OPEN-DECISIONS.md`、`docs/specs/M1-PHASE1-PLAN.md`、`docs/handoffs/`。
+
 ## V0.2.2 — 2026-11-12
 
 - 新增 `docs/spikes/S3-TECH-STACK-SPIKE.md`：ADR-0002 技术栈 Spike 实测（纯 JDK 279 ms/53 MB vs Spring Boot 4.1.2 2.4 s/204 MB，REST + MCP 同工程验证）。

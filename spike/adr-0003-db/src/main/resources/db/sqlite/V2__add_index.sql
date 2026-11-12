@@ -1,0 +1,1 @@
+CREATE INDEX idx_knowledge_document_project ON knowledge_document(project_id);
