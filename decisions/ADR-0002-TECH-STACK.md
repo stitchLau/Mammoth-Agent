@@ -1,8 +1,8 @@
 # ADR-0002: 技术栈与 UI 形态
 
-- 状态：Proposed（2026-11-12，等待负责人批准）
+- 状态：**Accepted v1.0**（2026-11-12 负责人批准）
 - 日期：2026-11-12
-- 决策人：（待填）
+- 决策人：项目负责人（2026-11-12 批准）
 - 相关需求/功能：M1 项目知识底座；DSH 集成（ADR-0001）
 
 ## 背景与约束
@@ -75,6 +75,6 @@ UI 子方案：B1 独立 SPA 由后端托管（建议）/ B2 嵌入 DSH Client s
 
 ## 后续行动
 
-1. 负责人批准本 ADR（Proposed → Accepted）。
+1. ~~负责人批准本 ADR~~ → 2026-11-12 已批准（Accepted v1.0）。
 2. 执行 ADR-0003（数据库/迁移）Spike，随后 ADR-0004/0006/0005。
 3. 建立 M1 工程骨架（`apps/web`、`services/domain`、`packages/contracts`），按 `docs/specs/M1-PHASE1-PLAN.md` T1 起实施。

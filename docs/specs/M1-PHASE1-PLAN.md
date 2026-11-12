@@ -89,7 +89,7 @@
 
 | 任务 | 内容 | 验收 |
 |---|---|---|
-| T1 工程骨架 | Java 17 + 构建工具 + 目录约定（`apps/`、`services/`、`docs/`）+ `.env.example` + 最小 CI（build+test） | 一条命令构建与测试通过；CI 绿 |
+| T1 工程骨架 | Java 17 + 构建工具 + 目录约定（`apps/`、`services/`、`docs/`）+ `.env.example` + 最小 CI（build+test） | 一条命令构建与测试通过；CI 绿。**已完成（2026-11-12）**：`apps/web`（Vite+React+TS）与 `services/domain`（Spring Boot 4.1.2）建成；后端 `mvn verify` 6 测试通过 + jar 冒烟 `/api/health` 200；前端 `npm run build` 与 `npm test`（3 测试）通过；CI 配置见 `.github/workflows/ci.yml`（远端运行待推送后确认） |
 | T2 配置与数据根 | 配置化数据根（禁止 `~/.dsh`）、启动自检 | 冷启动创建目录；误配到 DSH home 时启动失败 |
 | T3 迁移基线 | Flyway V1 建第 4 节表 | 空库迁移→回滚演练；重复执行幂等 |
 | T4 主数据与项目 | Customer/Product/Project 的 REST + 领域校验（项目必须绑定客户） | 创建/查询/约束违规用例 |

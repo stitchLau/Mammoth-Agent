@@ -37,6 +37,14 @@
 
 AgentTeam 是可选的会话级协调能力。它的任务板不提供文件系统隔离；团队成员可能共享同一 checkout。并行编码必须使用独立 Worktree/分支，否则串行实施。
 
+## 开发（M1 工程骨架）
+
+产品代码已开始（ADR-0002 Accepted）：
+
+- `apps/web/`：Vite 7 + React 19 + TypeScript SPA（独立 UI，由 Domain Service 托管）。
+- `services/domain/`：Spring Boot 4.1.2 + Java 17 Domain Service（REST；后续增加 MCP stdio 入口）。
+- 本地启动、配置项、数据根目录规则与 CI 说明见 [docs/dev-setup.md](docs/dev-setup.md)。
+
 ## 当前资料的性质
 
 - **已确定的产品原则**：不得为了短期演示随意删除或弱化。

@@ -65,7 +65,7 @@
 
 ## 下一步最小行动
 
-**等待负责人批准 5 份 Proposed ADR（0002/0003/0004/0005/0006）**；批准后开始 **M1 T1 工程骨架**：Spring Boot 4.1.2 + Java 17 + Maven、SQLite/Flyway、独立 SPA 骨架、`SearchAdapter`/`ArtifactStore` 接口、最小 CI，并按 `docs/specs/M1-PHASE1-PLAN.md` 依次实现 T2–T11。
+**执行 M1 T2/T3**：T2 完成数据根目录自检（创建目录、可写探测、错误信息与启动失败测试；当前 `DataRootResolver` 已做禁止路径校验）；T3 接入 SQLite + Flyway 迁移基线（`V1` 建 M1 表，CI 中双库迁移检查）。随后按 `docs/specs/M1-PHASE1-PLAN.md` 实现 T4–T11。ADR-0002/0003/0004/0005/0006 已于 2026-11-12 批准（Accepted v1.0）。
 
 ## 新会话必须先阅读
 

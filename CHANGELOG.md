@@ -1,5 +1,15 @@
 # Changelog
 
+## V0.3.0 — 2026-11-12
+
+- **ADR 批准**：ADR-0002（Spring Boot 4.1.2 + Java 17 + Maven、独立 SPA、可配置数据根目录）、ADR-0003（SQLite+Flyway 主库，PG 为团队阶段目标）、ADR-0004（内容寻址 Artifact 存储）、ADR-0005（M1 全文检索 + SearchAdapter）、ADR-0006（BCrypt + 服务端会话 + 项目级 RBAC）全部置为 **Accepted v1.0**。
+- **M1 T1 工程骨架落地**：
+  - `services/domain/`：Spring Boot 4.1.2 Domain Service（`/api/health`、`/api/meta`、数据根目录解析与禁止路径 fail-fast、6 个测试）。
+  - `apps/web/`：Vite 7 + React 19 + TypeScript SPA 骨架（健康检查页面、加载/空/错误状态、3 个单元测试）。
+  - `docs/dev-setup.md`：本地启动、配置与数据根目录规则。
+  - `.env.example`、`.github/workflows/ci.yml`（后端 `mvn verify`、前端 `npm ci/build/test`）。
+- 验证：后端 `mvn verify` BUILD SUCCESS（6 tests）+ jar 冒烟 `/api/health` 200；前端 `npm install/build/test` 通过（103 packages，3 tests）。远端 CI 运行待推送后确认。
+
 ## V0.2.6 — 2026-11-12
 
 - 新增 `docs/spikes/S7-RETRIEVAL-SPIKE.md`：12 文档/10 中文查询的检索对比（FTS5 trigram+BM25 recall@1 9/10 vs hash 向量基线 6/10 vs hybrid 9/10；scope 0 泄漏；重建 71 ms）；关键坑：trigram 整句 MATCH 为 0 命中。
