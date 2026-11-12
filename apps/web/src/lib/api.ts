@@ -1,8 +1,6 @@
 /**
- * Minimal typed client for the M1 domain API.
- *
- * Identity is a temporary header (`X-Mammoth-User-Id`) for the pre-authentication stage; the login
- * session replaces it in the authentication task without changing these call sites' resource paths.
+ * Typed client for the M1 domain API, using the server-side session cookie plus the XSRF-TOKEN
+ * cookie/header pair required by Spring Security for mutations.
  */
 export interface Project {
   id: string
@@ -27,28 +25,43 @@ export interface Artifact {
   createdAt: string
 }
 
-const USER_KEY = 'mammoth.userId'
-
-export function readUserId(): string {
-  try {
-    return localStorage.getItem(USER_KEY) ?? ''
-  } catch {
-    return ''
-  }
+export interface SessionUser {
+  id: string
+  username: string
+  displayName: string
 }
 
-export function writeUserId(userId: string): void {
-  try {
-    localStorage.setItem(USER_KEY, userId)
-  } catch {
-    // storage may be unavailable (private mode); the in-memory value still works for this page
-  }
+export interface KnowledgeHit {
+  documentId: string
+  title: string
+  chunkId: string
+  ordinal: number
+  text: string
+  score: number
+  sourceRefCount: number
 }
 
-async function request<T>(path: string, userId: string, init?: RequestInit): Promise<T> {
+function readCookie(name: string): string {
+  const prefix = `${name}=`
+  for (const part of document.cookie.split(';')) {
+    const trimmed = part.trim()
+    if (trimmed.startsWith(prefix)) {
+      return decodeURIComponent(trimmed.slice(prefix.length))
+    }
+  }
+  return ''
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
-  headers.set('X-Mammoth-User-Id', userId)
-  const response = await fetch(path, { ...init, headers })
+  const method = (init?.method ?? 'GET').toUpperCase()
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const csrf = readCookie('XSRF-TOKEN')
+    if (csrf) {
+      headers.set('X-XSRF-TOKEN', csrf)
+    }
+  }
+  const response = await fetch(path, { ...init, headers, credentials: 'include' })
   if (!response.ok) {
     let message = `HTTP ${response.status}`
     try {
@@ -59,26 +72,49 @@ async function request<T>(path: string, userId: string, init?: RequestInit): Pro
     }
     throw new Error(message)
   }
+  if (response.status === 204) {
+    return undefined as T
+  }
   return (await response.json()) as T
 }
 
-export function listProjects(userId: string): Promise<Project[]> {
-  return request<Project[]>('/api/projects', userId)
+/** Ensure the XSRF-TOKEN cookie exists before the first mutation of a page load. */
+export async function ensureCsrf(): Promise<void> {
+  await fetch('/api/auth/csrf', { credentials: 'include' })
 }
 
-export function listArtifacts(userId: string, projectId: string): Promise<Artifact[]> {
-  return request<Artifact[]>(`/api/projects/${projectId}/artifacts`, userId)
+export function login(username: string, password: string): Promise<SessionUser> {
+  return request<SessionUser>('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
 }
 
-export async function uploadArtifact(
-  userId: string,
-  projectId: string,
-  file: File,
-): Promise<Artifact> {
+export function currentUser(): Promise<SessionUser> {
+  return request<SessionUser>('/api/auth/me')
+}
+
+export function logout(): Promise<{ status: string }> {
+  return request<{ status: string }>('/api/auth/logout', { method: 'POST' })
+}
+
+export function listProjects(): Promise<Project[]> {
+  return request<Project[]>('/api/projects')
+}
+
+export function listArtifacts(projectId: string): Promise<Artifact[]> {
+  return request<Artifact[]>(`/api/projects/${projectId}/artifacts`)
+}
+
+export async function uploadArtifact(projectId: string, file: File): Promise<Artifact> {
   const form = new FormData()
   form.append('file', file)
-  return request<Artifact>(`/api/projects/${projectId}/artifacts`, userId, {
-    method: 'POST',
-    body: form,
-  })
+  return request<Artifact>(`/api/projects/${projectId}/artifacts`, { method: 'POST', body: form })
+}
+
+export function searchKnowledge(projectId: string, query: string): Promise<KnowledgeHit[]> {
+  return request<KnowledgeHit[]>(
+    `/api/projects/${projectId}/knowledge/search?q=${encodeURIComponent(query)}&topK=5`,
+  )
 }

@@ -65,13 +65,12 @@
 
 ## 下一步最小行动
 
-**M1 收尾（顺序建议）**：
-1. **正式认证**：用 Spring Security 会话/Cookie/CSRF/登录限速替换临时的 `X-Mammoth-User-Id` 与 `MAMMOTH_MCP_AGENT_USER_ID`（ADR-0006 后续行动），并让 MCP 使用受限只读服务账号；
-2. **T7 收尾**：审计查询接口 + 不可篡改（追加写）测试；
-3. 前端补齐知识视图（文档列表/审核/检索引用展示）与登录页；
-4. 运行 `node scripts/demo-m1.mjs` 全量回归 + 生成 M1 验收记录，再进入 M2（需求与方案）。
+**M1 已通过验收（见 `docs/M1-ACCEPTANCE.md`），下一阶段建议**：
+1. 前端补齐知识文档创建/审核/来源详情视图与项目创建流程（当前仅检索视图）；
+2. 生产化安全：TLS、共享会话/限速存储、MCP 专用只读账号；
+3. 进入 **M2（需求与方案）规划**：先更新 `docs/specs/` 与 ADR，再按垂直切片实施；M2 前需回顾 `docs/04-MVP-STRATEGY.md` Phase 2 范围。
 
-当前基线：M1 T1–T6、T8–T11 已完成；`mvn verify` 35 tests；DSH MCP 接入与演示脚本已实测。
+当前基线：M1 T1–T13 完成；`mvn verify` 39 tests；前端 build + 5 tests；认证版演示 14/14；DSH MCP 接入已实测（`docs/dsh-mcp-integration.md`）。
 
 ## 新会话必须先阅读
 

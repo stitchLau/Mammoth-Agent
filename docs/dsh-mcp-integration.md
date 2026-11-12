@@ -48,10 +48,11 @@
 
 ## 4. 安全说明（重要）
 
-- `MAMMOTH_MCP_AGENT_USER_ID` 是**认证实现前的临时身份**：Agent 以该本地用户身份检索。该用户必须是项目成员；**不得**用 owner 身份做长期 Agent 身份（应建专用只读账号）。
+- HTTP 侧已使用正式认证（Spring Security 会话 Cookie + CSRF，2026-11-12 起）；MCP 入口**不经过 HTTP**，仍以 `MAMMOTH_MCP_AGENT_USER_ID` 指定本地用户身份。
+- 该用户必须是项目成员；**不得**用 owner 身份做长期 Agent 身份，应为 Agent 建**专用只读账号**（项目 viewer 角色），并纳入审计。
 - 仅 `verified` 知识对 Agent 可见；草稿/待审文档不会泄露。
 - 工具只读，不提供写操作；写操作仍由人工在 Web/API 完成并留审计。
-- 不得在多人/网络暴露环境使用当前身份机制；正式认证（Spring Security 会话）完成后应改为服务级令牌/受限账号。
+- 后续应将环境变量身份替换为 MCP 专属服务凭据（ADR-0006 后续任务）。
 
 ## 5. 故障排查
 

@@ -81,7 +81,17 @@ npm test           # vitest
 | POST | `/api/projects/{id}/knowledge/{docId}/verify` | needs_review → verified（**创建者不可自审**；需 owner/reviewer 角色） | 需 header + owner/reviewer |
 | GET | `/api/projects/{id}/knowledge/search?q=&topK=` | 全文检索（**仅 verified**、仅本项目；返回 chunk 引用） | 需 header + 任意成员 |
 
-> **临时身份来源**：T4 阶段通过 `X-Mammoth-User-Id` 头传递调用者；这不是最终认证方案，登录/会话/CSRF 在认证任务中用 Spring Security 替换，授权判定仍统一走 `AuthorizationService`（ADR-0006）。
+> **认证（2026-11-12 起）**：使用**服务端会话 Cookie**（`MAMMOTH_SESSION`，HttpOnly/SameSite=Lax）+ **CSRF**（首次加载调用 `GET /api/auth/csrf`，之后变更请求带 `X-XSRF-TOKEN`）。不再使用临时 `X-Mammoth-User-Id` 头。
+>
+> | 端点 | 说明 |
+> |---|---|
+> | `POST /api/auth/login` | `{username,password}` → 设置会话 Cookie；5 次失败后 429 |
+> | `POST /api/auth/logout` | 撤销当前会话 |
+> | `GET /api/auth/me` | 当前用户 |
+> | `GET /api/auth/csrf` | 强制生成并返回 CSRF token（同时下发 XSRF-TOKEN cookie） |
+> | `POST /api/users` | **仅空库时**可匿名创建首个管理员；之后需登录 |
+>
+> 授权判定仍统一走 `AuthorizationService`（ADR-0006）。
 
 ## 数据根目录规则（ADR-0002/0004）
 
@@ -106,7 +116,8 @@ npm test           # vitest
 
 ## 已知限制（当前阶段）
 
-- T1–T6、T8 已完成：工程骨架、数据根自检、SQLite/Flyway 迁移、主数据/项目/成员 + 授权骨架 + 审计、Artifact 导入、知识文档状态机与四眼审核、项目内全文检索（仅 verified）；
-- 检索为全文（FTS5 trigram），语义改写能力有限；向量/混合检索按 ADR-0005 延后；
-- 认证仍是临时的 `X-Mammoth-User-Id` 头，**不得用于多人/网络暴露环境**；
-- 尚未提供 MCP 只读工具（T9）、权限隔离专项测试（T10）、演示脚本（T11）；前端尚无知识视图。
+- M1 T1–T13 已完成（含正式认证、审计不可篡改、MCP 只读工具、演示脚本）；验收记录见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)；
+- 前端已有登录、项目/资料、已验证知识检索；知识创建/审核/来源详情视图尚未实现；
+- 本地 localhost 为 HTTP（无 TLS）；局域网/服务端部署必须先做 TLS；
+- 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
+- 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充。

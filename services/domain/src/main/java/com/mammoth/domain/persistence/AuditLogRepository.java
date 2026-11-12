@@ -7,5 +7,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, String> {
 
   List<AuditLog> findByObjectTypeAndObjectIdOrderByAtAsc(String objectType, String objectId);
 
+  List<AuditLog> findByActorUserIdOrderByAtDesc(String actorUserId);
+
   long countByAction(String action);
 }

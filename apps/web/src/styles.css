@@ -29,6 +29,15 @@ h1 {
   color: var(--muted);
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: -0.75rem 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 h2 {
   font-size: 1.05rem;
   margin: 1.75rem 0 0.5rem;
@@ -45,13 +54,30 @@ section {
   flex-wrap: wrap;
 }
 
-input[type='text'],
-input:not([type]) {
-  flex: 1 1 22rem;
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 22rem;
+}
+
+.stack label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+input:not([type='file']) {
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   font: inherit;
+}
+
+.row input:not([type='file']) {
+  flex: 1 1 22rem;
 }
 
 button {
@@ -62,6 +88,13 @@ button {
   color: #fff;
   font: inherit;
   cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.88rem;
 }
 
 button:disabled {
@@ -114,6 +147,27 @@ button:disabled {
 
 .mono {
   font-family: ui-monospace, Consolas, monospace;
+}
+
+.hits {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.hits li {
+  padding: 0.6rem 0.5rem 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hits li:last-child {
+  border-bottom: none;
+}
+
+.hits p {
+  margin: 0.25rem 0;
 }
 
 .upload {

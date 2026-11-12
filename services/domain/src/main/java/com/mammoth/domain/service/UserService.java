@@ -61,4 +61,9 @@ public class UserService {
   public List<AppUser> list() {
     return appUserRepository.findByOrgIdOrderByCreatedAtAsc(organizationService.currentOrgId());
   }
+
+  @Transactional(readOnly = true)
+  public long count() {
+    return appUserRepository.count();
+  }
 }

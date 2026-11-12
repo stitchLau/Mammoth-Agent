@@ -38,8 +38,8 @@ class MigrationTest {
         .load();
 
     MigrateResult first = flyway.migrate();
-    assertThat(first.migrationsExecuted).isEqualTo(2);
-    assertThat(first.targetSchemaVersion).isEqualTo("2");
+    assertThat(first.migrationsExecuted).isEqualTo(3);
+    assertThat(first.targetSchemaVersion).isEqualTo("3");
 
     MigrateResult second = flyway.migrate();
     assertThat(second.migrationsExecuted).isZero();
@@ -76,7 +76,7 @@ class MigrationTest {
         versions.add(resultSet.getString("version"));
         assertThat(resultSet.getBoolean("success")).isTrue();
       }
-      assertThat(versions).containsExactly("1", "2");
+      assertThat(versions).containsExactly("1", "2", "3");
     }
   }
 }

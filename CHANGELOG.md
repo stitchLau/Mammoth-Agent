@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.5.0 — 2026-11-12
+
+- **M1 收尾：正式认证（ADR-0006）**：Spring Security + 服务端不透明会话 Cookie（HttpOnly/SameSite=Lax）+ CSRF（`XSRF-TOKEN`/`X-XSRF-TOKEN`，登录与 csrf 端点豁免）+ 登录限速（5 次失败 → 429）+ 注销即时撤销 + 首次账号 bootstrap；移除临时 `X-Mammoth-User-Id` 身份。修复两个真实安全集成缺陷：CSRF 被 `SessionManagementFilter` 轮换清空（调整过滤器顺序）、SPA 需明文 CSRF 请求处理器。
+- **M1 T7 审计收尾**：`/api/audit/me`、`/api/projects/{id}/audit`；V3 迁移用 SQLite 触发器禁止 `audit_log` UPDATE/DELETE（不可篡改），并有测试。
+- **前端**：登录页 + 会话认证（`credentials: include` + CSRF header）+ 已验证知识检索（引用数/文档 id 展示）；构建与单元测试通过。
+- **验收**：`mvn verify` BUILD SUCCESS（**39 tests**）；前端 build + 5 tests；认证版端到端演示 **14/14**（含 CSRF、登录/注销、401/403/409、审计查询）；新增 [`docs/M1-ACCEPTANCE.md`](docs/M1-ACCEPTANCE.md)。
+
 ## V0.4.0 — 2026-11-12
 
 - **M1 T9 Agent 只读工具（MCP）**：`java -jar ... --mcp` 独立 stdio 入口，复用 Spring 上下文与领域服务；工具 `search_project_knowledge`、`get_knowledge_document`；强制**仅 verified、仅项目成员、只读**；配置型 DSH bundle 模板与接入指南落地（`integrations/dsh/mammoth-domain-mcp/`、`docs/dsh-mcp-integration.md`）。
