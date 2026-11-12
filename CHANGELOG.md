@@ -1,5 +1,12 @@
 # Changelog
 
+## V0.2.2 — 2026-11-12
+
+- 新增 `docs/spikes/S3-TECH-STACK-SPIKE.md`：ADR-0002 技术栈 Spike 实测（纯 JDK 279 ms/53 MB vs Spring Boot 4.1.2 2.4 s/204 MB，REST + MCP 同工程验证）。
+- 新增 `decisions/ADR-0002-TECH-STACK.md`（Proposed）：建议 Spring Boot 4.1.2 + Java 17 + Maven、独立 SPA（由后端托管）、数据根目录可配置且禁止安装目录/`~/.dsh`/源码目录。
+- 新增 `spike/adr-0002-stack/` 一次性探针（pure-jdk、spring-boot）。
+- 更新 `docs/13-OPEN-DECISIONS.md` ADR-0002 进度、`docs/handoffs/` 下一步行动与 `.gitignore`（`target/`、`out/`）。
+
 ## V0.2.1 — 2026-11-12
 
 - 新增 `docs/spikes/`：S1 DSH 扩展能力 Spike（含 ADR-0001 v1.0 与实测发现 F1–F7、S1b/S1c）与 S2 MCP 边界 Spike。

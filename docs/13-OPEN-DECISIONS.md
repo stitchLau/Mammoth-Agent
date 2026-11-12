@@ -16,4 +16,4 @@
 
 每项决策必须使用 `docs/templates/ADR.md`，写明选项、证据、取舍、风险、验证结果和回滚/替代路径。
 
-**ADR-0002 进度（2026-11-12）**：DSH ↔ Domain API 的 **MCP 边界已实测可行**（Java 17 stdio MCP server + 配置型 bundle，工具 `mcp__mammoth__*` 端到端调用成功），证据见 `docs/spikes/S2-DOMAIN-API-MCP-BOUNDARY.md`。技术栈本身（语言框架、UI 框架、部署形态）**仍 OPEN**，不得据此认为已定栈。
+**ADR-0002 进度（2026-11-12）**：DSH ↔ Domain API 的 **MCP 边界已实测可行**（Java 17 stdio MCP server + 配置型 bundle，工具 `mcp__mammoth__*` 端到端调用成功），证据见 `docs/spikes/S2-DOMAIN-API-MCP-BOUNDARY.md`；技术栈 **Spike 已完成并产出草案**：建议 Spring Boot 4.1.2 + Java 17 + Maven、独立 SPA、数据根目录可配置（默认 OS 应用数据目录），实测对比见 `docs/spikes/S3-TECH-STACK-SPIKE.md`，草案见 `decisions/ADR-0002-TECH-STACK.md`（**Proposed，待批准**）。

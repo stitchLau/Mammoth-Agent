@@ -65,9 +65,7 @@
 
 ## 下一步最小行动
 
-**执行 ADR-0002 技术栈 Spike**（Java 框架：Spring Boot / Quarkus / 纯 JDK 的最小 REST + MCP 同工程验证；UI 形态：独立 SPA 由服务托管），产出 ADR-0002 草案；随后执行 ADR-0003 数据库/迁移 Spike。两者结果共同决定 M1 Slice-1 的工程骨架。
-
-（若负责人希望先锁数据层，也可先做 ADR-0003；但技术栈决定 Spike 的运行方式，建议顺序如上。）
+**执行 ADR-0003 数据库/迁移 Spike**（PostgreSQL vs SQLite：Flyway 迁移往返、备份恢复、中文全文检索对比），产出 ADR-0003 草案。ADR-0002 技术栈 Spike 已完成并产出草案（`decisions/ADR-0002-TECH-STACK.md`，Proposed 待批准），其结论默认作为后续 Spike 的实施基线。
 
 ## 新会话必须先阅读
 

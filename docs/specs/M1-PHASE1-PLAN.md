@@ -77,7 +77,7 @@
 
 | 顺序 | ADR | 需要决定 | Spike 方法（最小） |
 |---|---|---|---|
-| 1 | **ADR-0002 技术栈** | Java 框架（Spring Boot / Quarkus / 纯 JDK）、构建工具、UI 形态与前端栈 | 两个候选各起最小服务，验证 REST + MCP stdio 同进程/同工程可行性 |
+| 1 | **ADR-0002 技术栈** | Java 框架（Spring Boot / Quarkus / 纯 JDK）、构建工具、UI 形态与前端栈 | 两个候选各起最小服务，验证 REST + MCP stdio 同进程/同工程可行性。**已完成**：见 `docs/spikes/S3-TECH-STACK-SPIKE.md` 与 `decisions/ADR-0002-TECH-STACK.md`（Proposed，待批准） |
 | 2 | **ADR-0003 数据库/迁移** | PostgreSQL vs SQLite（单机优先）、迁移工具（Flyway/Liquibase）、访问层（JPA / jOOQ / JDBC） | 建 3 表 + 迁移往返 + 中文全文检索对比；备份恢复演练 |
 | 3 | **ADR-0004 Artifact Storage** | 本地内容寻址目录、命名与去重、配额、备份 | 上传/哈希/去重/只读校验最小实现 |
 | 4 | **ADR-0006 身份授权** | 单机最小认证（本地账号/token）、角色矩阵、项目级授权 | 两个用户 + 一个越权用例 |

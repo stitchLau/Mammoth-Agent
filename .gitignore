@@ -29,4 +29,6 @@ coverage/
 
 # Spike build output and temporary fixtures
 spike/**/classes/
+spike/**/target/
+spike/**/out/
 spike/.tmp-*/
