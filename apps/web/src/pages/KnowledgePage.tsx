@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSession } from '../app/session'
 import { EmptyState, ErrorBanner, LoadingState, PageHeader, StatusBadge } from '../components/ui'
+import { Pagination } from '../components/Pagination'
 import { useProject } from './ProjectLayout'
 import {
   createKnowledge,
@@ -11,7 +12,10 @@ import {
   type Artifact,
   type KnowledgeDocument,
 } from '../lib/api'
+import { clampPage, pageSlice } from '../lib/pagination'
 import { canEditKnowledge, canSubmitForReview } from '../lib/permissions'
+
+const PAGE_SIZE = 10
 
 const STATUS_FILTERS = [
   { value: '', label: '全部状态' },
@@ -27,6 +31,7 @@ export default function KnowledgePage() {
   const [documents, setDocuments] = useState<KnowledgeDocument[] | null>(null)
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [status, setStatus] = useState('')
+  const [page, setPage] = useState(1)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [artifactId, setArtifactId] = useState('')
@@ -63,6 +68,7 @@ export default function KnowledgePage() {
 
   const visible = documents?.filter((document) => status === '' || document.status === status) ?? null
   const writable = canEditKnowledge(role, true)
+  const totalPages = clampPage(page, visible?.length ?? 0, PAGE_SIZE)
 
   return (
     <>
@@ -70,7 +76,14 @@ export default function KnowledgePage() {
         title="知识文档"
         subtitle="draft → 待审核 → 已验证；已验证内容才会进入检索与助手回答"
         actions={
-          <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="按状态筛选">
+          <select
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value)
+              setPage(1)
+            }}
+            aria-label="按状态筛选"
+          >
             {STATUS_FILTERS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -89,7 +102,7 @@ export default function KnowledgePage() {
       )}
       {visible !== null && visible.length > 0 && (
         <ul className="documents">
-          {visible.map((document) => (
+          {pageSlice(visible, totalPages, PAGE_SIZE).map((document) => (
             <li key={document.id} className="document">
               <div className="document-head">
                 <StatusBadge status={document.status} />
@@ -118,6 +131,9 @@ export default function KnowledgePage() {
             </li>
           ))}
         </ul>
+      )}
+      {visible !== null && visible.length > PAGE_SIZE && (
+        <Pagination page={totalPages} total={visible.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
       )}
 
       {writable && artifacts.length > 0 && (

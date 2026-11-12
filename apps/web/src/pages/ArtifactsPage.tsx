@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { EmptyState, ErrorBanner, LoadingState, PageHeader } from '../components/ui'
+import { Pagination } from '../components/Pagination'
 import { useProject } from './ProjectLayout'
 import { listArtifacts, uploadArtifact, type Artifact } from '../lib/api'
 import { formatBytes } from '../lib/format'
+import { clampPage, pageSlice } from '../lib/pagination'
 import { canWriteArtifacts } from '../lib/permissions'
+
+const PAGE_SIZE = 10
 
 export default function ArtifactsPage() {
   const { project, role } = useProject()
   const [artifacts, setArtifacts] = useState<Artifact[] | null>(null)
+  const [page, setPage] = useState(1)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -69,26 +74,34 @@ export default function ArtifactsPage() {
         />
       )}
       {artifacts !== null && artifacts.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>文件名</th>
-              <th>大小</th>
-              <th>哈希（前 12 位）</th>
-              <th>上传时间</th>
-            </tr>
-          </thead>
-          <tbody>
-            {artifacts.map((artifact) => (
-              <tr key={artifact.id}>
-                <td>{artifact.originalName}</td>
-                <td>{formatBytes(artifact.sizeBytes)}</td>
-                <td className="mono">{artifact.contentHash.slice(0, 12)}</td>
-                <td className="mono">{artifact.createdAt}</td>
+        <>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>文件名</th>
+                <th>大小</th>
+                <th>哈希（前 12 位）</th>
+                <th>上传时间</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pageSlice(artifacts, page, PAGE_SIZE).map((artifact) => (
+                <tr key={artifact.id}>
+                  <td>{artifact.originalName}</td>
+                  <td>{formatBytes(artifact.sizeBytes)}</td>
+                  <td className="mono">{artifact.contentHash.slice(0, 12)}</td>
+                  <td className="mono">{artifact.createdAt}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Pagination
+            page={clampPage(page, artifacts.length, PAGE_SIZE)}
+            total={artifacts.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </>
   )

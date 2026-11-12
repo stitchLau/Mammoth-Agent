@@ -84,10 +84,7 @@ public class ProjectService {
   @Transactional
   public ProjectMember addMember(AppUser actor, String projectId, String userId, String role) {
     requireProject(projectId);
-    if (!List.of(AuthorizationService.OWNER, AuthorizationService.EDITOR,
-        AuthorizationService.REVIEWER, AuthorizationService.VIEWER).contains(role)) {
-      throw ApiException.badRequest("unsupported role: " + role);
-    }
+    requireSupportedRole(role);
     AppUser target = appUserRepository.findById(userId)
         .orElseThrow(() -> ApiException.notFound("user not found: " + userId));
     if (projectMemberRepository.findByProjectIdAndUserId(projectId, userId).isPresent()) {
@@ -103,5 +100,61 @@ public class ProjectService {
   @Transactional(readOnly = true)
   public List<ProjectMember> members(String projectId) {
     return projectMemberRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
+  }
+
+  private static final List<String> ROLES = List.of(
+      AuthorizationService.OWNER, AuthorizationService.EDITOR,
+      AuthorizationService.REVIEWER, AuthorizationService.VIEWER);
+
+  private static void requireSupportedRole(String role) {
+    if (role == null || !ROLES.contains(role)) {
+      throw ApiException.badRequest("unsupported role: " + role);
+    }
+  }
+
+  /** Defense in depth: member management is owner-only even if a caller bypasses the controller. */
+  private ProjectMember requireOwner(AppUser actor, String projectId) {
+    ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(projectId, actor.getId())
+        .orElseThrow(() -> ApiException.forbidden("no access to project " + projectId));
+    if (!AuthorizationService.OWNER.equals(membership.getRole())) {
+      throw ApiException.forbidden("only the project owner can manage members");
+    }
+    return membership;
+  }
+
+  @Transactional
+  public ProjectMember changeMemberRole(AppUser actor, String projectId, String userId, String newRole) {
+    requireProject(projectId);
+    requireOwner(actor, projectId);
+    requireSupportedRole(newRole);
+    ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
+        .orElseThrow(() -> ApiException.notFound("member not found: " + userId));
+    boolean demotingOwner = AuthorizationService.OWNER.equals(member.getRole())
+        && !AuthorizationService.OWNER.equals(newRole);
+    if (demotingOwner && projectMemberRepository.countByProjectIdAndRole(
+        projectId, AuthorizationService.OWNER) <= 1) {
+      throw ApiException.conflict("cannot demote the last project owner");
+    }
+    String previousRole = member.getRole();
+    member.changeRole(newRole);
+    projectMemberRepository.save(member);
+    auditService.record(actor.getId(), "project.member.role_change", "project", projectId,
+        "{\"userId\":\"" + userId + "\",\"from\":\"" + previousRole + "\",\"to\":\"" + newRole + "\"}");
+    return member;
+  }
+
+  @Transactional
+  public void removeMember(AppUser actor, String projectId, String userId) {
+    requireProject(projectId);
+    requireOwner(actor, projectId);
+    ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
+        .orElseThrow(() -> ApiException.notFound("member not found: " + userId));
+    if (AuthorizationService.OWNER.equals(member.getRole())
+        && projectMemberRepository.countByProjectIdAndRole(projectId, AuthorizationService.OWNER) <= 1) {
+      throw ApiException.conflict("cannot remove the last project owner");
+    }
+    projectMemberRepository.delete(member);
+    auditService.record(actor.getId(), "project.member.remove", "project", projectId,
+        "{\"userId\":\"" + userId + "\"}");
   }
 }

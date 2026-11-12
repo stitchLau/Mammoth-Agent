@@ -89,7 +89,11 @@ npm test           # vitest
 > | `POST /api/auth/logout` | 撤销当前会话 |
 > | `GET /api/auth/me` | 当前用户 |
 > | `GET /api/auth/csrf` | 强制生成并返回 CSRF token（同时下发 XSRF-TOKEN cookie） |
+> | `PUT /api/auth/profile` | 修改显示名 `{displayName}` |
+> | `PUT /api/auth/password` | 修改密码 `{currentPassword,newPassword}`；成功后**撤销全部会话**，需重新登录 |
 > | `POST /api/users` | **仅空库时**可匿名创建首个管理员；之后需登录 |
+> | `PATCH /api/projects/{id}/members/{userId}` | owner 修改成员角色 `{role}`；最后一名 owner 不可降级（409） |
+> | `DELETE /api/projects/{id}/members/{userId}` | owner 移除成员；最后一名 owner 不可移除（409） |
 >
 > 授权判定仍统一走 `AuthorizationService`（ADR-0006）。
 
@@ -104,7 +108,7 @@ npm test           # vitest
 
 ## CI
 
-`.github/workflows/ci.yml`：后端 `mvn -B -ntp verify`、前端 `npm ci && npm run build && npm test`。
+`.github/workflows/ci.yml`：后端 `mvn -B -ntp verify`、前端 `npm ci && npm run build && npm test`、浏览器 E2E（构建 jar 与 web、安装 Chromium、启动后端、`npm run test:e2e`）。
 
 **注意**：本地可复现同一组命令，但 GitHub Actions 是否真正运行需推送后在仓库页面确认；本地验证不等于远端 CI 已验证。
 
@@ -124,8 +128,10 @@ npm test           # vitest
   cd apps/web && npm run test:e2e
   ```
   也可用 `MAMMOTH_E2E_BASE` 指向已有环境；E2E 会创建临时客户/项目/知识，**不要在真实数据根运行**。
+- **CI**：E2E 已加入 `.github/workflows/ci.yml` 的 `e2e` job（远端 Runner 尚未在本机验证）。
 
 ## DSH 集成与演示
+
 
 - **生产/本地一体化启动**：先 `cd apps/web && npm run build`，再从仓库根目录 `java -jar services/domain/target/mammoth-domain-service.jar` —— 后端会自动探测 `apps/web/dist` 并托管 SPA（`GET /` 返回页面，`/api/**` 为接口）；也可用 `MAMMOTH_WEB_DIST` 显式指定目录。开发模式仍用 `npm run dev` + 代理。
 - **接入 DSH**：见 [`docs/dsh-mcp-integration.md`](dsh-mcp-integration.md)（配置型 bundle 模板在 `integrations/dsh/mammoth-domain-mcp/`）；两个只读 MCP 工具 `search_project_knowledge` / `get_knowledge_document`，仅 verified、仅项目成员。

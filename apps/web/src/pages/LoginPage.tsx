@@ -4,7 +4,7 @@ import { useSession } from '../app/session'
 import { login } from '../lib/api'
 
 export default function LoginPage() {
-  const { state, signIn } = useSession()
+  const { state, notice, signIn } = useSession()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -35,6 +35,7 @@ export default function LoginPage() {
       <div className="auth-card">
         <h1>Mammoth Agent</h1>
         <p className="hint">项目知识底座 · 登录</p>
+        {notice && <p className="state notice">{notice}</p>}
         <form className="stack" onSubmit={(event) => void submit(event)}>
           <label>
             用户名

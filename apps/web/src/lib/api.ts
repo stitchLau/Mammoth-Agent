@@ -263,3 +263,30 @@ export function updateKnowledge(
     body: JSON.stringify(input),
   })
 }
+
+export function updateProfile(displayName: string): Promise<SessionUser> {
+  return request<SessionUser>('/api/auth/profile', { ...jsonBody({ displayName }), method: 'PUT' })
+}
+
+export function changePassword(currentPassword: string, newPassword: string): Promise<{ status: string }> {
+  return request<{ status: string }>('/api/auth/password', {
+    ...jsonBody({ currentPassword, newPassword }),
+    method: 'PUT',
+  })
+}
+
+export function createUser(username: string, displayName: string, password: string): Promise<UserSummary> {
+  return request<UserSummary>('/api/users', jsonBody({ username, displayName, password }))
+}
+
+export function changeMemberRole(projectId: string, userId: string, role: string): Promise<Member> {
+  return request<Member>(`/api/projects/${projectId}/members/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role }),
+  })
+}
+
+export function removeMember(projectId: string, userId: string): Promise<void> {
+  return request<void>(`/api/projects/${projectId}/members/${userId}`, { method: 'DELETE' })
+}

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,17 +24,26 @@ public class AuthController {
   private final AuthenticationService authenticationService;
   private final SessionService sessionService;
   private final AppUserRepository appUserRepository;
+  private final AccountService accountService;
 
   public AuthController(
       AuthenticationService authenticationService,
       SessionService sessionService,
-      AppUserRepository appUserRepository) {
+      AppUserRepository appUserRepository,
+      AccountService accountService) {
     this.authenticationService = authenticationService;
     this.sessionService = sessionService;
     this.appUserRepository = appUserRepository;
+    this.accountService = accountService;
   }
 
   public record LoginRequest(String username, String password) {
+  }
+
+  public record ProfileRequest(String displayName) {
+  }
+
+  public record PasswordRequest(String currentPassword, String newPassword) {
   }
 
   public record MeResponse(String id, String username, String displayName) {
@@ -77,5 +87,17 @@ public class AuthController {
     AppUser user = appUserRepository.findById(CurrentUser.id())
         .orElseThrow(() -> com.mammoth.domain.web.ApiException.unauthorized("unknown user"));
     return MeResponse.from(user);
+  }
+
+  @PutMapping("/profile")
+  public MeResponse profile(@RequestBody ProfileRequest request) {
+    AppUser user = accountService.updateDisplayName(CurrentUser.id(), request.displayName());
+    return MeResponse.from(user);
+  }
+
+  @PutMapping("/password")
+  public Map<String, Object> password(@RequestBody PasswordRequest request) {
+    accountService.changePassword(CurrentUser.id(), request.currentPassword(), request.newPassword());
+    return Map.of("status", "password_changed");
   }
 }

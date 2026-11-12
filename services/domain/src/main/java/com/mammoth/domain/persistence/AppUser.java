@@ -69,4 +69,12 @@ public class AppUser {
   public boolean isActive() {
     return "active".equals(status);
   }
+
+  public void rename(String displayName) {
+    this.displayName = displayName;
+  }
+
+  public void changePasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
 }

@@ -49,6 +49,10 @@ public class ProjectMember {
     return createdAt;
   }
 
+  public void changeRole(String role) {
+    this.role = role;
+  }
+
   /** Composite primary key. */
   public static class Key implements Serializable {
 

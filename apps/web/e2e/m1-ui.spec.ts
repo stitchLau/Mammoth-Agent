@@ -68,6 +68,27 @@ test('M1 UI end-to-end', async ({ page }) => {
     await expect(page.getByText(/不能自审/)).toBeVisible()
   })
 
+  await test.step('账号设置：修改显示名并轮换密码', async () => {
+    const newPassword = 'NewPassw0rd!2026'
+    await page.goto('/settings')
+    await page.getByLabel('显示名', { exact: true }).fill('E2E Admin Renamed')
+    await page.getByRole('button', { name: '保存显示名' }).click()
+    await expect(page.getByText('显示名已更新')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'E2E Admin Renamed' })).toBeVisible()
+
+    await page.getByLabel('当前密码').fill(password)
+    await page.getByLabel('新密码', { exact: true }).fill(newPassword)
+    await page.getByLabel('确认新密码').fill(newPassword)
+    await page.getByRole('button', { name: '修改密码' }).click()
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.getByText(/密码已修改/)).toBeVisible()
+
+    await page.getByLabel('用户名').fill(adminName)
+    await page.getByLabel('密码').fill(newPassword)
+    await page.getByRole('button', { name: '登录' }).click()
+    await expect(page).toHaveURL(/\/projects$/)
+  })
+
   await test.step('添加 reviewer 成员', async () => {
     const csrfResponse = await page.request.get('/api/auth/csrf')
     const { token } = (await csrfResponse.json()) as { token: string }
@@ -86,8 +107,7 @@ test('M1 UI end-to-end', async ({ page }) => {
   })
 
   await test.step('切换 reviewer 审核通过', async () => {
-    await page.goto('/settings')
-    await page.getByRole('button', { name: '退出登录' }).click()
+    await page.getByRole('button', { name: '退出' }).click()
     await expect(page).toHaveURL(/\/login$/)
 
     await page.getByLabel('用户名').fill(reviewerName)

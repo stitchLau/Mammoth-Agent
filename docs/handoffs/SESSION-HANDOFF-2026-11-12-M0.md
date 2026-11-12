@@ -65,12 +65,12 @@
 
 ## 下一步最小行动
 
-**M1.5 首批已完成**（路由化 UI、首次引导、成员管理、知识详情/编辑/审核、统一状态、Playwright E2E），记录见 `docs/specs/UI-SPEC.md` §13。下一步：
-1. M1.5 收尾：分页、账号设置（改密）、成员角色变更/移除、E2E 接入 CI；
-2. 浏览器人工验收：登录→建项目→上传→建知识→审核→检索（E2E 已覆盖，仍建议人工过一遍视觉/交互）；
+**M1.5 已完成收尾**（账号设置/改密、成员角色变更与移除、新建用户并加入、客户端分页、E2E 入 CI），记录见 `docs/specs/UI-SPEC.md` §13。下一阶段：
+1. 在浏览器人工过一遍视觉/交互（E2E 已覆盖功能路径，视觉未评审）；
+2. 生产化加固：TLS、共享会话存储、MCP 专用只读账号；
 3. 进入 **M2（需求与方案）**：按 `docs/04-MVP-STRATEGY.md` Phase 2 更新 specs 与 ADR。
 
-基线：后端 44 tests；前端 13 tests；Playwright E2E 1 passed；API 演示 14/14；SPA 深链接 200；MCP 接入已实测。
+基线：后端 48 tests；前端 build + 16 tests；Playwright E2E 1 passed；API 演示 14/14；CI 新增 e2e job（远端未验证）。
 
 ## 新会话必须先阅读
 

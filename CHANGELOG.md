@@ -1,5 +1,14 @@
 # Changelog
 
+## V0.8.0 — 2026-11-12
+
+- **M1.5 收尾**：账号设置（显示名、修改密码并撤销全部会话）、成员角色变更/移除（保护最后一名 owner、owner-only、审计）、成员页新建用户并加入、资料/知识/成员列表客户端分页（10 条/页）。
+- **后端新增**：`PUT /api/auth/profile`、`PUT /api/auth/password`、`PATCH/DELETE /api/projects/{id}/members/{userId}`；服务层纵深校验（owner-only、最后 owner 保护）；新增 `AccountSettingsTest`、`MemberManagementTest`。
+- **CI**：新增 Playwright 浏览器 E2E job（构建 jar + web、启动后端、运行 `npm run test:e2e`、失败上传报告）。**远端 Runner 尚未实际执行**。
+- **E2E 扩展**：覆盖改显示名 + 改密后重新登录、reviewer 审核与检索引用。
+- **修复**：改密后登出 401 导致登录提示丢失（signOut best-effort + 会话上下文提示）；E2E 选择器歧义。
+- **验证**：后端 `mvn verify` **48 tests**；前端 build + **16 tests**；Playwright E2E **1 passed（4.5s）**；API 演示 14/14。
+
 ## V0.7.0 — 2026-11-12
 
 - **M1.5 UI 产品化（路线 A）**：按 `docs/specs/UI-SPEC.md` 重构为路由化产品壳：react-router + AppShell + 项目上下文侧栏导航；新增首次引导页（空库创建管理员并自动登录）、成员与角色页面（owner 添加成员）、知识详情/草稿编辑/提交审核/审核通过（含"不可自审"禁用原因）、统一状态组件与权限感知 UI。

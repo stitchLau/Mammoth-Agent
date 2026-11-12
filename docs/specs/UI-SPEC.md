@@ -176,21 +176,25 @@ src/
 | 知识列表（P05） | `KnowledgePage`（状态筛选、新建草稿、提交审核） | E2E：创建草稿 → 提交审核 → 待审核 |
 | 知识详情/审核（P06） | `KnowledgeDetailPage`（草稿编辑、来源引用、审核按钮与不可自审原因） | E2E：创建者按钮禁用并提示不可自审；reviewer 审核成功 |
 | 知识检索（P07） | `SearchPage`（命中片段 + 引用数 + 文档链接） | E2E：检索命中并显示"引用 N 项" |
-| 成员与角色（P08） | `MembersPage`（owner 添加 viewer/editor/reviewer/owner；角色显示） | E2E：API 添加 reviewer 后审核成功 |
+| 成员与角色（P08） | `MembersPage`：添加已有用户、**新建用户并加入**、**角色变更**、**移除成员**（服务端保护最后一名 owner） | E2E：添加 reviewer 后审核成功；`MemberManagementTest` 覆盖角色变更/最后 owner/非 owner 拒绝 |
+| 账号设置（P09） | `SettingsPage`：修改显示名、修改密码（校验当前密码、至少 8 位、不得与旧密码相同；**撤销全部会话**） | E2E：改显示名 → 改名生效 → 改密 → 重登新密码成功；`AccountSettingsTest` |
 | 统一状态组件 | `components/ui.tsx`（StatusBadge/RoleBadge/Loading/Empty/ErrorBanner/PageHeader/BackLink） | 各页面统一使用 |
-| 权限感知 UI | `lib/permissions.ts` + 单元测试；verify 禁用原因 | 13 个前端单元测试通过 |
-| 浏览器 E2E | `apps/web/e2e/m1-ui.spec.ts` + `playwright.config.ts` | **1 passed**（覆盖 setup→项目→资料→知识→审核→检索） |
-| 后端支持 | `PUT /api/projects/{id}/knowledge/{doc}`（草稿编辑）、`GET /api/setup/status`、SPA 深链接 | 后端 **44 tests** 通过 |
+| 权限感知 UI | `lib/permissions.ts` + 单元测试；verify 禁用原因 | 前端单元测试通过 |
+| 分页 | `lib/pagination.ts` + `components/Pagination.tsx`；资料/知识/成员列表 10 条/页（客户端分页） | 分页辅助函数单元测试；列表页使用 |
+| 浏览器 E2E | `apps/web/e2e/m1-ui.spec.ts` + `playwright.config.ts`，已加入 CI（`.github/workflows/ci.yml` `e2e` job） | 本地 **1 passed**；CI 远端尚未实际运行（无远端执行环境） |
+| 后端支持 | `PUT /api/auth/profile`、`PUT /api/auth/password`、`PATCH/DELETE /api/projects/{id}/members/{userId}`、`PUT .../knowledge/{docId}`、`GET /api/setup/status`、SPA 深链接 | 后端 **48 tests** 通过 |
 
 ### 本轮修复的真实缺陷
 
 1. **SPA 深链接 401**：安全过滤器先于 SPA 路由拦截 `/projects` 等路径 → 放行 SPA 路由，由前端处理登录跳转。
 2. **上传丢文件**：把 `FileList` 交给异步处理后立刻清空 input，导致列表被清空 → 先复制数组再清空；E2E 首次发现该问题。
+3. **改密后跳转丢失登录提示**：改密撤销会话使 `logout()` 返回 401，`signOut` 抛出导致跳转被 RequireAuth 重定向覆盖 → 登出改为 best-effort，提示改存会话上下文。
+4. **E2E 选择器歧义**：`getByLabel('显示名')` 同时匹配表单 `aria-label="修改显示名"` 与输入框 → 使用 `exact: true`。
 
 ### 仍待办（后续阶段）
 
-- P09 账号设置目前只读（改密/通知未实现）；
-- 列表全量加载，**分页尚未实现**（数据量大时需后端分页参数）；
-- 成员角色变更/移除未实现（需后端端点，M2）；
-- E2E 目前需手动启动后端（未接入 CI；如需接入需配置 Java+Playwright CI 环境）；
+- 列表为**客户端分页**（后端一次性返回）；超大数据量需后端分页参数；
+- 密码重置/找回、通知中心、用户停用/改角色审计视图未实现；
+- 成员角色变更仅 owner 可操作且无二次确认（移除有确认）；如需审批流在 M2 设计；
+- E2E 已加入 CI 配置，但**远端 Runner 尚未实际执行**（本地通过）；
 - 视觉品牌规范未定，暂沿用中性色 + `#247bbf`。
