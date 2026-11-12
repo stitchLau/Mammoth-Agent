@@ -69,9 +69,9 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 ## 4. 关键发现
 
 - **F1（已验证）外部 bundle 可安装并激活**：`install_bundle` 用 pnpm 把工作区目录 link 进 profile，HMR 激活；新装 bundle **不需要重启**，工具 schema 在本轮就注入现有会话（`host-plugin.md:75` 的 "can activate through HMR" 得到实测支持；本轮未观察到 "existing sessions keep plugin revision" 的阻断）。
-- **F2（已验证，最重要）外部 bundle 无法直接 `import '@deepseek-ai/*'`**：插件模块从**自身 checkout 路径**解析 Node 包，解析链不经过 DSH 安装目录，因此 `dsh-tools` 等包必须由插件自己声明并安装依赖（或构建成自包含产物）。这直接约束 Mammoth 的插件工程化方案与依赖策略。
+- **F2（已验证，最重要）外部 bundle 无法直接 `import '@deepseek-ai/*'`**：插件模块从**自身 checkout 路径**解析 Node 包，解析链不经过 DSH 安装目录，因此 `dsh-tools` 等包必须由插件自己声明并安装依赖（或构建成自包含产物）。这直接约束 Mammoth 的插件工程化方案与依赖策略。**S1b 结论：** 声明精确 `@deepseek-ai/*` 依赖并在插件目录内安装后，`defineTool` / `storageDomain` / `zod` 均可正常导入（见 §10）。
 - **F3（已验证）直连 `ctx.tools.register` 需要原生 JSON Schema**：工具 DSL（`required: true` 写在属性上）只被 `defineTool` 接受；不使用 `defineTool` 时 `output.schema` 必须是合法 JSON Schema（`required` 放根数组）。F2 使外部 bundle 难以使用 `defineTool`，故 Mammoth 插件更适合「构建期打包 + 使用官方 DSL」。
-- **F4（已验证）Host 侧持久化可行但非官方缝**：`ctx.storageDomain` 需要 `@deepseek-ai/dsh-storage-domain` + `zod`（被 F2 阻断），本轮改用插件自有 JSON 文件完成写-读往返（计数 1→2，文件已核验）；**跨重启读回未验证**（未重启 DSH）。因此官方 storage 缝在 out-of-tree bundle 中**尚未验证**。
+- **F4（S1b 已解决）Host 侧持久化**：S1b 中 `ctx.storageDomain` 成功打开 schema 校验域并落盘（`~/.dsh/storages/mammoth_spike.json`，`tables.counters.probe.count=2`），**官方存储缝已验证**；S1 早期用插件自有 JSON 文件的回退方案不再是当前实现。
 - **F5（已验证）UI slot 未做视觉验证**：`client.js` 通过 `window.__ModuleLoader__` 向 `conversation.composer.dock` 注册装饰组件，注册代码无报错，但本轮无浏览器控制，**未确认实际渲染**。
 - **F6（已验证）Worktree 能力可用**：`create_worktree` 工具已注入；注意 rc.2 起归档会话默认清理干净工作树（`retainOnArchive` 默认关），忽略文件/`skip-worktree` 改动会被丢弃，需归档前提交或 `git worktree lock`。
 - **F7（已验证）沙箱 shell 完整性级别限制**：shell 以 Low IL 运行，只能写带 Low 标签的对象；工作区根目录被 DSH 打 Low 标签，但既有子目录（`.git`、`docs`）仍是 Medium → shell 写这些目录被拒（Git 提交需完全权限）；宿主文件工具不受此限制。
@@ -80,7 +80,7 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 
 ### ADR-0001: DeepSeek Harness 集成策略（Spike 结论草案）
 
-- 状态：Proposed（Draft v0.3，未批准）
+- 状态：**Accepted（v1.0，2026-11-12 负责人批准；适用边界见第 6 节未验证项）**
 - 日期：2026-11-12
 - 决策人：（待填）
 - 相关需求/功能：M0
@@ -101,9 +101,9 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 - 方案 B：out-of-tree Bundle/Plugin + 独立 Domain API（本 Spike 主体）。
 - 方案 C：Mammoth 独立桌面应用，DSH 仅作外部 Runtime。
 
-#### 决策（草案，未生效）
+#### 决策（已批准）
 
-建议采纳 B，并明确其**已验证 / 未验证边界**：
+采纳 B，并明确其**已验证 / 未验证边界**：
 
 - 已验证：bundle 安装与激活、Agent tool 注册与真实调用、Host 侧本地持久化往返、Worktree 可选能力启用、profile 组成可核对。
 - 未验证：官方 `ctx.storageDomain` 缝在外部 bundle 中可用（被依赖解析阻断）；UI slot 实际渲染；跨重启行为；外部 Domain API 经 MCP 的安全连接。
@@ -145,13 +145,13 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 
 #### 后续行动
 
-1. 负责人批准本草案（落盘位置待定）。
-2. 执行 S1b，把上述"未验证"逐项转成已验证或被证伪。
-3. S1b 结果驱动 ADR-0002（技术栈）与 ADR-0007（Git/Worktree 使用策略）。
+1. ~~负责人批准本草案~~ → **2026-11-12 已批准（Accepted v1.0）**。
+2. S1b 已执行：官方 `ctx.storageDomain` 缝已验证（见 §10）；剩余未验证项见 §6。
+3. 结果驱动 ADR-0002（技术栈）与 ADR-0007（Git/Worktree 使用策略）。
 
 ## 6. 未验证项（明确列表）
 
-1. `ctx.storageDomain` 在外部 bundle 中可用（依赖解析阻断）。
+1. ~~`ctx.storageDomain` 在外部 bundle 中可用（依赖解析阻断）~~ → **S1b 已验证**（见 §10）。
 2. UI slot 实际渲染效果。
 3. 跨 DSH 重启后的工具可用性与持久化读回。
 4. `engines.dsh` 不满足时安装被拒绝的负向测试。
@@ -186,3 +186,57 @@ mammoth_spike_probe({note:"second call"}) → persistence=plugin-json-file count
 - 安装日志：`C:\Users\Lau\.dsh\profiles\desktop\.plugin-manager\logs\operation-*\pnpm.log`
 - 安装返回值：`install_bundle` → `application: applied`；`list_bundles` → `@local/mammoth-spike enabled=true installed=true availability=profile source=link:...`
 - Worktree：`list_bundles` → `@deepseek-ai/dsh-experimental-tool-worktree enabled=true optional=true`
+
+## 10. S1b — 依赖方案 a 与官方存储缝验证（2026-11-12 追加）
+
+### 10.1 做法
+
+`spike/dsh-extension/package.json` 增加精确依赖并做版本升级到 `0.2.0`：
+
+```json
+"dependencies": {
+  "@deepseek-ai/dsh-storage-domain": "0.2.2-rc.2",
+  "@deepseek-ai/dsh-tools": "0.2.2-rc.2",
+  "zod": "4.6.6"
+}
+```
+
+在**插件目录内**（不是 profile 目录）执行 `pnpm install`：解析 21 个包、下载 21 个（含 `@deepseek-ai/cordis` 等 peer 自动安装），pnpm 自动生成 `pnpm-lock.yaml` 与带 `minimumReleaseAgeExclude` 的 `pnpm-workspace.yaml`。
+
+`index.js` 改为官方 API：
+
+- `import { defineTool } from '@deepseek-ai/dsh-tools'`
+- `import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'` + `import { z } from 'zod'`
+- `export const inject = ['tools', 'storageDomain']`；`apply` 中 `await ctx.storageDomain.open(spec)`，`ctx.effect` 负责 `domain.close()`
+- 输出 schema 回到工具 DSL 形态（`required: true` 写在属性上），由 `defineTool` 编译
+
+### 10.2 迭代与结果
+
+| 轮次 | 结果 | 诊断 / 处置 |
+|---|---|---|
+| S1b-1 | `application: failed` | `Error: domain name 'mammoth-spike' must match /^[a-z][a-z0-9_]*$/` → 域名改为 `mammoth_spike` |
+| S1b-2 | **`application: applied`**，`warnings: []` | 工具 schema 立即注入当前会话 |
+
+真实调用（两次）：
+
+```
+mammoth_spike_probe({note:"S1b first"})  → persistence=storage-domain count=1
+mammoth_spike_probe({note:"S1b second"}) → persistence=storage-domain count=2
+```
+
+落盘证据（官方 JSON storage backend）：
+
+```json
+{ "unit": { "name": "mammoth_spike", "version": 1 },
+  "global": null,
+  "tables": { "counters": { "probe": { "count": 2 } } } }
+```
+
+文件：`C:\Users\Lau\.dsh\storages\mammoth_spike.json`。
+
+### 10.3 结论
+
+- **官方存储缝在 out-of-tree bundle 中可用**，前提是插件自带精确版本的 DSH 依赖并在自身目录安装（方案 a 成立）。
+- 代价：插件体积与依赖树显著变大（21 包），且与 DSH 版本**强耦合**（必须逐版本同步 `0.2.2-rc.2`）；这使"声明依赖 + 锁定版本"成为产品化必须的工程约束，也意味着升级 DSH 时必须同步升级插件依赖。
+- 仍未验证：跨重启读回（未重启 DSH）；UI slot 视觉渲染；`engines.dsh` 负向拒绝；MCP 端到端。
+
