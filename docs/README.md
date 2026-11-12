@@ -4,9 +4,10 @@
 
 ## 当前状态（2026-11-12）
 
-- **M1 与 M1.5 已完成**（本地验证通过）；下一阶段 **M2（需求与方案）**。
-- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-12-M1.5.md`](handoffs/SESSION-HANDOFF-2026-11-12-M1.5.md)
-- 过程记录：[`docs/process/M1-TIMELINE.md`](process/M1-TIMELINE.md) · 证据：[`docs/evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) · 缺陷：[`docs/quality/M1-BUGS.md`](quality/M1-BUGS.md)
+- **M1 / M1.5 / M2 已完成**（本地验证通过）；下一阶段 **M3（实施回收与知识闭环）**。
+- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`](handoffs/SESSION-HANDOFF-2026-11-12-M2.md)
+- M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md)
+- 历史记录：[`docs/process/M1-TIMELINE.md`](process/M1-TIMELINE.md) · [`docs/evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) · [`docs/quality/M1-BUGS.md`](quality/M1-BUGS.md)
 
 ## 产品与领域（先读）
 
@@ -29,10 +30,11 @@
 | 文档 | 内容 |
 |---|---|
 | [`specs/M1-PHASE1-PLAN.md`](specs/M1-PHASE1-PLAN.md) | M1 计划与 DoD |
+| [`specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) | M2 计划、状态机、就绪规则、一致性规则与实施记录 |
 | [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) | M1 验收记录 |
 | [`specs/UI-SPEC.md`](specs/UI-SPEC.md) | UI 规格（路线 A）与 M1.5 实施记录 |
-| [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1/M1.5 决策补充日志 |
-| [`../decisions/`](../decisions/) | ADR-0001 – ADR-0009 |
+| [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1/M1.5/M2 决策补充日志 |
+| [`../decisions/`](../decisions/) | ADR-0001 – ADR-0010 |
 
 ## 过程、质量与证据
 
