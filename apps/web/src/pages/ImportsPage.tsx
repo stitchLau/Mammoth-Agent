@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { BackLink, EmptyState, ErrorBanner, LoadingState, PageHeader } from '../components/ui'
 import {
   applyImport,
+  applyJiraImport,
   createExternalSource,
   getSolutionVersion,
   listExternalRecords,
@@ -10,6 +11,7 @@ import {
   listWorkItems,
   mapExternalRecord,
   previewImport,
+  previewJiraImport,
   rejectExternalRecord,
   type AcceptanceCriterion,
   type ExternalRecordView,
@@ -42,6 +44,8 @@ export default function ImportsPage() {
   const [sourceBaseUrl, setSourceBaseUrl] = useState('')
   const [sourceId, setSourceId] = useState('')
   const [mappingProfile, setMappingProfile] = useState('jira')
+  const [jiraJql, setJiraJql] = useState('updated >= -30d ORDER BY updated DESC')
+  const [jiraMaxResults, setJiraMaxResults] = useState(50)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<ImportPreviewView | null>(null)
   const [result, setResult] = useState<ImportResultView | null>(null)
@@ -177,6 +181,68 @@ export default function ImportsPage() {
           </ul>
         )}
       </section>
+
+      {writer && sources.some((source) => source.id === sourceId && source.systemType === 'jira') && (
+        <section className="card">
+          <h2>Jira 直连（只读）</h2>
+          <p className="hint">
+            通过服务端环境变量中的 Jira 只读令牌拉取；不写 Jira。记录按 Jira key 保存，后续人工映射到需求。
+          </p>
+          <div className="row">
+            <input
+              aria-label="Jira JQL"
+              value={jiraJql}
+              onChange={(event) => setJiraJql(event.target.value)}
+              placeholder="JQL，例如 updated >= -30d ORDER BY updated DESC"
+            />
+            <input
+              aria-label="Jira 最大条数"
+              type="number"
+              min={1}
+              max={500}
+              value={jiraMaxResults}
+              onChange={(event) => setJiraMaxResults(Number(event.target.value) || 1)}
+            />
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy || !sourceId}
+              onClick={() =>
+                void run(async () => {
+                  const report = await previewJiraImport(project.id, sourceId, {
+                    jql: jiraJql,
+                    maxResults: jiraMaxResults,
+                  })
+                  setPreview(report)
+                  setResult(null)
+                })
+              }
+            >
+              Jira 预检
+            </button>
+            <button
+              type="button"
+              disabled={busy || !sourceId}
+              onClick={() =>
+                void run(async () => {
+                  const applied = await applyJiraImport(project.id, sourceId, {
+                    jql: jiraJql,
+                    maxResults: jiraMaxResults,
+                  })
+                  setResult(applied)
+                  setPreview(null)
+                  await reload()
+                })
+              }
+            >
+              Jira 拉取并应用
+            </button>
+          </div>
+          <p className="hint">
+            令牌仅在服务端环境变量中；未配置时请求返回 409，不会发起外部调用。
+          </p>
+        </section>
+      )}
 
       {writer && (
         <section className="card">

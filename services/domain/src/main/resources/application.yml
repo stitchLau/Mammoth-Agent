@@ -56,6 +56,13 @@ mammoth:
     # Writer-only outbox worker; the read-only MCP entrypoint does not schedule it.
     poll-interval-ms: ${MAMMOTH_JOBS_POLL_INTERVAL_MS:5000}
     initial-delay-ms: ${MAMMOTH_JOBS_INITIAL_DELAY_MS:10000}
+  jira:
+    # M4.5-1 read-only Data Center connector. Token is required only at call time; empty = disabled.
+    base-url: ${MAMMOTH_JIRA_BASE_URL:http://119.145.133.146:18009}
+    token: ${MAMMOTH_JIRA_TOKEN:}
+    jql: ${MAMMOTH_JIRA_JQL:updated >= -30d ORDER BY updated DESC}
+    max-results: ${MAMMOTH_JIRA_MAX_RESULTS:100}
+    page-size: ${MAMMOTH_JIRA_PAGE_SIZE:50}
 
 logging:
   level:

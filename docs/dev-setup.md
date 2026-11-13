@@ -263,3 +263,23 @@ mammoth.jobs.initial-delay-ms=10000
 - 邮件/企微只用于内部通知；向客户/外部群发送需新 ADR。
 - 凭据只放环境变量/OS 存储，不写数据库、不写日志、不写导出/交接包；`server_job`/通知表默认不进管理导出。
 - worker 只由 writer 进程调度；`read-only=true` 的 MCP 进程不调度。
+
+## M4.5-1 Jira 只读连接器（mock 已实现；真实 smoke 待环境变量）
+
+- **目标**：Jira Data Center 8.x REST API v2 只读拉取 issue，进入 M4 S3 的导入/证据候选；**不写 Jira**。
+- **入口**：项目 → 外部导入 → 选择 `jira` 来源 → “Jira 预检/拉取并应用”。JQL 默认 `updated >= -30d ORDER BY updated DESC`，可覆盖；最大条数 1–500。
+- **字段**：`关键字/概要/描述/状态/问题类型/优先级/创建/更新/经办人/报告人/组件/Jira project key`；按记录人工映射到需求/证据，不自动关联 Mammoth 项目。
+- **认证**：Data Center PAT 以 `Authorization: Bearer <token>` 发送；令牌只从环境/OS 读取，不写 DB/日志/导出。
+- **安全**：令牌只发往 `mammoth.jira.base-url` 配置的 origin；项目来源的 base URL 只能作为显示/一致性校验，不能把令牌重定向到其他主机。
+
+```properties
+mammoth.jira.base-url=http://119.145.133.146:18009
+mammoth.jira.token=          # MAMMOTH_JIRA_TOKEN，环境变量/OS 凭据，勿入仓
+mammoth.jira.jql=updated >= -30d ORDER BY updated DESC
+mammoth.jira.max-results=100
+mammoth.jira.page-size=50
+```
+
+- 未配置 token 时 Jira 拉取返回 409，不会发起外部调用；真实 smoke 需要轮换后的只读 PAT。
+- HTTP 已被负责人接受；仍建议仅受控内网/网络隔离，后续优先 HTTPS。
+- 测试：`JiraImportTest` 用本地 JDK `HttpServer` 覆盖分页/Bearer/标准字段；**未调用真实 Jira**。

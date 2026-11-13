@@ -1227,6 +1227,28 @@ export function previewImport(
   })
 }
 
+export function previewJiraImport(
+  projectId: string,
+  sourceId: string,
+  input: { jql: string; maxResults: number },
+): Promise<ImportPreviewView> {
+  return request<ImportPreviewView>(
+    `/api/projects/${projectId}/external-sources/${sourceId}/jira/preview`,
+    jsonBody(input),
+  )
+}
+
+export function applyJiraImport(
+  projectId: string,
+  sourceId: string,
+  input: { jql: string; maxResults: number },
+): Promise<ImportResultView> {
+  return request<ImportResultView>(
+    `/api/projects/${projectId}/external-sources/${sourceId}/jira/import`,
+    jsonBody(input),
+  )
+}
+
 export function applyImport(
   projectId: string,
   file: File,
