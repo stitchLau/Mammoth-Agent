@@ -58,6 +58,27 @@
 
 产出：Jira/CSM、MCP、企业微信/邮件、外部 Agent 适配、多用户共享和组织管理。
 
+**状态：S0 草案（2026-11-13）** — 负责人已确认收敛口径：单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/远程网关/多实例延后。
+
+- 计划：[`docs/specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)（S1 组织/用户 → S2 BG-01/Agent/MCP 审计 → S3 导入框架 → S4 Jira 文件/BG-03 → S5 通知/任务/邮件企微 → S6 团队服务器预案）
+- 生产集成：[`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)（Jira 只读 API、CSM、渠道启用、远程 Agent、团队服务器试点）
+- 威胁模型：[`docs/specs/M4-THREAT-MODEL.md`](specs/M4-THREAT-MODEL.md)
+- 决策：ADR-0011（外部集成/凭据）、ADR-0012（服务端/PG=M5）、ADR-0013（通知/外发）**Proposed**；ADR-0006/0008 增补
+- M3.5：BG-01 → M4 S2、BG-03 → M4 S4、BG-02 → M4 S6/M5
+- 约束：M4 不调用负责人提供的 Jira 地址；邮件/企微完整实现但默认关闭；PG 多实例归 M5
+
+## M4.5：生产集成与运营启用
+
+产出：Jira 只读 API（确认版本/TLS/只读账号后）、CSM 适配器（端点确认后）、SMTP/企微渠道启用、可选远程 Agent 网关/团队服务器试点、CI 远端与真实脱敏项目验收。
+
+**状态：规划（2026-11-13）** — 见 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)。仍单节点 SQLite；不接触生产凭据/数据。
+
+## M5：团队服务端规模化（PostgreSQL/多实例）
+
+产出：PostgreSQL + 多实例/HA、共享限速/会话、任务并发领取、`pg_dump/pg_restore` 备份恢复、TLS/部署/监控/回滚；多组织/SSO 评估；双向同步/应用内 LLM 另立 ADR。
+
+**状态：未开始** — **PG 多实例明确在 M5 完成，不在 M4/M4.5**；触发条件与前置见 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md) §6 与 ADR-0012。
+
 ## 每个里程碑的固定交付
 
 - 已更新的产品规格/领域/架构文档；

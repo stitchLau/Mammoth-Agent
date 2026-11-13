@@ -95,3 +95,22 @@
 | ApprovalRecord | `approval_record`（submit/approve/request_changes；与 `audit_log` 互补） |
 
 M3 实现（2026-11-13）：`ProjectBaseline` 落为"项目 + 仓库集合 → commit"的不可变基线（`project_repository`/`project_baseline`/`project_baseline_repo`）；`ExecutionRecord` 引用 `baseline_id` 与 `to_commit`，`execution_change` 存文件级变更、`execution_task` 存任务完成、`execution_deviation` 存人工偏差；`DeliverySnapshot`（As-built，四眼批准、批准时落 Artifact）与 `KnowledgeUpdateProposal`（接受后生成知识草稿）落地；知识"过期"通过 `knowledge_document.applicable_baseline_id` 仅做提示，不自动改状态。仍未实现：代码符号/DDL 级映射、子模块递归、交接包作为可携带文件的导出（当前为 Markdown 响应）。
+
+## 10. M4 实现映射（S0 草案，2026-11-13）
+
+| 领域概念 | M4 实现（计划） | 说明 |
+|---|---|---|
+| Organization 角色 | `role_assignment`（`scope_type='organization'`, `role='org_admin'`） | 首个用户 bootstrap；与项目角色分离 |
+| User 生命周期 | `app_user.status`（active/disabled）、`account_type`（human/agent）、`email`、`password_reset_required` | 停用撤销会话；Agent 禁登；强制改密 |
+| ExternalSource | `external_source` | 项目外部来源（jira/csm/generic）；不含凭据 |
+| ImportBatch | `import_batch` + Artifact（原始文件 sha256） | dry-run/应用/失败；行数/错误 |
+| ExternalRecord | `external_record` | 外部 ID/版本/哈希/映射；唯一 `(source, type, id, version)` |
+| RequirementEvidence（外部） | 复用 `requirement_evidence`，新增 `evidence_type=jira/external`；`locator` 指向外部 key/URL，`artifact_id` 指向批次原始文件 | 人工映射后才生成；不自动改状态 |
+| Notification | `notification` | 站内默认；去重/已读 |
+| NotificationDelivery | `notification_delivery` | 邮件/企微 outbox；重试/死信 |
+| ServerJob | `server_job` | 仅 writer；重试/幂等/死信 |
+| AgentCall | `agent_call` | MCP 调用审计；从本地 JSONL 入库 |
+| ProjectBaseline 部署/DDL 版本 | BG-02（M4 S6 或 M5） | 部署版本/schema/DDL hash |
+| 验收矩阵业务目标/证据 | BG-03（M4 S4） | 不新增权威表；查询派生 |
+
+M4 边界：外部记录不是权威工作项；通知/任务为运营表（默认不导出）；MCP 只读；单节点 SQLite；PG 多实例=M5。

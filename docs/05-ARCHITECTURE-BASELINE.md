@@ -54,6 +54,31 @@
 - ADR-0007：项目代码基线、Git Worktree 和知识更新机制。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0007-GIT-BASELINE.md`
 - ADR-0008：项目工作区与正式知识空间。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0008-WORKSPACE.md`
 - ADR-0009：文档解析（OPEN）；ADR-0010：需求上下文基线（Accepted v1.0）
+- ADR-0011：外部系统集成与凭据边界（**Proposed**，2026-11-13）→ `decisions/ADR-0011-EXTERNAL-INTEGRATION.md`
+- ADR-0012：团队服务端部署与数据库演进（**Proposed**，PG 多实例=M5）→ `decisions/ADR-0012-TEAM-SERVER.md`
+- ADR-0013：通知与外部发送（**Proposed**，站内默认/邮件企微配置启用）→ `decisions/ADR-0013-NOTIFICATIONS.md`
+
+## 6A. M4 逻辑组件（S0 草案）
+
+```text
+SPA
+ ├─ 通知中心（站内默认；邮件/企微状态只读展示）
+ ├─ 导入中心（来源/批次/dry-run/待映射记录）
+ ├─ 验收矩阵（业务目标/执行证据/偏差目标）
+ └─ 组织与用户（org_admin/停用/重置/Agent 账号）
+
+Domain Service
+ ├─ identity/org：org_admin、用户生命周期、Agent 账号、会话撤销
+ ├─ external：ExternalAdapter SPI、CSV/JSON 导入、Jira 文件映射、幂等/溯源
+ ├─ notification：事件→收件人、站内通知、邮件/企微渠道（默认关闭）
+ ├─ jobs：server_job worker（仅 writer；重试/死信）
+ ├─ agent：MCP 只读 + 本地审计 journal + writer 入库
+ └─ delivery：BG-01 zip、BG-03 矩阵
+
+边界：单节点 writer + SQLite；MCP 只读；无出站（除非渠道/API 配置启用）；PG/多实例=M5
+```
+
+新增外部依赖（计划）：`spring-boot-starter-mail`（邮件，配置后启用）、CSV 解析（`commons-csv` 或内置，S3 评审）、GreenMail（仅测试，Apache-2.0）。所有依赖需来源/许可证/漏洞检查。
 
 ## 7. 可观测性
 

@@ -4,12 +4,12 @@
 
 ## 当前状态（2026-11-13）
 
-- **M1 / M1.5 / M2 / M3 已完成**（本地验证通过，含 M3.5 补强）；下一阶段 **M4（企业集成与协同）**。
-- M3 闭环：Git 基线 → 交接包 → 实施回收 → 偏差/验收矩阵 → As-built → 知识更新（人工审核）。
-- **ADR-0008 补齐**：导出/导入包、备份/恢复、实例锁清理 CLI 已实现并通过真实演练。
-- **M3.5 技术债**：[`docs/specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md)（交接包文件导出、Baseline 部署/DDL 版本、验收矩阵证据链接）。
-- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`](handoffs/SESSION-HANDOFF-2026-11-13-M3.md)
-- M3 规格：[`docs/specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`docs/evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`docs/process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`docs/quality/M3-BUGS.md`](quality/M3-BUGS.md) · 验收：[`docs/M3-ACCEPTANCE.md`](M3-ACCEPTANCE.md)
+- **M1 / M1.5 / M2 / M3 已完成**（本地验证通过，含 M3.5 补强）；**M4（企业集成与协同）S0 草案已落盘，待负责人评审后进入 S1**。
+- M4 收敛口径：单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 Jira/CSM API、真实邮件/企微启用、PostgreSQL 多实例、远程 Agent 网关列入 **M4.5/M5**。
+- **M4 S0 产出**：[`specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)、[`specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)、[`specs/M4-THREAT-MODEL.md`](specs/M4-THREAT-MODEL.md)、ADR-0011/0012/0013（Proposed）、ADR-0006/0008 增补。
+- **M3.5 技术债**：[`specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md)（BG-01→M4 S2、BG-03→M4 S4、BG-02→M4 S6/M5）。
+- 交接入口：[`handoffs/SESSION-HANDOFF-2026-11-13-M3.md`](handoffs/SESSION-HANDOFF-2026-11-13-M3.md) · M4 S0：[`handoffs/SESSION-HANDOFF-2026-11-13-M4-S0.md`](handoffs/SESSION-HANDOFF-2026-11-13-M4-S0.md)
+- M3 规格：[`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`quality/M3-BUGS.md`](quality/M3-BUGS.md) · 验收：[`M3-ACCEPTANCE.md`](M3-ACCEPTANCE.md)
 - M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md) · 验收：[`docs/M2-ACCEPTANCE.md`](M2-ACCEPTANCE.md)
 - 历史记录：[`docs/process/M1-TIMELINE.md`](process/M1-TIMELINE.md) · [`docs/evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) · [`docs/quality/M1-BUGS.md`](quality/M1-BUGS.md)
 
@@ -36,20 +36,23 @@
 | [`specs/M1-PHASE1-PLAN.md`](specs/M1-PHASE1-PLAN.md) | M1 计划与 DoD |
 | [`specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) | M2 计划、状态机、就绪规则、一致性规则与实施记录 |
 | [`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) | M3 计划、切片顺序与 S1–S6/M3.5 实施记录 |
-| [`specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md) | M3.5 技术债与延期清单（BG-01–BG-03） |
+| [`specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md) | **M4 计划（S0 草案）**：S1–S6 切片、数据模型、权限矩阵、通知/导入/Agent 设计、验收 |
+| [`specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md) | **M4.5 落地计划**：Jira 只读 API、CSM、通知启用、远程 Agent、团队服务器试点；PG 多实例归 M5 |
+| [`specs/M4-THREAT-MODEL.md`](specs/M4-THREAT-MODEL.md) | M4 威胁模型与安全测试清单 |
+| [`specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md) | M3.5 技术债与延期清单（BG-01–BG-03，M4 关闭计划） |
 | [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) / [`M2-ACCEPTANCE.md`](M2-ACCEPTANCE.md) / [`M3-ACCEPTANCE.md`](M3-ACCEPTANCE.md) | 阶段验收记录（口径、结果、AC 映射、残留） |
 | [`specs/UI-SPEC.md`](specs/UI-SPEC.md) | UI 规格（路线 A）与 M1.5 实施记录 |
-| [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1–M3.5 决策补充日志（D-001–D-027） |
-| [`../decisions/`](../decisions/) | ADR-0001 – ADR-0008 + ADR-0010（ADR-0009 文档解析仍 OPEN，暂无文件） |
+| [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1–M4 S0 决策补充日志（D-001–D-036） |
+| [`../decisions/`](../decisions/) | ADR-0001 – ADR-0008、ADR-0010 + **ADR-0011/0012/0013（Proposed，M4 S0）**；ADR-0009 文档解析仍 OPEN；应用内 LLM 待另立 |
 
 ## 过程、质量与证据
 
 | 文档 | 内容 |
 |---|---|
-| [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) / [`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) | 提交级执行时间线 |
+| [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) / [`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) / [`process/M4-TIMELINE.md`](process/M4-TIMELINE.md) | 提交级执行时间线（M4 S0 已开始） |
 | [`quality/M1-BUGS.md`](quality/M1-BUGS.md) / [`quality/M2-BUGS.md`](quality/M2-BUGS.md) / [`quality/M3-BUGS.md`](quality/M3-BUGS.md) | 缺陷台账（根因/修复/回归） |
-| [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) / [`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图 |
-| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5/M2/M3-S1 历史快照 + M3/M3.5 当前快照） |
+| [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) / [`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) / [`evidence/M4-VERIFICATION.md`](evidence/M4-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图（M4 S0 为文档检查） |
+| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5/M2/M3-S1 历史快照 + M3/M3.5 + M4 S0） |
 
 ## 运行与集成
 
@@ -69,6 +72,6 @@
 ## 新会话推荐阅读顺序
 
 1. `AGENTS.md` → `docs/00-MASTER-GUIDE.md`
-2. 本索引 → `docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`
-3. 按 M4 读 `docs/04`、`docs/13`、`docs/12`、`docs/03`、`docs/07`、`docs/specs/M3.5-BACKLOG.md`、`docs/M3-ACCEPTANCE.md` 与 ADR-0007/0008；启动用 `docs/prompts/10-M4-KICKOFF.md`
+2. 本索引 → M4 S0 交接 `docs/handoffs/SESSION-HANDOFF-2026-11-13-M4-S0.md`（评审后）→ M3 交接
+3. 按 M4 读 `docs/specs/M4-PHASE4-PLAN.md`、`docs/specs/M4.5-PHASE45-PLAN.md`、`docs/specs/M4-THREAT-MODEL.md`、`docs/04`、`docs/12`、`docs/13`、ADR-0011/0012/0013、ADR-0006/0008 增补
 4. 需要实现细节时读 `docs/dev-setup.md`、`docs/evidence/M3-VERIFICATION.md`、代码与测试

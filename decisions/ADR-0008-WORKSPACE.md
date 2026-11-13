@@ -144,3 +144,45 @@ M3 切片 1 已实现本 ADR 的以下部分（证据：`docs/evidence/M3-VERIFI
 - **验证**：AdminPackageTest 4 tests（往返、口令锁定、篡改/非空拒绝、备份恢复、篡改备份拒绝）；scripts/admin-drill.mjs **9/9** 真实 CLI 演练（种子→导出→导入→启动校验→备份→恢复→再启动→非空拒绝）；后端全量 **83 tests**。
 - **实例锁清理（2026-11-13 补齐）**：`--admin-clear-lock --data-root=<root>` + `RestoreService` 同风格纯文件操作；仅在无活动写实例时删除锁与 holder，运行中拒绝并显示持有者；`scripts/clear-data-root-lock.ps1` 为运维封装；`LockCleanupServiceTest` 4 tests。
 - **未实现（后续）**：导出包加密与密钥管理、账号批量重置流程、增量导出。
+
+## 2026-11-13 M4 S0 增补：新表分类、Agent 审计与团队服务器边界（Proposed）
+
+> 负责人 2026-11-13 确认：M4 仍单节点单写者 + SQLite；团队服务器/证书暂不处理；PG 多实例归 M5。本增补细化 ADR-0008 在 M4 的落地口径。
+
+### 1. 新表分类（权威 vs 运营）
+
+| 表 | 分类 | 是否进导出/导入 | 说明 |
+|---|---|---|---|
+| `external_source` | 权威业务元数据 | 是 | 项目外部来源（Jira/CSM/通用），不含凭据 |
+| `import_batch` | 权威业务元数据 | 是 | 导入批次、原始 Artifact、校验/应用状态 |
+| `external_record` | 权威证据索引 | 是 | 外部记录/版本/映射/哈希，不含源码正文 |
+| `agent_call` | 权威审计（Agent 调用） | 是 | MCP 调用事件从本地 journal 入库，唯一 event_id |
+| `notification` | 运营/用户数据 | 否（默认） | 可由业务事件重建；不进入跨机导出 |
+| `notification_delivery` | 运营 | 否 | 外发重试/死信；含目标渠道状态，不含秘密 |
+| `server_job` | 运营 | 否 | 任务队列；跨机导入会产生重复执行风险 |
+
+- `AdminTables` 只加入“是”的表；`MigrationTest`/`admin-drill` 覆盖新增表。
+- `MIN_SCHEMA_VERSION` 每次迁移递增；只读 MCP 的 schema 门槛同步。
+- 导出包仍不含密码哈希（锁定值）、会话、SMTP/企微/API 凭据。
+
+### 2. Agent 审计落点（MCP 只读）
+
+- MCP 进程只读，**不能写 `audit_log`**；采用本地 append-only JSONL（`<dataRoot>/audit/agent-audit.jsonl`）+ writer 侧入库：
+  - MCP 每次 `tools/call` 写一行：`eventId`、`at`、`agentUserId`、`tool`、`projectId`、`resultCount`、`durationMs`、`error`（不含正文/参数原文）；
+  - writer 侧任务读取新行，写入 `agent_call`（唯一 `event_id`）并追加 `audit_log`（`action=agent.tool_call`，`object_type=agent_call`，`object_id=eventId`）；
+  - MCP 不创建目录、不取锁；目录由 writer 启动时创建；文件不可写时降级为 stderr 并告警；
+  - 该机制为过渡方案；HTTP Agent Gateway/服务令牌在 M4.5 评估。
+- JSONL 文件路径、轮转/保留策略、损坏行处理写入 M4 规格与 `dev-setup`。
+
+### 3. 团队服务器/单写者
+
+- 团队服务器仍是**单节点单写者**；后台任务 worker 只在 writer 进程运行，`read-only=true` 的 MCP 进程不跑任务、不发通知、不迁移。
+- 反向代理 TLS 是部署层能力，见 ADR-0012；数据根仍必须本地固定盘，不允许网络盘/云同步根。
+- PostgreSQL 多实例属于 M5，不在 ADR-0008 v1 范围；届时另立/修订 ADR-0003 与迁移/备份方案。
+
+### 4. 验证
+
+- 导出/导入包含 `external_source`/`import_batch`/`external_record`/`agent_call`，不含通知/任务/凭据；
+- `agent_call.event_id` 唯一，重复导入 JSONL 不重复；
+- MCP 只读进程无 `audit_log` 写入、无任务、无通知；
+- `MIN_SCHEMA_VERSION` 与 `MigrationTest` 同步。

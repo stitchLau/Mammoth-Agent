@@ -64,3 +64,35 @@ Mammoth 以 DSH 作为 Vibe Coding 工具与候选 Runtime，DSH Host 环境本�
 - 安装/启用/停用/卸载 DSH 插件是对运行环境的实质变更：需负责人批准、记录来源与版本、提供卸载/回滚方式。
 - 插件代码运行在 Host 进程且可访问工作区与网络：引入前审查来源、许可证、`engines.dsh` 兼容性与所需权限。
 - 插件不得把业务权威状态写入 DSH storage；DSH storage 仅用于非权威的本地状态（见 ADR-0001）。
+
+## 9. M4 外部集成、通知与 Agent 边界（2026-11-13，S0 草案）
+
+### 9.1 外部集成（ADR-0011）
+
+- **只读优先**：M4 只做文件导入；M4.5 才做 Jira/CSM 只读 API；双向同步另立 ADR。M4/M4.5 不执行外部写操作。
+- **外部记录不是权威事实**：导入产生 `external_record` 与证据候选；必须人工映射到 WorkItem/Evidence，不自动改状态/知识/方案。
+- **凭据**：仅环境变量/OS 凭据存储（`SecretProvider`）；禁止入库、入仓、入导出/交接包、入日志/截图；只读服务账号；缺失即禁用。
+- **网络**：主机白名单、HTTPS（带凭据）、禁止任意重定向、超时/响应上限、错误脱敏；负责人提供的 Jira 地址当前为 HTTP，未 HTTPS/未书面风险接受前不得发送凭据。
+- **导入内容**：按 Confidential 处理；原始文件 Artifact + sha256；不自动进 RAG；不把外部附件正文入库。
+- **审计**：`integration.import`、`integration.import.dry_run`、`external_record.map/reject`、`handoff.export`。
+
+### 9.2 通知与外部发送（ADR-0013）
+
+- 站内通知默认启用；邮件/企微**完整实现但默认关闭**，必须配置参数后才能启用。
+- 邮件/企微只用于**内部通知**；向客户/外部群发送需新 ADR（客户授权、模板审批、退订/合规）。
+- 模板代码化/版本化；禁止头注入/超长；正文摘要化，不含凭据/源码/完整敏感正文。
+- 外发走 `notification_delivery` + `server_job`：重试/退避/死信/限速；`webhook-url`/SMTP 密码视为凭据，日志/导出脱敏。
+- MCP 只读进程不运行任务、不发通知；worker 仅 writer。
+
+### 9.3 外部 Agent 与 MCP 审计（ADR-0006/0008 增补）
+
+- 专用 `account_type=agent` 账号、项目 viewer、禁止 Web 登录；不得复用 owner/editor 账号。
+- MCP 仍只读；调用审计写入 `<dataRoot>/audit/agent-audit.jsonl`，由 writer 入库 `agent_call` + `audit_log`；不记录参数原文/正文。
+- BG-01 交接包固定文件清单、秘密扫描、sha256 manifest、角色校验；不含凭据/源码。
+- 远程 Agent 网关/服务令牌在 M4.5 评估，需 TLS/令牌/限速/跨项目测试。
+
+### 9.4 团队服务器（ADR-0012）
+
+- M4 默认单机 localhost；团队部署必须反向代理 TLS、Secure Cookie、只信任配置代理、默认绑定 127.0.0.1。
+- 服务器/证书暂不处理（负责人决定）；PG 多实例=M5；不得用网络盘/云同步根替代。
+- 多实例前必须替换进程内登录限速、任务领取锁、备份恢复方案。

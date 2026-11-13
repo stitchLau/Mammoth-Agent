@@ -74,3 +74,29 @@
 1. ~~负责人批准~~ → 2026-11-12 已批准（Accepted v1.0）。
 2. 执行 ADR-0005（检索/RAG）Spike。
 3. M1 T4/T10 落地：Spring Security 接入、登录/登出/限速、授权服务、越权测试与审计。
+
+## 2026-11-13 M4 S0 增补：组织角色、用户生命周期与 Agent 账号（Proposed）
+
+> 本增补只扩展 ADR-0006 的授权/账号模型，不改变“默认拒绝 + 项目级 RBAC + 服务端会话”的基线。负责人 2026-11-13 已确认“组织/用户生命周期与权限收紧按建议执行”，详细内容待 S0 评审后随 ADR-0006 v1.1 生效。
+
+### 背景
+
+- 代码现状：授权服务只有项目级 `owner/editor/reviewer/viewer`；`role_assignment` 表存在但未使用；`POST /api/users` 对**任意已登录用户**开放；`GET /api/users` 返回全部用户；`app_user.status` 只有 `active`；`AccountService` 只支持本人改密，**无管理员停用/重置**。
+- ADR-0006 决策 4 已承诺“禁用用户立即失效其全部会话；口令重置仅由 owner 执行”，但 M1–M3 未实现。M4 必须补齐，否则团队服务器/外部 Agent 账号无法安全治理。
+
+### 决策
+
+1. **组织级角色 `org_admin`**：复用 `role_assignment`（`scope_type='organization'`, `scope_id=<org_id>`, `role='org_admin'`）；首个用户（bootstrap）自动成为 `org_admin`；迁移 V7 为已有组织回填最早创建的 active 用户。组织角色与项目角色分离：`org_admin` 不自动拥有项目写权限，项目权限仍按 `project_member` 判定。
+2. **用户生命周期**：`app_user.status` 使用 `active`/`disabled`；停用立即撤销该用户全部会话（`session.revoked_at`），后续 API 401；启用不恢复旧会话。新增 `account_type`（`human`/`agent`），Agent 账号**禁止 Web 交互登录**，只能作为 MCP/服务身份。
+3. **管理员口令重置**：仅 `org_admin` 可重置他人口令；设置临时口令 + `password_reset_required=true`；撤销全部会话；用户下次登录后只允许改密/登出/查看自己（服务端强制，不能只靠 UI）；改密后清除标记并重新登录。
+4. **用户创建/目录权限**：`POST /api/users` 仅 `org_admin`（空库 bootstrap 例外）；`GET /api/users`（含状态/创建时间）仅 `org_admin`；新增 `GET /api/users/directory` 给已登录用户返回最小字段（id/displayName/username），用于项目 owner 添加成员。
+5. **主数据权限细化**：客户/产品创建改为 `org_admin`；项目创建仍允许任何 active 用户（创建者成为项目 owner）；项目成员管理仍 owner-only。
+6. **审计**：`user.create`、`user.disable`、`user.enable`、`user.password_reset`、`user.org_role_change`、`user.session_revoke`、`auth.login_failed`、`auth.password_change` 落 `audit_log`；审计不含口令/临时口令。
+7. **迁移与兼容**：V7 增加 `app_user.email`（可空、格式校验）、`account_type`（默认 `human`）、`password_reset_required`（默认 0）；`role_assignment` 增加唯一索引 `(user_id, role, scope_type, scope_id)`；已有用户默认 `human`，不回填 email。
+8. **Agent 账号**：`account_type=agent` 的账号不能登录、不能改密；由 `org_admin` 创建，项目 owner 加为 `viewer`；MCP 仍用 `MAMMOTH_MCP_AGENT_USER_ID` 指向该账号（M4 S2 起）。专用服务令牌/远程 Agent 网关不在本增补，放 M4.5。
+
+### 影响/验证
+
+- 影响：团队服务器、通知收件人、外部 Agent 身份、审计读取；不改变项目级四眼/角色规则。
+- 验证：`OrgAdminTest`（bootstrap/角色/权限）、`UserLifecycleTest`（停用/启用/会话撤销/Agent 禁登）、`PasswordResetTest`（临时口令/强制改密/旧会话失效）、`UserDirectoryTest`（最小字段/非 admin 不可建用户）、迁移 V7 幂等/回填。
+- 回滚：关闭 `org_admin` 校验可回到“任意登录用户可建用户”的旧行为，但不建议；数据列可保留，回滚不丢数据。

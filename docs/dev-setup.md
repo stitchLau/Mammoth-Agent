@@ -200,3 +200,50 @@ java -jar $jar --admin-restore="$env:TEMP\mammoth-backups\mammoth-backup-<时间
 - 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）；
 - 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入与备份/恢复已实现（ADR-0008 CLI）**；实例锁清理已提供 CLI/脚本；
 - 在 DSH `workspace-write` 沙箱中 Playwright 会因 worker 管道 `EPERM` 失败；E2E 需普通终端、CI 或一次性提权。
+
+## M4 配置预告（S5 实现后生效；2026-11-13 S0）
+
+> 以下键位是 M4 S5 的设计口径，**当前代码尚未实现**，配置后不会生效；S5 落地时以实际 `application.yml`/环境变量为准。
+
+**站内通知（默认启用）**
+
+```properties
+mammoth.notifications.in-app.enabled=true
+```
+
+**邮件（完整实现、默认关闭；配置后启用）**
+
+```properties
+mammoth.notifications.email.enabled=false
+mammoth.notifications.email.from=
+mammoth.notifications.email.test-recipient=
+spring.mail.host=
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=          # 用环境变量注入，不要写入仓库
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+```
+
+**企微群机器人（完整实现、默认关闭；webhook 视为凭据）**
+
+```properties
+mammoth.notifications.wecom.enabled=false
+mammoth.notifications.wecom.webhook-url=       # 环境变量/OS 密钥，勿入仓/日志
+mammoth.notifications.wecom.msg-type=markdown
+mammoth.notifications.wecom.events=solution.submitted,job.failed
+mammoth.notifications.wecom.rate-limit-per-minute=20
+mammoth.notifications.wecom.test-webhook-url=  # 可选测试群
+```
+
+**任务/审计**
+
+```properties
+mammoth.jobs.enabled=true
+mammoth.jobs.poll-interval-ms=5000
+mammoth.jobs.max-attempts=5
+```
+
+- 默认关闭时**零外发**；启用前必须先配置必填参数，缺失会启动/保存失败。
+- 邮件/企微只用于内部通知；向客户/外部群发送需新 ADR。
+- 凭据只放环境变量/OS 存储，不写数据库、不写日志、不写导出/交接包。
