@@ -41,6 +41,7 @@
 | D-035 | ADR 编号 | ADR-0011 外部集成/凭据、0012 服务端/PG、0013 通知/外发；应用内 LLM 顺延另立 | 负责人"按建议" | `docs/13-OPEN-DECISIONS.md`；ADR-0011/0012/0013 |
 | D-036 | M3.5 BG 顺序 | BG-01 → M4 S2；BG-03 → M4 S4；BG-02 → M4 S6/M5（S6 条件） | 负责人"按你建议" | `docs/specs/M3.5-BACKLOG.md`；`M4-PHASE4-PLAN.md` §8 |
 | D-037 | M4 S1 实施 | `org_admin`（`role_assignment`）+ 用户停用/启用/管理员重置/强制改密/Agent 账号 + 建用户/目录收紧 + 客户/产品主数据仅 org_admin；V7；后端 103 tests、前端 25、E2E 4、演练 18/18/9/9/25/25 | 负责人"开S1" | `M4-PHASE4-PLAN.md` §6.6；`ADR-0006` v1.1 |
+| D-038 | M4 S2 实施 | BG-01 交接包 ZIP（manifest/逐文件 sha256/秘密扫描/Artifact/`handoff.export`）+ 专用 Agent 账号（复用 S1）+ MCP 本地 JSONL 审计 + writer 入库 `agent_call`/`audit_log`；V8；后端 109 tests、前端 25、E2E 4、演练 18/18/9/9/25/25 | 负责人"开S2" | `M4-PHASE4-PLAN.md` §17；`ADR-0008` 增补 |
 
 ## M3 前置（2026-11-13 已解除）
 

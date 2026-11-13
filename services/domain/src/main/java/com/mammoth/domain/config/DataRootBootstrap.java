@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
  *   db/          SQLite database + migrations metadata
  *   artifacts/   content-addressed immutable artifacts (ADR-0004)
  *   cache/       disposable derived data (indexes may live here or under db/)
+ *   audit/       local append-only MCP/agent audit journal (ADR-0008 addendum)
  * </pre>
  *
  * <p>Read-only instances (the MCP stdio entrypoint, ADR-0008) must not create directories or write
@@ -63,7 +64,7 @@ public class DataRootBootstrap {
     }
     try {
       Files.createDirectories(root);
-      for (String child : new String[] {"db", "artifacts", "cache"}) {
+      for (String child : new String[] {"db", "artifacts", "cache", "audit"}) {
         Files.createDirectories(root.resolve(child));
       }
       Path probe = root.resolve(PROBE_FILE);

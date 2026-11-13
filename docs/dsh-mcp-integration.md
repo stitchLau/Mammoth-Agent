@@ -50,10 +50,21 @@
 ## 4. 安全说明（重要）
 
 - HTTP 侧已使用正式认证（Spring Security 会话 Cookie + CSRF，2026-11-12 起）；MCP 入口**不经过 HTTP**，仍以 `MAMMOTH_MCP_AGENT_USER_ID` 指定本地用户身份。
-- 该用户必须是项目成员；**不得**用 owner 身份做长期 Agent 身份，应为 Agent 建**专用只读账号**（项目 viewer 角色），并纳入审计。
+- 该用户必须是项目成员；**不得**用 owner 身份做长期 Agent 身份。M4 S1 起由 org_admin 创建 `account_type=agent` 专用账号（不可 Web 登录），项目 owner 将其加为 `viewer`，并纳入审计。
 - 仅 `verified` 知识对 Agent 可见；草稿/待审文档不会泄露。
 - 工具只读，不提供写操作；写操作仍由人工在 Web/API 完成并留审计。
-- 后续应将环境变量身份替换为 MCP 专属服务凭据（ADR-0006 后续任务）。
+- 后续应将环境变量身份替换为 MCP 专属服务凭据（M4.5 评估）。
+
+## 4A. MCP 调用审计（M4 S2）
+
+- MCP 进程以只读连接打开 SQLite，**不能写 `audit_log`**；每次 `tools/call` 追加一行 JSONL 到
+  `<数据根>/audit/agent-audit.jsonl`（工具名、项目 ID、结果数、耗时、错误，不含参数原文/正文）。
+- writer 进程的 `AgentAuditIngestService` 定时读取该文件，写入 `agent_call`（`event_id` 唯一，
+  幂等）并追加 `audit_log`（`action=agent.tool_call`）。
+- `audit/` 目录由 writer 启动时创建；只读 MCP 不创建目录、不取锁；目录不可写时降级为 stderr 告警。
+- 审计查询可通过数据库/后续管理页查看；`agent_call` 进入导出包（权威审计表）。
+- 交接包 ZIP（BG-01）由 `GET .../handoff/package` 生成：manifest + 方案/任务/验收/基线 + README/SECURITY，
+  逐文件 sha256，秘密扫描，落 Artifact，审计 `handoff.export`；不含凭据/源码。
 
 ## 5. 故障排查
 

@@ -27,3 +27,17 @@
 ## 无产品缺陷说明
 
 S1 未发现权限绕过、会话失效或迁移破坏；负向测试覆盖非 admin 建用户/停用/重置/主数据、停用撤销会话、Agent 禁登、最后 org_admin 保护、临时口令会话白名单。
+
+## B-M4-003 S2 审计 ingest 测试与定时 poller 竞争
+
+| 项 | 内容 |
+|---|---|
+| 现象 | `AgentAuditIngestTest` 依赖 `ingestNow()` 返回值；默认 10s 初始延迟的 `@Scheduled` 可能在测试窗口内先消费 journal，造成偶发失败 |
+| 根因 | 测试上下文与生产调度共用同一 `@Scheduled` 默认参数 |
+| 修复 | 测试用 `mammoth.agent-audit.initial-delay-ms=600000` / `ingest-interval-ms=600000` 隔离 poller；生产默认仍为 10s/30s |
+| 回归 | 后端 109 tests；`AgentAuditIngestTest` 稳定通过 |
+| 状态 | 已关闭 |
+
+## S2 说明
+
+S2 未发现权限绕过或审计丢失；负向覆盖 zip 秘密拒绝、跨项目/角色、journal 损坏行跳过、`event_id` 幂等。zip 不加密为已知限制（与 ADR-0008 一致）。

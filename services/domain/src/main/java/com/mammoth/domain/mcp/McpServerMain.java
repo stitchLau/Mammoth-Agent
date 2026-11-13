@@ -1,6 +1,7 @@
 package com.mammoth.domain.mcp;
 
 import com.mammoth.domain.DomainApplication;
+import com.mammoth.domain.config.DataRootBootstrap;
 import java.io.BufferedReader;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -67,13 +68,20 @@ public final class McpServerMain {
       }
       McpToolService tools = context.getBean(McpToolService.class);
       String agentUserId = context.getEnvironment().getProperty("mammoth.mcp.agent-user-id", "");
+      DataRootBootstrap bootstrap = context.getBean(DataRootBootstrap.class);
+      AgentAuditJournal journal = new AgentAuditJournal(bootstrap.root().resolve("audit"));
       serve(new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)),
-          protocolOut, tools, agentUserId);
+          protocolOut, tools, agentUserId, journal);
     }
   }
 
   static void serve(BufferedReader reader, PrintStream out, McpToolService tools, String agentUserId)
       throws Exception {
+    serve(reader, out, tools, agentUserId, null);
+  }
+
+  static void serve(BufferedReader reader, PrintStream out, McpToolService tools, String agentUserId,
+      AgentAuditJournal auditJournal) throws Exception {
     String line;
     while ((line = reader.readLine()) != null) {
       line = line.trim();
@@ -96,7 +104,7 @@ public final class McpServerMain {
         continue;
       }
       try {
-        dispatch(out, id, method, message, tools, agentUserId);
+        dispatch(out, id, method, message, tools, agentUserId, auditJournal);
       } catch (RuntimeException error) {
         sendError(out, id, -32603, "Internal error: " + error.getMessage());
       }
@@ -104,7 +112,7 @@ public final class McpServerMain {
   }
 
   private static void dispatch(PrintStream out, Object id, String method, Map<?, ?> message,
-      McpToolService tools, String agentUserId) {
+      McpToolService tools, String agentUserId, AgentAuditJournal auditJournal) {
     switch (method) {
       case "initialize" -> sendResult(out, id, McpJson.orderedMap(
           "protocolVersion", PROTOCOL_VERSION,
@@ -112,7 +120,7 @@ public final class McpServerMain {
           "serverInfo", McpJson.orderedMap("name", "mammoth-domain", "version", "0.1.0")));
       case "ping" -> sendResult(out, id, McpJson.orderedMap());
       case "tools/list" -> sendResult(out, id, McpJson.orderedMap("tools", toolDescriptors()));
-      case "tools/call" -> handleToolCall(out, id, message, tools, agentUserId);
+      case "tools/call" -> handleToolCall(out, id, message, tools, agentUserId, auditJournal);
       default -> sendError(out, id, -32601, "Method not found: " + method);
     }
   }
@@ -158,7 +166,7 @@ public final class McpServerMain {
   }
 
   private static void handleToolCall(PrintStream out, Object id, Map<?, ?> message,
-      McpToolService tools, String agentUserId) {
+      McpToolService tools, String agentUserId, AgentAuditJournal auditJournal) {
     Map<?, ?> params = asMap(message.get("params"));
     String name = asString(params.get("name"));
     Map<?, ?> arguments = asMap(params.get("arguments"));
@@ -166,6 +174,10 @@ public final class McpServerMain {
       sendToolError(out, id, "MAMMOTH_MCP_AGENT_USER_ID is not configured; refusing agent access.");
       return;
     }
+    String projectId = asString(arguments.get("projectId"));
+    long started = System.nanoTime();
+    int resultCount = 0;
+    String auditError = null;
     try {
       switch (name == null ? "" : name) {
         case "search_project_knowledge" -> {
@@ -174,6 +186,7 @@ public final class McpServerMain {
               asString(arguments.get("projectId")),
               asString(arguments.get("query")),
               asInt(arguments.get("topK")));
+          resultCount = hits.size();
           List<Object> payload = hits.stream().map(hit -> (Object) McpJson.orderedMap(
               "documentId", hit.documentId(),
               "title", hit.title(),
@@ -191,6 +204,7 @@ public final class McpServerMain {
               agentUserId,
               asString(arguments.get("projectId")),
               asString(arguments.get("documentId")));
+          resultCount = 1;
           List<Object> refs = document.sourceRefs().stream().map(ref -> (Object) McpJson.orderedMap(
               "artifactId", ref.artifactId(),
               "locator", ref.locator(),
@@ -214,6 +228,7 @@ public final class McpServerMain {
               agentUserId,
               asString(arguments.get("projectId")),
               asString(arguments.get("workItemId")));
+          resultCount = 1;
           List<Object> evidence = context.evidence().stream().map(entry -> (Object) McpJson.orderedMap(
               "batchNo", entry.batchNo(),
               "type", entry.type(),
@@ -246,10 +261,24 @@ public final class McpServerMain {
               "content", List.of(McpJson.orderedMap("type", "text", "text", McpJson.write(payload))),
               "isError", Boolean.FALSE));
         }
-        default -> sendToolError(out, id, "unknown tool: " + name);
+        default -> {
+          auditError = "unknown tool: " + name;
+          sendToolError(out, id, auditError);
+        }
       }
+      audit(auditJournal, agentUserId, name, projectId, resultCount, started, auditError);
     } catch (RuntimeException error) {
+      audit(auditJournal, agentUserId, name, projectId, resultCount, started,
+          error.getClass().getSimpleName());
       sendToolError(out, id, error.getClass().getSimpleName() + ": " + error.getMessage());
+    }
+  }
+
+  private static void audit(AgentAuditJournal journal, String agentUserId, String tool,
+      String projectId, int resultCount, long startedNanos, String error) {
+    if (journal != null) {
+      journal.record(agentUserId, tool == null ? "unknown" : tool, projectId, resultCount,
+          (System.nanoTime() - startedNanos) / 1_000_000L, error);
     }
   }
 

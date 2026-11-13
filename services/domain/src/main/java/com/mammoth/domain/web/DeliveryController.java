@@ -2,6 +2,7 @@ package com.mammoth.domain.web;
 
 import com.mammoth.domain.delivery.DeliveryService;
 import com.mammoth.domain.delivery.DeliverySnapshot;
+import com.mammoth.domain.delivery.HandoffPackageService;
 import com.mammoth.domain.delivery.KnowledgeUpdateProposal;
 import com.mammoth.domain.execution.ExecutionChange;
 import com.mammoth.domain.execution.ExecutionDeviation;
@@ -28,12 +29,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeliveryController {
 
   private final DeliveryService deliveryService;
+  private final HandoffPackageService handoffPackageService;
   private final ExecutionService executionService;
   private final AuthorizationService authorizationService;
 
-  public DeliveryController(DeliveryService deliveryService, ExecutionService executionService,
+  public DeliveryController(DeliveryService deliveryService,
+      HandoffPackageService handoffPackageService, ExecutionService executionService,
       AuthorizationService authorizationService) {
     this.deliveryService = deliveryService;
+    this.handoffPackageService = handoffPackageService;
     this.executionService = executionService;
     this.authorizationService = authorizationService;
   }
@@ -54,6 +58,11 @@ public class DeliveryController {
 
   public record HandoffResponse(String markdown, String solutionVersionId, int solutionVersion,
       String baselineId, String generatedAt) {
+  }
+
+  public record HandoffPackageResponse(String artifactId, String originalName, String sha256,
+      long sizeBytes, String downloadUrl, String generatedAt, String solutionVersionId,
+      int solutionVersion, String baselineId) {
   }
 
   public record ExecutionRecordResponse(String id, String projectId, String workItemId,
@@ -150,6 +159,18 @@ public class DeliveryController {
     var generated = deliveryService.handoff(actor, projectId, workItemId);
     return new HandoffResponse(generated.markdown(), generated.solutionVersionId(),
         generated.solutionVersion(), generated.baselineId(), generated.generatedAt());
+  }
+
+  /** BG-01: generate a downloadable zip with manifest + sha256 and audit the export. */
+  @GetMapping("/handoff/package")
+  public HandoffPackageResponse handoffPackage(@PathVariable String projectId,
+      @PathVariable String workItemId) {
+    AppUser actor = CurrentUser.require(authorizationService);
+    HandoffPackageService.PackageView view = handoffPackageService.export(actor, projectId,
+        workItemId);
+    return new HandoffPackageResponse(view.artifactId(), view.originalName(), view.sha256(),
+        view.sizeBytes(), view.downloadUrl(), view.generatedAt(), view.solutionVersionId(),
+        view.solutionVersion(), view.baselineId());
   }
 
   @GetMapping("/executions")

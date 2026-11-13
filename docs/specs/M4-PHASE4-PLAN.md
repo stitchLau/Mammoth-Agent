@@ -1,6 +1,6 @@
 # M4 阶段计划：企业集成与协同（S0 草案）
 
-- **状态**：S0 完成（ADR/规格/威胁模型）；**S1 已实施并通过本地验证（2026-11-13）**；S2 待开始
+- **状态**：S0 完成；S1/S2 已实施并通过本地验证（2026-11-13）；S3 待开始
 - **日期**：2026-11-13
 - **基线**：`main` @ `3231b43`（以 `git log -1` 为准）
 - **依据**：`docs/04-MVP-STRATEGY.md` Phase 4、`docs/12-ROADMAP.md` M4、`docs/13-OPEN-DECISIONS.md`、`decisions/ADR-0006`（含 2026-11-13 增补）、`ADR-0007`、`ADR-0008`（含增补）、`ADR-0011`、`ADR-0012`、`ADR-0013`
@@ -33,8 +33,8 @@
 
 | 切片 | 内容 |
 |---|---|
-| S1 | 组织/用户生命周期与权限收紧（V7） |
-| S2 | 外部 Agent 前置：BG-01 交接包 zip + 专用 Agent 账号 + MCP 审计（V8） |
+| S1 | 组织/用户生命周期与权限收紧（V7，已完成） |
+| S2 | 外部 Agent 前置：BG-01 交接包 zip + 专用 Agent 账号 + MCP 审计（V8，已完成） |
 | S3 | 通用只读导入框架（V9） |
 | S4 | Jira 导出文件映射 + BG-03 验收矩阵补强（无迁移） |
 | S5 | 站内通知 + 邮件/企微渠道（完整实现、默认关闭）+ 服务端任务（V10） |
@@ -376,3 +376,14 @@ S0 准入（本文件/ADR/威胁模型/夹具清单）
 - [`M3.5-BACKLOG.md`](M3.5-BACKLOG.md)
 - `decisions/ADR-0011`、`ADR-0012`、`ADR-0013`、`ADR-0006`/`ADR-0008` 增补
 - `docs/04`、`docs/07`、`docs/08`、`docs/09`、`docs/12`
+
+## 17. S2 实施记录（2026-11-13）
+
+- **数据**：`V8__agent_call_audit.sql`——`agent_call`（event_id 主键、agent_user_id/tool/project_id/result_count/duration_ms/error/at/ingested_at/source_file）；`MIN_SCHEMA_VERSION=8`；`agent_call` 加入 `AdminTables`（权威审计，导出/导入保留）。
+- **BG-01 交接包**：`HandoffPackageService` + `GET .../handoff/package`；zip 含 `manifest.properties`（方案/需求/基线/上下文 + 每文件 sha256）、`solution-business.md`、`solution-technical.md`、`tasks.md`、`acceptance.md`、`baseline.md`、`handoff.md`、`README.md`、`SECURITY.md`；秘密模式扫描；zip 落 Artifact（kind=`handoff_package`）；审计 `handoff.export`；UI“生成交接包 ZIP”+下载链接。
+- **MCP 审计**：`AgentAuditJournal`（MCP 只读进程写 `<dataRoot>/audit/agent-audit.jsonl`，不含参数/正文）；`AgentAuditIngestService`（writer-only，`TransactionTemplate` + 定时）写 `agent_call` + `audit_log(agent.tool_call)`；`agent_call.event_id` 幂等；损坏行跳过；`SchedulingConfig` 在 `read-only=true` 时禁用调度；`DataRootBootstrap` 创建 `audit/`。
+- **Agent 账号**：复用 S1 `account_type=agent`（禁登、org_admin 创建、项目 viewer）；MCP 文档更新。
+- **测试**：`DeliveryWorkflowTest` +2（zip/manifest/hash/审计、秘密拒绝）；`AgentAuditJournalTest` 2；`AgentAuditIngestTest` 1（幂等/损坏行/audit_log）；`McpServerMainTest` +1（journal）；`MigrationTest` V8；`AdminPackageTest` schema 8。
+- **回归（本机）**：后端全量、前端 build + 25 tests、E2E 4 passed（含 ZIP）、M3 演练、ADR-0008 演练、M3 演示；具体数字见 `docs/evidence/M4-VERIFICATION.md` §2。
+- **偏差/限制**：MCP journal 采用“全文件读取 + event_id 去重”，大 journal 需轮转（M4.5/后续）；审计查询暂无专门 UI（走 DB/后续管理页）；交接包不加密（与 ADR-0008 一致）；zip 时间戳固定为 0 以便可复现。
+- **未做**：S3 导入、S4 Jira、S5 通知/任务、S6 团队服务器；ADR-0011/0012/0013 仍 Proposed。

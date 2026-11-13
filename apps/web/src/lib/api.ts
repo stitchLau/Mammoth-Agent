@@ -900,6 +900,18 @@ export interface HandoffView {
   generatedAt: string
 }
 
+export interface HandoffPackageView {
+  artifactId: string
+  originalName: string
+  sha256: string
+  sizeBytes: number
+  downloadUrl: string
+  generatedAt: string
+  solutionVersionId: string
+  solutionVersion: number
+  baselineId: string | null
+}
+
 export interface DeliverySnapshotView {
   id: string
   projectId: string
@@ -963,6 +975,15 @@ export function captureBaseline(
 
 export function getHandoff(projectId: string, workItemId: string): Promise<HandoffView> {
   return request<HandoffView>(`/api/projects/${projectId}/work-items/${workItemId}/handoff`)
+}
+
+export function getHandoffPackage(
+  projectId: string,
+  workItemId: string,
+): Promise<HandoffPackageView> {
+  return request<HandoffPackageView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/handoff/package`,
+  )
 }
 
 export function listExecutions(

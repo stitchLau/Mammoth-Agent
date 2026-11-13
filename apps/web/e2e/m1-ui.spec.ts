@@ -340,6 +340,10 @@ test('M3 baseline, handoff, execution and delivery approval', async ({ page }) =
       await expect(page.getByText('开发交接包（Markdown）')).toBeVisible()
       await expect(page.getByText(/只读约束/)).toBeVisible()
 
+      await page.getByRole('button', { name: '生成交接包 ZIP' }).click()
+      await expect(page.getByText('交接包已生成')).toBeVisible()
+      await expect(page.getByRole('link', { name: /下载 .*\.zip/ })).toBeVisible()
+
       writeFileSync(join(repo, 'src', 'App.java'), 'class App { int duplicateCheck; }\n')
       writeFileSync(join(repo, 'src', 'ScanValidator.java'), 'class ScanValidator {}\n')
       git('add', '-A')

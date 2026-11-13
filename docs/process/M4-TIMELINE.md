@@ -44,8 +44,19 @@
 | 回归 | `m3-acceptance-drill`、`admin-drill`、`demo-m3` | **18/18、9/9、25/25** |
 | 偏差 | `UserService.create` 保留内部/测试 provisioning；orgAdmin 列表 N+1；未做邮件找回/SSO | 见 M4 计划 §6.6 |
 
-## 5. 下一步
+## 5. 切片 2（S2，2026-11-13）
 
-- S1 已完成；进入 **S2**：BG-01 交接包 zip + 专用 Agent 账号 + MCP 审计（本地 JSONL + writer 入库）。
-- S1 遗留：`UserService.create` 内部原语的使用边界、orgAdmin 列表查询优化（小团队可接受）。
-- S2–S5 按计划推进；S6 视负责人是否要团队服务器。
+| 阶段 | 内容 | 结果 |
+|---|---|---|
+| 规格 | M4 计划 §7（BG-01/Agent/MCP 审计）、ADR-0008 增补（agent_call/journal） | 先测试后实现 |
+| 数据 | `V8__agent_call_audit.sql`：`agent_call` + 索引；`MIN_SCHEMA_VERSION=8`；`AdminTables` 加入 `agent_call` | 迁移/导出/备份测试通过 |
+| BG-01 | `HandoffPackageService` + `GET .../handoff/package`；zip（manifest+sha256+方案/任务/验收/基线/README/SECURITY）；秘密扫描；Artifact；`handoff.export`；UI 下载链接 | DeliveryWorkflowTest +2 |
+| MCP 审计 | `AgentAuditJournal`（只读进程 JSONL）；`AgentAuditIngestService`（writer 定时入库 `agent_call`+`audit_log`）；`SchedulingConfig` 只读禁用；`DataRootBootstrap` 创建 `audit/` | Journal/Ingest/McpServer 测试 |
+| 回归 | 后端 109 tests；前端 25；E2E 4（含 ZIP）；演练 18/18、9/9；演示 25/25 | 全部通过 |
+| 偏差 | journal 全量读取 + event_id 去重（大文件需轮转）；无专门审计 UI；zip 不加密 | 见 M4 计划 §17 |
+
+## 6. 下一步
+
+- S2 已完成；进入 **S3**：通用只读导入框架（CSV/JSON、来源/批次/外部记录、幂等、dry-run、审计；V9）。
+- S3 前确认：CSV 解析依赖（`commons-csv` vs 内置）、导入映射 profile 形态、导入上限。
+- S4 Jira 文件/BG-03、S5 通知/任务、S6 团队服务器按计划推进。

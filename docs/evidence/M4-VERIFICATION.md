@@ -1,9 +1,9 @@
 # M4 验证证据
 
 - **日期**：2026-11-13（Asia/Shanghai）
-- **范围**：M4 S0（ADR/规格/威胁模型/文档同步）；S1–S6 实施后追加
+- **范围**：M4 S0–S2（S0 文档；S1 组织/用户；S2 BG-01/Agent/MCP 审计）；S3–S6 实施后追加
 - **规格**：`docs/specs/M4-PHASE4-PLAN.md`
-- **结论**：S0 仅文档，无业务代码；已做工作树/空白/本地链接/凭据模式检查。S1 起补自动化与浏览器验证。
+- **结论**：S0 文档检查通过；S1/S2 自动化、浏览器 E2E 与 CLI 演练通过（本机）；CI 远端未验证。
 
 ## 0. S0（2026-11-13）
 
@@ -33,17 +33,31 @@
 
 **S1 关键验证**：非 admin 建用户/停用/重置/主数据 → 403；停用撤销旧会话并阻止登录；Agent 账号禁登；最后 active org_admin 不可降级；临时口令会话仅能 `/api/auth/{me,password,logout,csrf}`；改密清除标记并重新登录。真实 HTTP 门禁用 `PasswordResetAccessTest`（RANDOM_PORT）验证。
 
-## 2. S2–S6（待填）
+## 2. S2（2026-11-13，已完成）
+
+| 检查 | 命令 | 结果 |
+|---|---|---|
+| 后端全量 | `mvn -B -ntp -f services/domain/pom.xml verify` | **BUILD SUCCESS，109 tests**（S1 103 + S2 6） |
+| S2 新增测试 | `DeliveryWorkflowTest` +2（zip/manifest/sha256/审计、秘密拒绝）、`AgentAuditJournalTest` 2、`AgentAuditIngestTest` 1、`McpServerMainTest` +1、`MigrationTest` V8、`AdminPackageTest` schema 8 | 全部通过 |
+| 迁移 | `MigrationTest` | V1–V8 幂等；`agent_call` 表/索引；V7 回填仍通过 |
+| 前端 | `cd apps/web; npm run build; npm test` | build 通过；**25 tests** |
+| 浏览器 E2E | 空数据根 + `npm run test:e2e` | **4 passed（15.8s）**：M1/M2/M3（含交接包 ZIP 生成/下载链接）+ M4 S1 |
+| M3 验收演练 | `node scripts/m3-acceptance-drill.mjs` | **18/18** |
+| ADR-0008 演练 | `node scripts/admin-drill.mjs` | **9/9**（schema v8，32 表） |
+| M3 API 演示 | `node scripts/demo-m3.mjs` | **25/25** |
+
+**S2 关键验证**：zip 含 `manifest.properties`（每个文件 sha256）、方案/任务/验收/基线/README/SECURITY；秘密模式命中 `password=...` 时拒绝；`handoff.export` 审计；MCP journal 写入不含参数/正文；writer 入库 `agent_call` + `audit_log` 幂等；损坏 journal 行跳过；`read-only=true` 时调度配置禁用。
+
+## 3. S3–S6（待填）
 
 | 切片 | 检查 | 结果 |
 |---|---|---|
-| S2 | BG-01/Agent/MCP 审计测试 | 待执行 |
 | S3 | 导入框架/幂等/dry-run 测试 | 待执行 |
 | S4 | Jira 文件映射/BG-03 | 待执行 |
 | S5 | 通知/任务/本地 SMTP/HTTP stub | 待执行 |
 | S6 | 团队服务器预案（条件） | 待执行 |
 
-## 2. 环境与口径
+## 4. 环境与口径
 
 - Windows PowerShell 5.1；JDK 17.0.15；Maven 3.9.11；Node/npm 按仓库；SQLite(WAL)。
 - 测试使用临时数据根与合成数据；禁止真实客户数据/生产凭据/生产环境。

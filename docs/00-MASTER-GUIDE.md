@@ -135,7 +135,7 @@ Agent 在任务开始时必须输出：
 
 这些事项必须通过短技术 Spike 和 ADR 决定。不得因为 Agent 偏好某个框架就直接定案。
 
-**2026-11-13 更新**：M1–M3 已完成；M4 S0 已定 ADR-0011（外部集成/凭据，Proposed）、ADR-0012（团队服务端；PG 多实例=M5，Proposed）、ADR-0013（通知/外发，Proposed），并增补 ADR-0006/0008。M4 S1 已落地 `org_admin`/用户停用重置/Agent 账号/强制改密（ADR-0006 v1.1）。M4 收敛为单节点协作 + 只读集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/PG 多实例/远程网关见 `docs/specs/M4.5-PHASE45-PLAN.md`。应用内 LLM 仍需另立 ADR。
+**2026-11-13 更新**：M1–M3 已完成；M4 S0 已定 ADR-0011（外部集成/凭据，Proposed）、ADR-0012（团队服务端；PG 多实例=M5，Proposed）、ADR-0013（通知/外发，Proposed），并增补 ADR-0006/0008。M4 S1 已落地 `org_admin`/用户停用重置/Agent 账号/强制改密（ADR-0006 v1.1）；S2 已落地 BG-01 交接包 ZIP 与 MCP 审计（V8）。M4 收敛为单节点协作 + 只读集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/PG 多实例/远程网关见 `docs/specs/M4.5-PHASE45-PLAN.md`。应用内 LLM 仍需另立 ADR。
 
 ## 12. Lead Agent 与 SubAgent 协作
 

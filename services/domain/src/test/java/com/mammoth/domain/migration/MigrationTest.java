@@ -24,7 +24,7 @@ class MigrationTest {
   private static final List<String> EXPECTED_TABLES = List.of(
       "organization", "app_user", "role_assignment", "customer", "product", "project",
       "project_product", "project_member", "artifact", "knowledge_document",
-      "knowledge_source_ref", "knowledge_chunk", "audit_log", "session",
+      "knowledge_source_ref", "knowledge_chunk", "audit_log", "session", "agent_call",
       "work_item", "requirement_evidence", "requirement_assessment", "requirement_snapshot",
       "solution_version", "solution_design_item", "acceptance_criterion", "solution_task",
       "approval_record",
@@ -44,8 +44,8 @@ class MigrationTest {
         .load();
 
     MigrateResult first = flyway.migrate();
-    assertThat(first.migrationsExecuted).isEqualTo(7);
-    assertThat(first.targetSchemaVersion).isEqualTo("7");
+    assertThat(first.migrationsExecuted).isEqualTo(8);
+    assertThat(first.targetSchemaVersion).isEqualTo("8");
 
     MigrateResult second = flyway.migrate();
     assertThat(second.migrationsExecuted).isZero();
@@ -137,7 +137,7 @@ class MigrationTest {
         versions.add(resultSet.getString("version"));
         assertThat(resultSet.getBoolean("success")).isTrue();
       }
-      assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7");
+      assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
     }
   }
 }

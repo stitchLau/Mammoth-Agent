@@ -29,7 +29,7 @@ import org.sqlite.SQLiteDataSource;
 public class DataSourceConfig {
 
   /** Latest migration version this build understands (ADR-0008 read-only startup check). */
-  static final int MIN_SCHEMA_VERSION = 7;
+  static final int MIN_SCHEMA_VERSION = 8;
 
   private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
 

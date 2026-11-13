@@ -82,7 +82,10 @@ public class DeliveryService {
   }
 
   public record Generated(String markdown, String solutionVersionId, int solutionVersion,
-      String baselineId, String generatedAt) {
+      String baselineId, String generatedAt, String workItemId, String itemNo, String itemTitle,
+      String solutionTitle, String contextSnapshotId, String businessMarkdown,
+      String technicalMarkdown, String tasksMarkdown, String acceptanceMarkdown,
+      String baselineMarkdown) {
   }
 
   @Transactional
@@ -259,31 +262,72 @@ public class DeliveryService {
             : detail.version().getContextSnapshotId())
         .append("\n\n");
     markdown.append("> 只读约束：实施方不得修改已批准方案；Mammoth 不托管代码，变更以 commit 为准。\n\n");
-    markdown.append("## 1. 开发任务\n\n");
-    for (SolutionTask task : detail.tasks()) {
-      markdown.append("### ").append(task.getTitle()).append("\n\n");
-      if (task.getDescription() != null) {
-        markdown.append("- 说明：").append(task.getDescription()).append('\n');
-      }
-      if (task.getDoneWhen() != null) {
-        markdown.append("- 完成条件：").append(task.getDoneWhen()).append('\n');
-      }
-      if (task.getDependsOnTaskId() != null) {
-        markdown.append("- 依赖任务：").append(task.getDependsOnTaskId()).append('\n');
-      }
-      markdown.append('\n');
-    }
-    markdown.append("## 2. 验收标准\n\n");
-    for (AcceptanceCriterion criterion : detail.acceptanceCriteria()) {
-      markdown.append("- ").append(criterion.getText()).append('\n');
-    }
+    String tasksMarkdown = renderTasks(detail.tasks());
+    String acceptanceMarkdown = renderAcceptance(detail.acceptanceCriteria());
+    String baselineMarkdown = renderBaseline(baseline);
+    markdown.append("## 1. 开发任务\n\n").append(tasksMarkdown);
+    markdown.append("## 2. 验收标准\n\n").append(acceptanceMarkdown);
     markdown.append('\n').append(business).append('\n').append(technical).append('\n');
     String generatedAt = Ids.nowIso();
     auditService.record(actor.getId(), "handoff.generate", "work_item", workItemId,
         JsonLite.write(JsonLite.object("solutionVersionId", versionId,
             "baselineId", baseline == null ? null : baseline.getId())));
     return new Generated(markdown.toString(), versionId, detail.version().getVersion(),
-        baseline == null ? null : baseline.getId(), generatedAt);
+        baseline == null ? null : baseline.getId(), generatedAt, workItemId, item.getItemNo(),
+        item.getTitle(), detail.version().getTitle(), detail.version().getContextSnapshotId(),
+        business, technical, tasksMarkdown, acceptanceMarkdown, baselineMarkdown);
+  }
+
+  private String renderTasks(List<SolutionTask> tasks) {
+    StringBuilder out = new StringBuilder();
+    for (SolutionTask task : tasks) {
+      out.append("### ").append(task.getTitle()).append("\n\n");
+      if (task.getDescription() != null) {
+        out.append("- 说明：").append(task.getDescription()).append('\n');
+      }
+      if (task.getDoneWhen() != null) {
+        out.append("- 完成条件：").append(task.getDoneWhen()).append('\n');
+      }
+      if (task.getDependsOnTaskId() != null) {
+        out.append("- 依赖任务：").append(task.getDependsOnTaskId()).append('\n');
+      }
+      out.append('\n');
+    }
+    return out.toString();
+  }
+
+  private String renderAcceptance(List<AcceptanceCriterion> criteria) {
+    StringBuilder out = new StringBuilder();
+    for (AcceptanceCriterion criterion : criteria) {
+      out.append("- ").append(criterion.getText()).append('\n');
+    }
+    return out.toString();
+  }
+
+  private String renderBaseline(ProjectBaseline baseline) {
+    if (baseline == null) {
+      return "# 代码基线\n\n未捕获基线。\n";
+    }
+    Map<String, String> labels = new HashMap<>();
+    for (ProjectRepository repository : projectRepositoryRepository
+        .findByProjectIdOrderByAddedAtAsc(baseline.getProjectId())) {
+      labels.put(repository.getId(), repository.getLabel());
+    }
+    StringBuilder out = new StringBuilder("# 代码基线\n\n");
+    out.append("- 基线 ID：").append(baseline.getId()).append('\n');
+    out.append("- 捕获时间：").append(baseline.getCapturedAt()).append('\n');
+    out.append("- 捕获人：").append(baseline.getCapturedBy()).append('\n');
+    out.append("- 完整：").append(baseline.isComplete()).append('\n');
+    out.append("- 说明：").append(baseline.getNote() == null ? "—" : baseline.getNote())
+        .append("\n\n");
+    out.append("| 仓库 | commit | branch | dirty | worktree |\n|---|---|---|---|---|\n");
+    for (var repo : baselineService.detail(baseline.getId(), baseline.getProjectId()).repos()) {
+      out.append("| ").append(labels.getOrDefault(repo.getRepositoryId(), repo.getRepositoryId()))
+          .append(" | `").append(repo.getCommitSha()).append("` | ")
+          .append(repo.getBranch() == null ? "—" : repo.getBranch()).append(" | ")
+          .append(repo.isDirty()).append(" | ").append(repo.isWorktree()).append(" |\n");
+    }
+    return out.toString();
   }
 
   private String buildAsBuilt(AppUser actor, String projectId, WorkItem item, String versionId) {

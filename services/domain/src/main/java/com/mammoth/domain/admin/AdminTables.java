@@ -21,6 +21,7 @@ final class AdminTables {
       "knowledge_source_ref",
       "knowledge_chunk",
       "audit_log",
+      "agent_call",
       "work_item",
       "requirement_evidence",
       "requirement_assessment",

@@ -3,6 +3,8 @@ package com.mammoth.domain.delivery;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.mammoth.domain.artifact.ArtifactRecord;
+import com.mammoth.domain.artifact.ArtifactService;
 import com.mammoth.domain.baseline.BaselineService;
 import com.mammoth.domain.baseline.ProjectBaseline;
 import com.mammoth.domain.baseline.ProjectRepository;
@@ -14,6 +16,7 @@ import com.mammoth.domain.knowledge.KnowledgeSearchAdapter;
 import com.mammoth.domain.knowledge.KnowledgeService;
 import com.mammoth.domain.knowledge.KnowledgeStalenessService;
 import com.mammoth.domain.persistence.AppUser;
+import com.mammoth.domain.persistence.AuditLogRepository;
 import com.mammoth.domain.persistence.Customer;
 import com.mammoth.domain.persistence.Project;
 import com.mammoth.domain.service.AuthorizationService;
@@ -26,10 +29,17 @@ import com.mammoth.domain.web.ApiException;
 import com.mammoth.domain.workitem.RequirementDimension;
 import com.mammoth.domain.workitem.WorkItem;
 import com.mammoth.domain.workitem.WorkItemService;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +103,15 @@ class DeliveryWorkflowTest {
   private DeliveryService deliveryService;
 
   @Autowired
+  private HandoffPackageService handoffPackageService;
+
+  @Autowired
+  private ArtifactService artifactService;
+
+  @Autowired
+  private AuditLogRepository auditLogRepository;
+
+  @Autowired
   private KnowledgeService knowledgeService;
 
   @Autowired
@@ -125,6 +144,10 @@ class DeliveryWorkflowTest {
   }
 
   private Fixture approvedFixture() throws Exception {
+    return approvedFixture("重复扫码时冻结库存并转人工复核。");
+  }
+
+  private Fixture approvedFixture(String businessBody) throws Exception {
     AppUser owner = user("owner");
     AppUser reviewer = user("reviewer");
     Project project = project(owner);
@@ -151,8 +174,7 @@ class DeliveryWorkflowTest {
     SolutionVersion version = solutionService.createVersion(owner, project.getId(), item.getId(),
         "收货扫码处理方案", "初版");
     String business = solutionService.addDesignItem(owner, project.getId(), item.getId(),
-        version.getId(), "business", null, "收货扫码流程",
-        "重复扫码时冻结库存并转人工复核。").getId();
+        version.getId(), "business", null, "收货扫码流程", businessBody).getId();
     String technical = solutionService.addDesignItem(owner, project.getId(), item.getId(),
         version.getId(), "technical", business, "扫码服务改造",
         "扫码接口增加幂等校验。").getId();
@@ -197,6 +219,76 @@ class DeliveryWorkflowTest {
         draft.getId()))
         .isInstanceOf(ApiException.class)
         .hasMessageContaining("approved solution");
+  }
+
+  @Test
+  void handoffPackageContainsManifestAndIsAudited() throws Exception {
+    Fixture fixture = approvedFixture();
+
+    HandoffPackageService.PackageView view = handoffPackageService.export(fixture.owner(),
+        fixture.project().getId(), fixture.item().getId());
+    assertThat(view.artifactId()).isNotBlank();
+    assertThat(view.sha256()).hasSize(64);
+    assertThat(view.downloadUrl()).contains("/artifacts/" + view.artifactId() + "/content");
+
+    ArtifactRecord record = artifactService.require(fixture.project().getId(), view.artifactId());
+    assertThat(record.getKind()).isEqualTo("handoff_package");
+    assertThat(record.getContentHash()).isEqualTo(view.sha256());
+    byte[] bytes = artifactService.content(record);
+
+    Map<String, byte[]> entries = new HashMap<>();
+    try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(bytes),
+        StandardCharsets.UTF_8)) {
+      ZipEntry entry;
+      while ((entry = zip.getNextEntry()) != null) {
+        entries.put(entry.getName(), zip.readAllBytes());
+      }
+    }
+    assertThat(entries).containsKeys("manifest.properties", "solution-business.md",
+        "solution-technical.md", "tasks.md", "acceptance.md", "baseline.md", "handoff.md",
+        "README.md", "SECURITY.md");
+    assertThat(entries).doesNotContainKey(".env");
+    assertThat(new String(entries.get("SECURITY.md"), StandardCharsets.UTF_8))
+        .contains("不包含生产凭据");
+
+    Properties manifest = new Properties();
+    manifest.load(new java.io.StringReader(
+        new String(entries.get("manifest.properties"), StandardCharsets.UTF_8)));
+    assertThat(manifest.getProperty("formatVersion")).isEqualTo("1");
+    assertThat(manifest.getProperty("itemNo")).isEqualTo(fixture.item().getItemNo());
+    assertThat(manifest.getProperty("solutionVersionId")).isEqualTo(fixture.solutionVersionId());
+    assertThat(manifest.getProperty("baselineId")).isEqualTo(fixture.baselineId());
+    int count = Integer.parseInt(manifest.getProperty("fileCount"));
+    for (int index = 0; index < count; index++) {
+      String name = manifest.getProperty("file." + index + ".name");
+      String expected = manifest.getProperty("file." + index + ".sha256");
+      assertThat(entries).containsKey(name);
+      assertThat(sha256(entries.get(name))).isEqualTo(expected);
+    }
+
+    assertThat(auditLogRepository.findByObjectTypeAndObjectIdOrderByAtAsc("work_item",
+        fixture.item().getId()))
+        .extracting(log -> log.getAction())
+        .contains("handoff.generate", "handoff.export");
+  }
+
+  @Test
+  void handoffPackageRejectsPossibleSecrets() throws Exception {
+    Fixture fixture = approvedFixture("连接串示例 password=supersecret-value");
+
+    assertThatThrownBy(() -> handoffPackageService.export(fixture.owner(),
+        fixture.project().getId(), fixture.item().getId()))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("possible secret");
+  }
+
+  private static String sha256(byte[] value) {
+    try {
+      return java.util.HexFormat.of().formatHex(
+          java.security.MessageDigest.getInstance("SHA-256").digest(value));
+    } catch (Exception error) {
+      throw new IllegalStateException(error);
+    }
   }
 
   @Test

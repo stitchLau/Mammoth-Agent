@@ -201,6 +201,14 @@ java -jar $jar --admin-restore="$env:TEMP\mammoth-backups\mammoth-backup-<时间
 - 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入与备份/恢复已实现（ADR-0008 CLI）**；实例锁清理已提供 CLI/脚本；
 - 在 DSH `workspace-write` 沙箱中 Playwright 会因 worker 管道 `EPERM` 失败；E2E 需普通终端、CI 或一次性提权。
 
+## M4 S2：Agent 账号、MCP 审计与交接包 ZIP（2026-11-13）
+
+- **专用 Agent 账号**：org_admin 在 `/settings` 创建“Agent 账号（不可登录）”，项目 owner 将其加为 `viewer`；MCP 的 `MAMMOTH_MCP_AGENT_USER_ID` 指向该账号。Agent 账号不能登录 Web、无口令重置。
+- **MCP 审计 journal**：MCP 每次 `tools/call` 追加 `<数据根>/audit/agent-audit.jsonl`（工具、项目、结果数、耗时、错误；不含参数/正文）。writer 进程启动时创建 `audit/`，`AgentAuditIngestService` 定时（默认 30s）入库 `agent_call` + `audit_log`；MCP 只读进程不建目录、不写 DB。
+- **可配置**：`mammoth.agent-audit.ingest-interval-ms`（默认 30000）、`mammoth.agent-audit.initial-delay-ms`（默认 10000）。
+- **交接包 ZIP（BG-01）**：`GET /api/projects/{p}/work-items/{w}/handoff/package` 生成并落 Artifact；UI 在交付闭环页“生成交接包 ZIP”后显示下载链接。包内 `manifest.properties` 记录每个文件 SHA-256；生成前做秘密模式扫描；审计 `handoff.export`；不含凭据/源码。
+- **注意**：MCP 只读进程不能写 `audit_log`，因此审计以本地 journal 为过渡；不要把它当作数据库直接写入。
+
 ## M4 配置预告（S5 实现后生效；2026-11-13 S0）
 
 > 以下键位是 M4 S5 的设计口径，**当前代码尚未实现**，配置后不会生效；S5 落地时以实际 `application.yml`/环境变量为准。

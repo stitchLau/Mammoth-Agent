@@ -78,6 +78,8 @@ Domain Service
 边界：单节点 writer + SQLite；MCP 只读；无出站（除非渠道/API 配置启用）；PG/多实例=M5
 
 **S1 已落地（2026-11-13）**：`org_admin`（`role_assignment`）、用户停用/启用/管理员重置/强制改密、Agent 账号、`/api/users/directory`、客户/产品主数据 org_admin 门禁；V7；后端 103 tests、E2E 4 passed。
+
+**S2 已落地（2026-11-13）**：BG-01 交接包 zip（Artifact/`handoff.export`）、MCP 本地 journal + writer 入库 `agent_call`/`audit_log`、`SchedulingConfig` 只读禁用；V8；后端 109 tests、E2E 4 passed。
 ```
 
 新增外部依赖（计划）：`spring-boot-starter-mail`（邮件，配置后启用）、CSV 解析（`commons-csv` 或内置，S3 评审）、GreenMail（仅测试，Apache-2.0）。所有依赖需来源/许可证/漏洞检查。

@@ -1,5 +1,16 @@
 # Changelog
 
+## V0.15.0 — 2026-11-13
+
+- **M4 S2（外部 Agent 前置：BG-01 + Agent 账号 + MCP 审计）**：
+  - **BG-01 交接包 ZIP**：`HandoffPackageService` + `GET .../handoff/package`；zip 含 `manifest.properties`（需求/方案/基线/上下文 + 每个文件 sha256）、业务/技术方案、任务、验收、基线、完整交接 Markdown、README、SECURITY；秘密模式扫描（password/token/私钥/JDBC/Bearer）；zip 落 Artifact（`handoff_package`）；审计 `handoff.export`；前端“生成交接包 ZIP”+下载链接。
+  - **MCP 审计**：MCP 只读进程写 `<数据根>/audit/agent-audit.jsonl`（工具/项目/结果数/耗时/错误，不含参数/正文）；`AgentAuditIngestService`（writer-only，定时）入库 `agent_call` + `audit_log(agent.tool_call)`；`event_id` 幂等；损坏行跳过；`read-only=true` 时 `SchedulingConfig` 禁用调度；`DataRootBootstrap` 创建 `audit/`。
+  - **数据**：`V8__agent_call_audit.sql`（`agent_call` + 索引）；`MIN_SCHEMA_VERSION=8`；`agent_call` 加入导出/导入（权威审计）。
+  - **专用 Agent 账号**：复用 S1 `account_type=agent`（org_admin 创建、禁登、项目 viewer）；`docs/dsh-mcp-integration.md` 更新。
+  - **测试**：后端 **109 tests**（103 + 6）；前端 build + **25 tests**；Playwright **4 passed**（含 ZIP）；M3 验收 **18/18**、ADR-0008 **9/9**（schema v8）、M3 演示 **25/25**。
+  - **限制**：journal 全量读取 + event_id 去重（大文件需轮转）；无专门审计 UI；zip 不加密；ADR-0011/0012/0013 仍 Proposed。
+- **说明**：S2 未实现 S3 导入、S4 Jira/BG-03、S5 通知/任务、S6 团队服务器；下一阶段 S3。CI 远端仍未验证。
+
 ## V0.14.0 — 2026-11-13
 
 - **M4 S1（组织/用户生命周期与权限收紧）**：

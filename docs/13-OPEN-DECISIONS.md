@@ -38,3 +38,5 @@
 
 **M4 S1 进度（2026-11-13）**：负责人“开S1”；ADR-0006 增补转 **Accepted v1.1**。V7 + `org_admin` + 用户停用/启用/管理员重置/强制改密 + Agent 账号 + 建用户/目录收紧 + 主数据 org_admin 门禁已落地；后端 **103 tests**、前端 25、E2E **4 passed**、M3 演练 18/18、ADR-0008 演练 9/9、M3 演示 25/25。ADR-0011/0012/0013 仍 Proposed；下一阶段 S2。
 
+**M4 S2 进度（2026-11-13）**：负责人“开S2”；BG-01 交接包 ZIP（manifest/sha256/秘密扫描/Artifact/`handoff.export`）、专用 Agent 账号（复用 S1）、MCP 本地 journal + writer 入库 `agent_call`/`audit_log`、V8 已落地；后端 **109 tests**、前端 25、E2E **4 passed**（含 ZIP）、M3 演练 18/18、ADR-0008 演练 9/9（schema 8）、M3 演示 25/25。BG-01 关闭；下一阶段 S3。
+

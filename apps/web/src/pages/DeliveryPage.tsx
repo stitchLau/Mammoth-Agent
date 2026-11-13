@@ -9,6 +9,7 @@ import {
   createDelivery,
   createKnowledgeProposal,
   getHandoff,
+  getHandoffPackage,
   getSolutionVersion,
   getWorkItem,
   listAcceptanceMatrix,
@@ -24,6 +25,7 @@ import {
   type DeliverySnapshotView,
   type ExecutionDetailView,
   type HandoffView,
+  type HandoffPackageView,
   type KnowledgeProposalView,
   type Repository,
   type RequirementDetail,
@@ -57,6 +59,7 @@ export default function DeliveryPage() {
   const [deliveries, setDeliveries] = useState<DeliverySnapshotView[]>([])
   const [proposals, setProposals] = useState<KnowledgeProposalView[]>([])
   const [handoff, setHandoff] = useState<HandoffView | null>(null)
+  const [handoffPackage, setHandoffPackage] = useState<HandoffPackageView | null>(null)
 
   const [repoId, setRepoId] = useState('')
   const [baselineId, setBaselineId] = useState('')
@@ -154,8 +157,33 @@ export default function DeliveryPage() {
         >
           生成开发交接包
         </button>
+        <button
+          type="button"
+          className="secondary"
+          disabled={busy || !workItem.approvedSolutionVersionId}
+          title={workItem.approvedSolutionVersionId ? undefined : '需要先批准方案'}
+          onClick={() =>
+            void run(async () => {
+              const generated = await getHandoffPackage(project.id, workItem.id)
+              setHandoffPackage(generated)
+              setHandoffNote(
+                `交接包 ZIP · 方案 v${generated.solutionVersion} · 基线 ${short(generated.baselineId)}`,
+              )
+            })
+          }
+        >
+          生成交接包 ZIP
+        </button>
         {handoffNote && <span className="hint">{handoffNote}</span>}
       </div>
+
+      {handoffPackage && (
+        <p className="state notice">
+          交接包已生成：
+          <a href={handoffPackage.downloadUrl}>下载 {handoffPackage.originalName}</a>
+          {' '}· SHA-256 <span className="mono">{handoffPackage.sha256.slice(0, 16)}…</span>
+        </p>
+      )}
 
       {handoff && (
         <details className="panel" open>

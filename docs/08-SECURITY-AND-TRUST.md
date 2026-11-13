@@ -93,6 +93,8 @@ Mammoth 以 DSH 作为 Vibe Coding 工具与候选 Runtime，DSH Host 环境本�
 
 **S1 已落地（2026-11-13）**：`org_admin`（复用 `role_assignment`）、用户停用/启用/会话撤销、管理员一次性口令+强制改密、Agent 账号禁登；`/api/users` 非 bootstrap 仅 org_admin；强制改密会话仅放行 `/api/auth/{me,password,logout,csrf}`；客户/产品主数据仅 org_admin。验证见 `docs/evidence/M4-VERIFICATION.md` §1。
 
+**S2 已落地（2026-11-13）**：BG-01 交接包固定文件清单、秘密扫描、逐文件 sha256、Artifact、`handoff.export` 审计；MCP 只读进程写本地 JSONL（不含参数/正文），writer 入库 `agent_call`/`audit_log`；`SchedulingConfig` 在只读模式禁用。验证见 `docs/evidence/M4-VERIFICATION.md` §2。
+
 ### 9.4 团队服务器（ADR-0012）
 
 - M4 默认单机 localhost；团队部署必须反向代理 TLS、Secure Cookie、只信任配置代理、默认绑定 127.0.0.1。

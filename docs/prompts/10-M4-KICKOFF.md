@@ -2,7 +2,7 @@
 
 - **用途**：M1–M3（含 M3.5 补强）完成后新开会话继续 **M4（企业集成与协同）** 的初始指令
 - **日期**：2026-11-13
-- **状态更新（2026-11-13）**：M4 S0/S1 已完成（ADR-0011/0012/0013 Proposed、M4/M4.5/M5/威胁模型落盘；org_admin/用户生命周期/强制改密已落地）；新会话请先读 `docs/handoffs/SESSION-HANDOFF-2026-11-13-M4-S1.md` 与 `docs/specs/M4-PHASE4-PLAN.md`，从 S2 继续；本 Prompt 保留为初始背景。
+- **状态更新（2026-11-13）**：M4 S0/S1/S2 已完成（ADR-0011/0012/0013 Proposed、M4/M4.5/M5/威胁模型落盘；org_admin/用户生命周期/强制改密、BG-01 交接包 ZIP、MCP 审计已落地）；新会话请先读 `docs/handoffs/SESSION-HANDOFF-2026-11-13-M4-S2.md` 与 `docs/specs/M4-PHASE4-PLAN.md`，从 S3 继续；本 Prompt 保留为初始背景。
 - **仓库基线**：`main` @ `3231b43`（M4 S0 提交后以前进后的 `git log -1` 为准）
 - **使用方式**：新建 DSH 会话，将下方代码块整段粘贴为第一条消息；会话工作目录保持仓库根 `E:\MyProj\MommothAgent\code\Mammoth-Agent`
 
