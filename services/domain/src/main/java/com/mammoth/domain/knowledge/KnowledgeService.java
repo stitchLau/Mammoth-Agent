@@ -86,6 +86,34 @@ public class KnowledgeService {
     return document;
   }
 
+  /**
+   * Delivery-loop draft: created from an approved delivery snapshot, citing its artifact and the
+   * code baseline it was derived from (ADR-0007). It still needs normal human review.
+   */
+  @Transactional
+  public KnowledgeDocument createDeliveryDraft(AppUser author, String projectId, String title,
+      String body, String artifactId, String baselineId) {
+    requireEditorRole(author, projectId);
+    String normalizedTitle = requireText(title, "title");
+    String normalizedBody = requireText(body, "body");
+    artifactService.require(projectId, artifactId);
+    String now = Ids.nowIso();
+    KnowledgeDocument document = new KnowledgeDocument(Ids.newId(), SCOPE_PROJECT, projectId,
+        "delivery", normalizedTitle, normalizedBody, KnowledgeDocument.DRAFT, 1, author.getId(),
+        now);
+    documentRepository.save(document);
+    sourceRefRepository.save(new KnowledgeSourceRef(Ids.newId(), document.getId(), artifactId,
+        "As-built", "交付快照"));
+    reindex(document);
+    document.attachBaseline(baselineId);
+    documentRepository.save(document);
+    auditService.record(author.getId(), "knowledge.create_delivery", "knowledge_document",
+        document.getId(), com.mammoth.domain.support.JsonLite.write(
+            com.mammoth.domain.support.JsonLite.object("artifactId", artifactId,
+                "baselineId", baselineId)));
+    return document;
+  }
+
   /** Edit a draft in place; only draft documents can change and evidence refs are replaced. */
   @Transactional
   public KnowledgeDocument updateDraft(AppUser actor, String projectId, String documentId,

@@ -619,3 +619,42 @@ button:disabled {
   width: 100%;
   min-width: 90px;
 }
+
+.secondary-link {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.secondary-link:hover {
+  background: #eef4fb;
+}
+
+.delivery-preview {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  max-height: 480px;
+  overflow: auto;
+  margin: 0.5rem 0 0;
+}
+
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+fieldset legend {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0 0.25rem;
+}

@@ -139,7 +139,14 @@ export default function RequirementDetailPage() {
       <PageHeader
         title={`${item.itemNo} ${item.title}`}
         subtitle={`${project.code} · 优先级 ${workItemPriorityLabel(item.priority)}${item.readyConfirmedAt ? ` · 就绪确认于 ${item.readyConfirmedAt}` : ''}`}
-        actions={<StatusBadge status={item.status} label={workItemStatusLabel(item.status)} />}
+        actions={
+          <>
+            <StatusBadge status={item.status} label={workItemStatusLabel(item.status)} />
+            <Link className="secondary-link" to={`/projects/${project.id}/requirements/${item.id}/delivery`}>
+              交付与知识闭环 →
+            </Link>
+          </>
+        }
       />
       {error && <ErrorBanner message={error} onRetry={() => void reload()} />}
 

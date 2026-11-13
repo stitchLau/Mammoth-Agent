@@ -74,7 +74,16 @@ export default function KnowledgeDetailPage() {
       <PageHeader
         title={document.title}
         subtitle={`${project.code} · 版本 ${document.version}${document.reviewer ? ` · 审核人 ${document.reviewer.slice(0, 8)}…` : ''}`}
-        actions={<StatusBadge status={document.status} />}
+        actions={
+          <>
+            <StatusBadge status={document.status} />
+            {document.stale && (
+              <span className="status status-superseded" title="该知识基于较早的代码基线">
+                可能过期
+              </span>
+            )}
+          </>
+        }
       />
       {error && <ErrorBanner message={error} onRetry={() => void reload()} />}
 

@@ -57,6 +57,11 @@ export default function SearchPage() {
               <Link to={`/projects/${project.id}/knowledge/${hit.documentId}`}>
                 <strong>{hit.title}</strong>
               </Link>
+              {hit.stale && (
+                <span className="status status-superseded" title="该知识基于较早的代码基线">
+                  可能过期
+                </span>
+              )}
               <span className="mono"> chunk#{hit.ordinal}</span>
               <p>{hit.text}</p>
               <p className="hint">引用 {hit.sourceRefCount} 项 · 文档 {hit.documentId.slice(0, 8)}…</p>

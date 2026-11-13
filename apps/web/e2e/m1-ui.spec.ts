@@ -1,4 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 /**
  * Browser acceptance for the product flows.
@@ -14,6 +18,7 @@ const shared: {
   reviewerUser?: string
   reviewerPassword?: string
   projectId?: string
+  workItemId?: string
 } = {}
 
 test('M1 UI end-to-end', async ({ page }) => {
@@ -257,6 +262,7 @@ test('M2 requirement to approved solution', async ({ page }) => {
     await expect(page.getByText('评审中').first()).toBeVisible()
     await expect(page.getByText(/方案作者不能批准自己的方案/)).toBeVisible()
     solutionUrl = page.url()
+    shared.workItemId = solutionUrl.split('/requirements/')[1]?.split('/')[0] ?? ''
   })
 
   await test.step('reviewer 批准方案并保留批准版本', async () => {
@@ -277,4 +283,95 @@ test('M2 requirement to approved solution', async ({ page }) => {
     await expect(page.getByText('当前批准版本')).toBeVisible()
     await expect(page.getByText(`v1`).first()).toBeVisible()
   })
+})
+
+/**
+ * M3 acceptance (ADR-0007/0008, M3 plan S2/S3/S4/S6): register a local repository, capture an
+ * immutable baseline, generate the handoff package, recover an implementation commit into the
+ * acceptance matrix, and approve an As-built snapshot with a second person.
+ */
+test('M3 baseline, handoff, execution and delivery approval', async ({ page }) => {
+  test.skip(!shared.workItemId, 'requires the M2 flow first (shared backend data root)')
+  const adminUser = shared.adminUser ?? ''
+  const adminPassword = shared.adminPassword ?? ''
+  const reviewerUser = shared.reviewerUser ?? ''
+  const reviewerPassword = shared.reviewerPassword ?? ''
+  const projectId = shared.projectId ?? ''
+  const workItemId = shared.workItemId ?? ''
+  const repoDir = mkdtempSync(join(tmpdir(), 'mammoth-e2e-repo-'))
+  const repo = join(repoDir, 'repo')
+  const git = (...args: string[]): string =>
+    execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim()
+
+  try {
+    mkdirSync(join(repo, 'src'), { recursive: true })
+    git('init', '-b', 'main')
+    git('config', 'user.email', 'e2e@example.com')
+    git('config', 'user.name', 'E2E')
+    writeFileSync(join(repo, 'src', 'App.java'), 'class App {}\n')
+    git('add', '-A')
+    git('commit', '-m', 'initial')
+
+    await test.step('注册仓库并捕获基线', async () => {
+      await page.goto('/login')
+      await page.getByLabel('用户名').fill(adminUser)
+      await page.getByLabel('密码').fill(adminPassword)
+      await page.getByRole('button', { name: '登录' }).click()
+      await expect(page).toHaveURL(/\/projects$/)
+
+      await page.goto(`/projects/${projectId}/baselines`)
+      await page.getByLabel('仓库标识').fill('backend')
+      await page.getByLabel('仓库路径').fill(repo)
+      await page.getByRole('button', { name: '注册' }).click()
+      await expect(page.getByRole('cell', { name: 'backend' })).toBeVisible()
+
+      await page.getByLabel('基线说明').fill('E2E 实施前基线')
+      const captured = page.waitForResponse(
+        (response) => response.url().includes('/baselines') && response.request().method() === 'POST',
+      )
+      await page.getByRole('button', { name: '捕获基线' }).click()
+      expect((await captured).ok()).toBeTruthy()
+      await expect(page.getByText('E2E 实施前基线')).toBeVisible()
+    })
+
+    await test.step('生成交接包并回收实施 commit', async () => {
+      await page.goto(`/projects/${projectId}/requirements/${workItemId}/delivery`)
+      await page.getByRole('button', { name: '生成开发交接包' }).click()
+      await expect(page.getByText('开发交接包（Markdown）')).toBeVisible()
+      await expect(page.getByText(/只读约束/)).toBeVisible()
+
+      writeFileSync(join(repo, 'src', 'App.java'), 'class App { int duplicateCheck; }\n')
+      writeFileSync(join(repo, 'src', 'ScanValidator.java'), 'class ScanValidator {}\n')
+      git('add', '-A')
+      git('commit', '-m', 'implementation')
+      const toCommit = git('rev-parse', 'HEAD')
+
+      await page.getByLabel('目标 commit').fill(toCommit)
+      await page.getByLabel('实施摘要').fill('E2E 实施完成')
+      await page.getByRole('checkbox', { name: '实现扫码重复校验' }).check()
+      await page.getByRole('button', { name: '记录实施' }).click()
+
+      await expect(page.getByText(toCommit.slice(0, 8)).first()).toBeVisible()
+      await expect(page.getByText('已覆盖 1')).toBeVisible()
+    })
+
+    await test.step('生成并四眼批准交付快照', async () => {
+      await page.getByLabel('快照标题').fill('E2E As-built')
+      await page.getByRole('button', { name: '生成快照草稿' }).click()
+      await expect(page.getByText('E2E As-built')).toBeVisible()
+
+      await page.getByRole('button', { name: '退出' }).click()
+      await expect(page).toHaveURL(/\/login$/)
+      await page.getByLabel('用户名').fill(reviewerUser)
+      await page.getByLabel('密码').fill(reviewerPassword)
+      await page.getByRole('button', { name: '登录' }).click()
+      await expect(page).toHaveURL(/\/projects$/)
+
+      await page.goto(`/projects/${projectId}/requirements/${workItemId}/delivery`)
+      await page.getByRole('button', { name: '批准快照' }).click()
+      await expect(page.getByText('已批准').first()).toBeVisible()
+    })
+  } finally {
+    rmSync(repoDir, { recursive: true, force: true })
+  }
 })

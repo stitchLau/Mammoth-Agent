@@ -53,6 +53,8 @@ export interface KnowledgeHit {
   text: string
   score: number
   sourceRefCount: number
+  applicableBaselineId: string | null
+  stale: boolean
 }
 
 export interface SourceRef {
@@ -72,6 +74,8 @@ export interface KnowledgeDocument {
   createdBy: string | null
   reviewer: string | null
   reviewedAt: string | null
+  applicableBaselineId: string | null
+  stale: boolean
   createdAt: string
   updatedAt: string
   sourceRefs: SourceRef[]
@@ -694,5 +698,320 @@ export function deleteSolutionTask(
   return request<void>(
     `/api/projects/${projectId}/work-items/${workItemId}/solutions/${versionId}/tasks/${taskId}`,
     { method: 'DELETE' },
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* M3: repositories, baselines, execution, delivery and knowledge loop  */
+/* ------------------------------------------------------------------ */
+
+export interface Repository {
+  id: string
+  projectId: string
+  label: string
+  absolutePath: string
+  remoteUrl: string | null
+  defaultBranch: string | null
+  status: string
+  addedBy: string | null
+  addedAt: string
+}
+
+export interface BaselineRepo {
+  id: string
+  repositoryId: string
+  commitSha: string
+  branch: string | null
+  dirty: boolean
+  detached: boolean
+  worktree: boolean
+  capturedAt: string
+}
+
+export interface Baseline {
+  id: string
+  projectId: string
+  note: string | null
+  complete: boolean
+  capturedBy: string | null
+  capturedAt: string
+  repos: BaselineRepo[]
+}
+
+export interface ExecutionRecordView {
+  id: string
+  projectId: string
+  workItemId: string
+  solutionVersionId: string
+  baselineId: string
+  repositoryId: string
+  fromCommit: string
+  toCommit: string
+  diverged: boolean
+  summary: string | null
+  testsNote: string | null
+  recordedBy: string | null
+  recordedAt: string
+}
+
+export interface ExecutionChangeView {
+  id: string
+  executionRecordId: string
+  filePath: string
+  changeType: string
+  oldPath: string | null
+  additions: number
+  deletions: number
+}
+
+export interface ExecutionTaskState {
+  id: string
+  executionRecordId: string
+  taskId: string
+  status: string
+  note: string | null
+}
+
+export interface ExecutionDeviationView {
+  id: string
+  executionRecordId: string
+  deviationType: string
+  targetType: string | null
+  targetId: string | null
+  description: string
+  createdBy: string | null
+  createdAt: string
+}
+
+export interface ExecutionDetailView {
+  records: ExecutionRecordView[]
+  changes: ExecutionChangeView[]
+  taskStates: ExecutionTaskState[]
+  deviations: ExecutionDeviationView[]
+}
+
+export interface MatrixRowView {
+  criterionId: string
+  criterionText: string
+  designItemTitle: string
+  coverage: string
+  totalTasks: number
+  doneTasks: number
+  partialTasks: number
+}
+
+export interface MissingTaskView {
+  taskId: string
+  title: string
+  status: string
+}
+
+export interface AcceptanceAnalysis {
+  solutionVersionId: string
+  matrix: MatrixRowView[]
+  missingTasks: MissingTaskView[]
+  deviations: ExecutionDeviationView[]
+  records: ExecutionRecordView[]
+  covered: number
+  partial: number
+  unverified: number
+}
+
+export interface HandoffView {
+  markdown: string
+  solutionVersionId: string
+  solutionVersion: number
+  baselineId: string | null
+  generatedAt: string
+}
+
+export interface DeliverySnapshotView {
+  id: string
+  projectId: string
+  workItemId: string
+  solutionVersionId: string
+  baselineId: string | null
+  title: string
+  bodyMarkdown: string
+  status: string
+  artifactId: string | null
+  createdBy: string | null
+  createdAt: string
+  approvedBy: string | null
+  approvedAt: string | null
+}
+
+export interface KnowledgeProposalView {
+  id: string
+  projectId: string
+  workItemId: string
+  deliverySnapshotId: string
+  title: string
+  bodyMarkdown: string
+  status: string
+  knowledgeDocumentId: string | null
+  createdBy: string | null
+  createdAt: string
+  decidedBy: string | null
+  decidedAt: string | null
+}
+
+export function listRepositories(projectId: string, includeInactive = false): Promise<Repository[]> {
+  return request<Repository[]>(
+    `/api/projects/${projectId}/repositories?includeInactive=${includeInactive}`,
+  )
+}
+
+export function registerRepository(
+  projectId: string,
+  input: { label: string; path: string; defaultBranch: string | null },
+): Promise<Repository> {
+  return request<Repository>(`/api/projects/${projectId}/repositories`, jsonBody(input))
+}
+
+export function deactivateRepository(projectId: string, repositoryId: string): Promise<Repository> {
+  return request<Repository>(`/api/projects/${projectId}/repositories/${repositoryId}`, {
+    method: 'DELETE',
+  })
+}
+
+export function listBaselines(projectId: string): Promise<Baseline[]> {
+  return request<Baseline[]>(`/api/projects/${projectId}/baselines`)
+}
+
+export function captureBaseline(
+  projectId: string,
+  input: { note: string | null; allowDirty: boolean },
+): Promise<Baseline> {
+  return request<Baseline>(`/api/projects/${projectId}/baselines`, jsonBody(input))
+}
+
+export function getHandoff(projectId: string, workItemId: string): Promise<HandoffView> {
+  return request<HandoffView>(`/api/projects/${projectId}/work-items/${workItemId}/handoff`)
+}
+
+export function listExecutions(
+  projectId: string,
+  workItemId: string,
+): Promise<ExecutionDetailView> {
+  return request<ExecutionDetailView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/executions`,
+  )
+}
+
+export function recordExecution(
+  projectId: string,
+  workItemId: string,
+  input: {
+    repositoryId: string
+    baselineId: string
+    toCommit: string
+    summary: string | null
+    testsNote: string | null
+    completedTaskIds: string[]
+  },
+): Promise<ExecutionRecordView> {
+  return request<ExecutionRecordView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/executions`,
+    jsonBody(input),
+  )
+}
+
+export function addDeviation(
+  projectId: string,
+  workItemId: string,
+  executionId: string,
+  input: {
+    deviationType: string
+    targetType: string | null
+    targetId: string | null
+    description: string
+  },
+): Promise<ExecutionDeviationView> {
+  return request<ExecutionDeviationView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/executions/${executionId}/deviations`,
+    jsonBody(input),
+  )
+}
+
+export function listAcceptanceMatrix(
+  projectId: string,
+  workItemId: string,
+): Promise<AcceptanceAnalysis> {
+  return request<AcceptanceAnalysis>(
+    `/api/projects/${projectId}/work-items/${workItemId}/acceptance-matrix`,
+  )
+}
+
+export function listDeliveries(
+  projectId: string,
+  workItemId: string,
+): Promise<DeliverySnapshotView[]> {
+  return request<DeliverySnapshotView[]>(
+    `/api/projects/${projectId}/work-items/${workItemId}/deliveries`,
+  )
+}
+
+export function createDelivery(
+  projectId: string,
+  workItemId: string,
+  title: string,
+): Promise<DeliverySnapshotView> {
+  return request<DeliverySnapshotView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/deliveries`,
+    jsonBody({ title }),
+  )
+}
+
+export function approveDelivery(
+  projectId: string,
+  workItemId: string,
+  snapshotId: string,
+): Promise<DeliverySnapshotView> {
+  return request<DeliverySnapshotView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/deliveries/${snapshotId}/approve`,
+    { method: 'POST' },
+  )
+}
+
+export function listKnowledgeProposals(
+  projectId: string,
+  workItemId: string,
+): Promise<KnowledgeProposalView[]> {
+  return request<KnowledgeProposalView[]>(
+    `/api/projects/${projectId}/work-items/${workItemId}/knowledge-proposals`,
+  )
+}
+
+export function createKnowledgeProposal(
+  projectId: string,
+  workItemId: string,
+  input: { snapshotId: string; title: string },
+): Promise<KnowledgeProposalView> {
+  return request<KnowledgeProposalView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/knowledge-proposals`,
+    jsonBody(input),
+  )
+}
+
+export function acceptKnowledgeProposal(
+  projectId: string,
+  workItemId: string,
+  proposalId: string,
+): Promise<KnowledgeProposalView> {
+  return request<KnowledgeProposalView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/knowledge-proposals/${proposalId}/accept`,
+    { method: 'POST' },
+  )
+}
+
+export function rejectKnowledgeProposal(
+  projectId: string,
+  workItemId: string,
+  proposalId: string,
+): Promise<KnowledgeProposalView> {
+  return request<KnowledgeProposalView>(
+    `/api/projects/${projectId}/work-items/${workItemId}/knowledge-proposals/${proposalId}/reject`,
+    { method: 'POST' },
   )
 }

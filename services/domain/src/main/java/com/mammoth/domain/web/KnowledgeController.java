@@ -1,5 +1,6 @@
 package com.mammoth.domain.web;
 
+import com.mammoth.domain.knowledge.KnowledgeStalenessService;
 import com.mammoth.domain.knowledge.KnowledgeDocument;
 import com.mammoth.domain.knowledge.KnowledgeSearchAdapter;
 import com.mammoth.domain.knowledge.KnowledgeService;
@@ -32,14 +33,17 @@ public class KnowledgeController {
   private final KnowledgeService knowledgeService;
   private final AuthorizationService authorizationService;
   private final KnowledgeSearchAdapter searchAdapter;
+  private final KnowledgeStalenessService stalenessService;
 
   public KnowledgeController(
       KnowledgeService knowledgeService,
       AuthorizationService authorizationService,
-      KnowledgeSearchAdapter searchAdapter) {
+      KnowledgeSearchAdapter searchAdapter,
+      KnowledgeStalenessService stalenessService) {
     this.knowledgeService = knowledgeService;
     this.authorizationService = authorizationService;
     this.searchAdapter = searchAdapter;
+    this.stalenessService = stalenessService;
   }
 
   public record SourceRefPayload(String artifactId, String locator, String note) {
@@ -54,12 +58,13 @@ public class KnowledgeController {
 
   public record KnowledgeResponse(String id, String projectId, String docType, String title,
       String body, String status, int version, String createdBy, String reviewer,
-      String reviewedAt, String createdAt, String updatedAt,
-      List<SourceRefResponse> sourceRefs) {
+      String reviewedAt, String applicableBaselineId, boolean stale, String createdAt,
+      String updatedAt, List<SourceRefResponse> sourceRefs) {
   }
 
   public record SearchHitResponse(String documentId, String title, String chunkId, int ordinal,
-      String text, double score, int sourceRefCount) {
+      String text, double score, int sourceRefCount, String applicableBaselineId,
+      boolean stale) {
   }
 
   @PostMapping
@@ -96,7 +101,8 @@ public class KnowledgeController {
             KnowledgeDocument document = knowledgeService.requireDocument(projectId, hit.documentId());
             return new SearchHitResponse(hit.documentId(), document.getTitle(), hit.chunkId(),
                 hit.ordinal(), hit.text(), hit.score(),
-                knowledgeService.sourceRefs(document.getId()).size());
+                knowledgeService.sourceRefs(document.getId()).size(),
+                document.getApplicableBaselineId(), stalenessService.isStale(document));
           } catch (RuntimeException notVisible) {
             return null;
           }
@@ -148,7 +154,8 @@ public class KnowledgeController {
     return new KnowledgeResponse(
         document.getId(), document.getScopeId(), document.getDocType(), document.getTitle(),
         document.getBody(), document.getStatus(), document.getVersion(), document.getCreatedBy(),
-        document.getReviewer(), document.getReviewedAt(), document.getCreatedAt(),
-        document.getUpdatedAt(), refs);
+        document.getReviewer(), document.getReviewedAt(), document.getApplicableBaselineId(),
+        stalenessService.isStale(document), document.getCreatedAt(), document.getUpdatedAt(), refs);
   }
+
 }

@@ -2,6 +2,8 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AppShell from './app/AppShell'
 import { SessionProvider, useSession } from './app/session'
 import ArtifactsPage from './pages/ArtifactsPage'
+import BaselinesPage from './pages/BaselinesPage'
+import DeliveryPage from './pages/DeliveryPage'
 import ErrorPage from './pages/ErrorPage'
 import KnowledgeDetailPage from './pages/KnowledgeDetailPage'
 import KnowledgePage from './pages/KnowledgePage'
@@ -49,6 +51,8 @@ export default function App() {
               path="requirements/:workItemId/solutions/:versionId"
               element={<SolutionPage />}
             />
+            <Route path="requirements/:workItemId/delivery" element={<DeliveryPage />} />
+            <Route path="baselines" element={<BaselinesPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="members" element={<MembersPage />} />
           </Route>

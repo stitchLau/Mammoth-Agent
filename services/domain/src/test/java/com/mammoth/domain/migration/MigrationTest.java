@@ -27,7 +27,10 @@ class MigrationTest {
       "knowledge_source_ref", "knowledge_chunk", "audit_log", "session",
       "work_item", "requirement_evidence", "requirement_assessment", "requirement_snapshot",
       "solution_version", "solution_design_item", "acceptance_criterion", "solution_task",
-      "approval_record");
+      "approval_record",
+      "project_repository", "project_baseline", "project_baseline_repo", "execution_record",
+      "execution_change", "execution_task", "execution_deviation", "delivery_snapshot",
+      "knowledge_update_proposal");
 
   @TempDir
   Path tempDir;
@@ -41,8 +44,8 @@ class MigrationTest {
         .load();
 
     MigrateResult first = flyway.migrate();
-    assertThat(first.migrationsExecuted).isEqualTo(4);
-    assertThat(first.targetSchemaVersion).isEqualTo("4");
+    assertThat(first.migrationsExecuted).isEqualTo(5);
+    assertThat(first.targetSchemaVersion).isEqualTo("5");
 
     MigrateResult second = flyway.migrate();
     assertThat(second.migrationsExecuted).isZero();
@@ -79,7 +82,7 @@ class MigrationTest {
         versions.add(resultSet.getString("version"));
         assertThat(resultSet.getBoolean("success")).isTrue();
       }
-      assertThat(versions).containsExactly("1", "2", "3", "4");
+      assertThat(versions).containsExactly("1", "2", "3", "4", "5");
     }
   }
 }

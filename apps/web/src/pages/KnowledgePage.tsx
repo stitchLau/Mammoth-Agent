@@ -106,6 +106,11 @@ export default function KnowledgePage() {
             <li key={document.id} className="document">
               <div className="document-head">
                 <StatusBadge status={document.status} />
+                {document.stale && (
+                  <span className="status status-superseded" title="该知识基于较早的代码基线">
+                    可能过期
+                  </span>
+                )}
                 <Link to={`/projects/${project.id}/knowledge/${document.id}`}>
                   <strong>{document.title}</strong>
                 </Link>

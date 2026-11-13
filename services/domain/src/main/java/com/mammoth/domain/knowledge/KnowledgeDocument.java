@@ -36,6 +36,9 @@ public class KnowledgeDocument {
 
   private String reviewedAt;
 
+  /** Code baseline this knowledge was derived from (ADR-0007); null for ordinary knowledge. */
+  private String applicableBaselineId;
+
   private String createdAt;
 
   private String updatedAt;
@@ -100,6 +103,15 @@ public class KnowledgeDocument {
 
   public String getReviewedAt() {
     return reviewedAt;
+  }
+
+  public String getApplicableBaselineId() {
+    return applicableBaselineId;
+  }
+
+  /** Attach the knowledge to a code baseline (delivery loop); null means "not baseline-specific". */
+  public void attachBaseline(String baselineId) {
+    this.applicableBaselineId = baselineId;
   }
 
   public String getCreatedAt() {
