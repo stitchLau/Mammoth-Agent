@@ -6,8 +6,8 @@
 
 | 提交 | 内容 |
 |---|---|
-| 待提交 | `feat(m3): data root write lock, network/cloud root rejection and read-only MCP entrypoint` |
-| 待提交 | `docs(m3): slice-1 plan, verification evidence, timeline and session handoff` |
+| `7632cf3` | `feat(m3)`：数据根锁 / 根校验 / 只读 MCP（S1） |
+| `86abb59` | `docs(m3)`：S1 规格/证据/时间线/缺陷/交接 |
 
 ## 2. 切片 1（S1）过程
 
@@ -30,3 +30,17 @@
 
 - S2：仓库注册 + 基线捕获 + 只读 `GitAdapter`（ADR-0007，`V5` 迁移）；
 - 进入 S2 前需确认：Git 只读命令白名单的 Windows/中文路径测试夹具、脏树拒绝与 owner 覆盖的 API 形态、`project_baseline` 是否绑定 `solution_version.project_baseline_id`。
+## 5. 切片 2–6（2026-11-13）
+
+| 阶段 | 内容 | 结果 |
+|---|---|---|
+| 规格 | docs/specs/M3-PHASE3-PLAN.md §9：V5 数据模型、GitAdapter 只读边界、交接/实施/矩阵/交付/知识闭环设计 | 先文档后代码 |
+| S2 | git/LocalGitAdapter（白名单、超时、输出上限、中文路径、safe.directory、URL 脱敏）、aseline/*（仓库注册、不可变基线、脏树拒绝/owner 覆盖） | LocalGitAdapterTest 3 + BaselineWorkflowTest 2 |
+| S3 | DeliveryService.handoff（批准方案渲染 + 任务 + 验收 + 基线；无批准方案 409） | demo handoff-generated |
+| S4 | execution/*（from/to、变更清单、diverged、任务完成）、DeliveryController | DeliveryWorkflowTest 3 |
+| S5 | 验收矩阵（covered/partial/unverified + 未完成任务候选）与人工偏差分类 | 同上 |
+| S6 | As-built 快照（批准时落 Artifact、四眼、不可覆盖）、知识提议（接受生成知识草稿）、KnowledgeStalenessService | 同上；E2E 第 3 场景 |
+| 前端 | 代码基线页、交付闭环页、知识"可能过期"标记、路由/导航 | build + 25 tests |
+| 回归 | mvn verify 79 tests；E2E 3 passed；demo-m3.mjs 25/25 | 全绿 |
+
+**过程中修正**：测试仓库误建在数据根内被服务正确拒绝（改为独立临时仓库根）；E2E 基线 POST 因立即导航被中止（等待响应 + 唯一文案断言）；实施 commit 文本在表格与下拉框重复导致严格模式冲突（.first()）。详见 docs/quality/M3-BUGS.md。

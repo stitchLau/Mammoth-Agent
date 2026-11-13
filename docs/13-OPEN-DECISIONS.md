@@ -27,7 +27,7 @@
 
 **ADR-0003 进度（2026-11-12）**：数据库 Spike 已完成——Flyway 13.12.1 对 SQLite 3.54 与 PostgreSQL 17 均支持（迁移幂等）；SQLite FTS5 trigram 与 PG pg_trgm 中文子串检索均可用（各 2 命中/0 ms），PG `tsvector('simple')` 对中文 0 命中；SQLite 文件备份恢复与 PG `pg_dump/pg_restore` 均验证。建议 SQLite（WAL）为 M1 主库、PG 为团队阶段目标。证据 `docs/spikes/S4-DATABASE-SPIKE.md`，草案 `decisions/ADR-0003-DATABASE-MIGRATION.md`（**Accepted v1.0**）。
 
-**ADR-0007 进度（2026-11-13）**：定案为**本地只读 Git + 人工捕获不可变基线**。Mammoth 只执行白名单只读命令（`rev-parse`/`status --porcelain=v2`/`log --format`/`diff --name-status`/`--stat`/`worktree list`/`remote get-url` 脱敏），不 clone/fetch/push/checkout、不写工作树；基线按"项目 + 仓库集合 → commit"保存；基线默认要求干净工作树；代码内容不复制进知识库；知识"过期"只提示、不改状态；DSH 临时 worktree 不得注册（rc.2 归档会清理，S1 F6）。本机已实测只读命令与 `safe.directory`（git 2.50.1）。详见 `decisions/ADR-0007-GIT-BASELINE.md`。
+**ADR-0007 进度（2026-11-13）**：定案为**本地只读 Git + 人工捕获不可变基线**。Mammoth 只执行白名单只读命令（`rev-parse`/`status --porcelain=v2`/`log --format`/`diff --name-status`/`--stat`/`worktree list`/`remote get-url` 脱敏），不 clone/fetch/push/checkout、不写工作树；基线按"项目 + 仓库集合 → commit"保存；基线默认要求干净工作树；代码内容不复制进知识库；知识"过期"只提示、不改状态；DSH 临时 worktree 不得注册（rc.2 归档会清理，S1 F6）。本机已实测只读命令与 `safe.directory`（git 2.50.1）。详见 `decisions/ADR-0007-GIT-BASELINE.md`。**S2–S4 已落地（2026-11-13）**：只读 `LocalGitAdapter`、仓库注册、不可变基线（`V5`）、`ExecutionRecord`/变更/`diverged`、知识过期标记；79 tests + E2E 3 passed + 演示 25/25。
 
 **ADR-0008 进度（2026-11-13）**：定案为**单机本地单写者 + 显式导出/导入包**。数据根必须本地固定盘，拒绝 UNC/网络盘/云同步目录；新增数据根实例锁（M3 实现）；MCP 入口改为**只读连接**（不跑 Flyway、不写库），迁移只由 Web/管理入口执行；跨机仅导出/导入（不含凭据，仅空库导入）；备份用 `VACUUM INTO`/backup API（已实测 WAL 下成功，需专用连接且无进行中语句）。详见 `decisions/ADR-0008-WORKSPACE.md`。**S1 已落地（2026-11-13）**：实例锁 + holder 元数据、UNC/云同步根拒绝、MCP 强制只读（System property、`query_only`、未初始化根 fail fast）；证据 `docs/evidence/M3-VERIFICATION.md`，71 tests + 手动 5 项。
 

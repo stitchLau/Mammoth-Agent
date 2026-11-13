@@ -52,6 +52,8 @@
 
 约束：Git 只读、不 clone/fetch/push；代码内容不进知识库；Jira/CI 集成不在 M3。
 
+**状态：已完成（2026-11-13）** — 证据：`docs/specs/M3-PHASE3-PLAN.md` §10、`docs/evidence/M3-VERIFICATION.md` §7、`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`；后端 79 tests、前端 25 tests、E2E 3 passed、演示 25/25。未纳入本阶段（ADR-0008 后续）：导出/导入包、实例锁清理脚本、备份恢复演练自动化。
+
 ## M4：企业集成和协同
 
 产出：Jira/CSM、MCP、企业微信/邮件、外部 Agent 适配、多用户共享和组织管理。

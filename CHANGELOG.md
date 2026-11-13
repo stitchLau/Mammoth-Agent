@@ -1,5 +1,18 @@
 # Changelog
 
+## V0.11.0 — 2026-11-13
+
+- **M3 完成（实施回收与知识闭环）**：
+  - **Git 基线（ADR-0007）**：只读 `LocalGitAdapter`（白名单命令、10 s 超时、1 MiB 输出上限、UTF-8 中文路径、精确 `safe.directory`、远程 URL 脱敏）、项目仓库注册、不可变基线（`project_repository`/`project_baseline`/`project_baseline_repo`，`V5`）、脏树拒绝与 owner 覆盖。
+  - **交接包**：基于批准方案生成业务/技术渲染 + 任务 + 验收 + 基线/上下文快照的 Markdown 交接包（无批准方案 409）。
+  - **实施回收**：`ExecutionRecord`（from/to commit、变更清单、diverged）、任务完成标记、人工偏差分类。
+  - **验收矩阵**：以批准方案验收标准为行，按任务完成情况给出 covered/partial/unverified 与未完成任务候选。
+  - **交付快照与知识闭环**：As-built 快照（四眼批准、批准时落 Artifact、不可覆盖）、知识更新提议（接受生成知识草稿，仍需四眼审核发布）、知识"可能过期"提示（绑定基线，不改状态）。
+  - **UI**：代码基线页、交付闭环页、知识过期标记、导航与路由。
+- **验证**：后端 `mvn verify` **79 tests**；前端 build + **25 tests**；E2E **3 passed（12.8s）**；演示 `demo-m3.mjs` **25/25**。
+- **文档**：M3 规格实施记录、验证证据、时间线、缺陷台账、ADR-0007 落地记录、M3 演示说明、交接；README/ROADMAP/13-OPEN-DECISIONS 同步。
+- **已知限制**：Git 仅文件级映射；重命名统计近似；子模块不递归；ADR-0008 的导出/导入、锁清理脚本、备份演练仍在后续范围；CI 远端未运行。
+
 ## V0.10.0 — 2026-11-13
 
 - **M3 切片 1（运行边界加固，ADR-0008）**：

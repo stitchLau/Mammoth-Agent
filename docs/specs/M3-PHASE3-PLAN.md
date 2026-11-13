@@ -1,6 +1,6 @@
 # M3 Phase 3 计划 — 实施回收与知识闭环
 
-- **状态**：In Progress（2026-11-13；切片 1 实施中，其余切片待负责人按序确认）
+- **状态**：**Completed（2026-11-13）**（S1–S6 全部完成；见 §10 实施记录）
 - **前置**：M2 完成（`598b49f`）；**ADR-0007/0008 Accepted v1.0（2026-11-13，`d91cb2e`）**
 - **对应路线图**：`docs/12-ROADMAP.md` M3
 - **依据**：`docs/04-MVP-STRATEGY.md` Phase 3、`docs/07-WORK-ITEM-LIFECYCLE.md` §7–8、`docs/03-DOMAIN-MODEL.md`、`docs/08-SECURITY-AND-TRUST.md`、`decisions/ADR-0007`、`ADR-0008`、`ADR-0010`
@@ -23,11 +23,11 @@
 | 片 | 内容 | 主要验收 | 状态 |
 |---|---|---|---|
 | **S1** | **运行边界加固（ADR-0008）**：数据根实例锁、网络盘/云同步根拒绝、MCP 只读连接（不跑 Flyway、不写库） | 双写实例被拒；UNC/云同步根被拒（可覆盖）；只读进程可读、写入被拒、无 Flyway；M2 全量测试不回归 | **已完成（2026-11-13）** |
-| S2 | 仓库注册 + 基线捕获 + 只读 `GitAdapter`（ADR-0007，`V5`） | 只读命令白名单；基线不可变；脏树默认拒绝；多仓库/多分支；中文路径与超时 | 待启动 |
-| S3 | 开发交接包（Approved Design 快照 + 任务 + 验收 + 基线） | 交接包可导出、可校验、不含凭据；批准版本不被覆盖 | 待启动 |
-| S4 | `ExecutionRecord`：from/to commit、变更清单、diverged、与设计项/任务映射 | 变更可追溯到基线与方案；`from` 非祖先时标记 diverged | 待启动 |
-| S5 | 偏差分析 + 验收矩阵 | 符合/偏离/额外/未实现可分类；每条验收有任务/证据 | 待启动 |
-| S6 | As-built/交付快照 + 知识更新提议与人工发布 + 过期提示 | 知识更新有来源与审核；旧方案/旧知识保留 | 待启动 |
+| S2 | 仓库注册 + 基线捕获 + 只读 `GitAdapter`（ADR-0007，`V5`） | 只读命令白名单；基线不可变；脏树默认拒绝；多仓库/多分支；中文路径与超时 | **已完成（2026-11-13）** |
+| S3 | 开发交接包（Approved Design 快照 + 任务 + 验收 + 基线） | 交接包可导出、可校验、不含凭据；批准版本不被覆盖 | **已完成（2026-11-13）** |
+| S4 | `ExecutionRecord`：from/to commit、变更清单、diverged、与设计项/任务映射 | 变更可追溯到基线与方案；`from` 非祖先时标记 diverged | **已完成（2026-11-13）** |
+| S5 | 偏差分析 + 验收矩阵 | 符合/偏离/额外/未实现可分类；每条验收有任务/证据 | **已完成（2026-11-13）** |
+| S6 | As-built/交付快照 + 知识更新提议与人工发布 + 过期提示 | 知识更新有来源与审核；旧方案/旧知识保留 | **已完成（2026-11-13）** |
 
 ## 4. S1 详细规格
 
@@ -106,3 +106,77 @@
 3. 只读连接的可写拦截以 `PRAGMA query_only=ON` 断言（不依赖 JDBC `isReadOnly()` 的驱动实现）。
 
 **未完成（后续切片）**：导出/导入包、实例锁清理脚本、备份/恢复演练脚本、Git 基线（S2）。
+
+## 9. S2–S6 设计要点（2026-11-13，实施依据）
+
+### 9.1 数据模型（`V5__m3_delivery.sql`）
+
+| 表 | 关键列 | 说明 |
+|---|---|---|
+| `project_repository` | id, project_id, label, absolute_path, remote_url（脱敏）, default_branch, status, added_by, added_at | 项目代码仓库注册（ADR-0007），项目内路径唯一 |
+| `project_baseline` | id, project_id, note, complete, captured_by, captured_at | 不可变基线；"当前基线"=最近一次 |
+| `project_baseline_repo` | id, baseline_id, repository_id, commit_sha, branch, dirty, detached, worktree, captured_at | 每仓库的 commit 快照 |
+| `execution_record` | id, project_id, work_item_id, solution_version_id, baseline_id, repository_id, from_commit, to_commit, diverged, summary, tests_note, recorded_by, recorded_at | 实施回收，一条记录对应一个仓库的一段 commit 范围 |
+| `execution_change` | id, execution_record_id, file_path, change_type(A/M/D/R), old_path, additions, deletions | 文件级变更（不含源码正文） |
+| `execution_task` | id, execution_record_id, task_id, status(done/partial/skipped), note | 任务完成情况（用于验收矩阵） |
+| `execution_deviation` | id, execution_record_id, deviation_type(conform/extra/missing/changed), target_type(design_item/task/criterion), target_id, description, created_by, created_at | 人工偏差分类；"未完成候选"由系统按任务计算 |
+| `delivery_snapshot` | id, project_id, work_item_id, solution_version_id, baseline_id, title, body_markdown, status(draft/approved), artifact_id, created_by, created_at, approved_by, approved_at | As-built 快照；批准后不可覆盖，markdown 落 Artifact |
+| `knowledge_update_proposal` | id, project_id, work_item_id, delivery_snapshot_id, title, body_markdown, status(draft/accepted/rejected), knowledge_document_id, created_by, created_at, decided_by, decided_at | 知识更新提议；接受后生成知识草稿 |
+| `knowledge_document.applicable_baseline_id` | 新增可空列 | 知识绑定的代码基线；与最新基线不一致时提示"可能过期"，不改状态 |
+
+### 9.2 GitAdapter（只读）
+
+- 接口：`inspect(path)`、`diff(path, from, to)`、`isAncestor(path, from, to)`。
+- 实现 `LocalGitAdapter`（原生 git CLI）：只读白名单 `rev-parse`、`status --porcelain=v2 --branch`、`diff --name-status`、`diff --numstat`、`merge-base --is-ancestor`、`remote get-url`；**禁止** clone/fetch/pull/push/checkout/commit/reset/clean/gc/prune。
+- 安全：`GIT_TERMINAL_PROMPT=0`、`--no-optional-locks`、`-c core.quotepath=false`、`-c core.fsmonitor=false`、对已注册绝对路径按需 `-c safe.directory=<path>`；10 s 超时、1 MiB 输出上限；commit 参数先正则校验并用 `--` 隔离；remote URL 去 userinfo。
+- 错误语义：非仓库/路径不存在 → 400；git 缺失/超时 → 409/500 可操作错误。
+
+### 9.3 交接包（S3）
+
+`GET .../handoff` 生成（不落库）：项目/客户、需求、**批准方案**的业务/技术渲染（`SolutionRenderer`）、任务清单、验收标准、基线 commit 集合、上下文快照 ID；要求存在 `approved` 方案版本（否则 409）。输出 Markdown + 结构化 JSON；审计 `handoff.generate`。不含凭据、源码正文。
+
+### 9.4 实施记录与偏差（S4/S5）
+
+- `POST .../executions`：`{repositoryId, baselineId, toCommit, summary, testsNote, completedTaskIds[]}`；校验仓库属于项目、基线包含该仓库、`toCommit` 可解析；`from=baselineRepo.commit`；`diverged=!isAncestor(from,to)`；落 `execution_change`（`--name-status` + `--numstat` 合并）。
+- `POST .../executions/{id}/deviations`：人工分类（符合/额外/未实现/变更），可关联设计项/任务/验收标准。
+- `GET .../acceptance-matrix`：以**当前批准方案**的验收标准为行；覆盖状态 = 关联任务（直接或经设计项）中被标记 `done` 的比例 → `covered/partial/unverified`；同时返回"未完成任务候选"（系统计算）与偏差列表。
+
+### 9.5 交付快照与知识闭环（S6）
+
+- `POST .../deliveries`：基于批准方案 + 最新实施记录生成 As-built Markdown（draft）；`approve` 需 owner/reviewer 且非创建者（四眼），批准时把 Markdown 写入 Artifact 并固定 `artifact_id`；批准后不可编辑，只能新建。
+- `POST .../knowledge-proposals`：只能基于**已批准**交付快照；`accept` 需 owner/reviewer 且非提议者，创建 `KnowledgeDocument`（draft，`docType=delivery`，`sourceRefs=[快照 Artifact]`，`applicableBaselineId=快照基线`），之后走既有四眼审核发布；`reject` 记录理由。
+- 知识过期：列表/详情返回 `stale`（`applicableBaselineId != 最新基线 id`），UI 显示"可能过期"；不自动改状态。
+
+### 9.6 权限
+
+| 动作 | owner | editor | reviewer | viewer |
+|---|---|---|---|---|
+| 注册仓库 | ✓ | — | — | — |
+| 捕获基线（含脏树覆盖） | ✓ | ✓（脏树覆盖仅 owner） | — | — |
+| 生成交接包 | ✓ | ✓ | ✓ | ✓ |
+| 记录实施/偏差 | ✓ | ✓ | — | — |
+| 创建交付快照 | ✓ | ✓ | — | — |
+| 批准交付快照 | ✓（≠作者） | — | ✓（≠作者） | — |
+| 创建/接受知识提议 | 接受需 owner/reviewer（≠提议者）；创建 owner/editor | | | |
+## 10. S2–S6 实施记录（2026-11-13）
+
+| 项 | 结果 |
+|---|---|
+| 后端 | mvn verify → **BUILD SUCCESS，79 tests**（S1 基线 71 + 本批 8：GitAdapter 3、基线 2、交付闭环 3） |
+| 迁移 | V5__m3_delivery.sql：9 张表 + knowledge_document.applicable_baseline_id；迁移测试 5 个版本幂等 |
+| 前端 | build 通过、**25 tests**；新增代码基线页、交付闭环页、知识"可能过期"标记 |
+| 浏览器 E2E | **3 passed（12.8s）**：M1 / M2 / M3（注册仓库→捕获基线→交接包→实施回收→验收矩阵→快照四眼批准） |
+| API 演示 | 
+ode scripts/demo-m3.mjs → **25/25**（含远程 URL 脱敏、快照/提议四眼、知识过期标记、审计） |
+
+**实现位置**：git/LocalGitAdapter（只读白名单/超时/输出上限/中文路径/safe.directory）、aseline/*（仓库注册、不可变基线）、execution/*（实施记录、变更、任务完成、偏差、验收矩阵）、delivery/*（As-built、四眼批准、知识提议与接受）、knowledge/KnowledgeStalenessService、web/BaselineController、web/DeliveryController、前端 BaselinesPage/DeliveryPage。
+
+**与计划的偏差**：
+
+1. 多仓库基线为"一条基线包含多个仓库 commit"；实施记录按仓库逐条回收（一个基线可对应多条记录），验收矩阵按批准方案任务聚合多条记录。
+2. 偏差分析采用"系统计算未完成任务候选 + 人工分类（符合/额外/未实现/变更）"，不尝试从 diff 自动推断语义偏差。
+3. 重命名（R）在 --name-status 中保留 old_path；--numstat 对重命名可能显示 0/0（文件级统计为近似），正文不落库。
+4. 交付快照批准时才写入 Artifact（内容寻址、只读），草稿不落字节；知识提议接受后生成**草稿**知识，仍需既有四眼审核发布。
+5. 导出/导入包与实例锁清理脚本仍在 ADR-0008 后续范围，不属于本阶段退出条件。
+
+**已知限制**：git 缺失/超时返回可操作错误；Windows 映射网络盘检测依赖路径/类型启发式；代码符号级映射未做（变更映射到文件级）。

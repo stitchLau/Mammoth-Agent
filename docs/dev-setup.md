@@ -62,9 +62,9 @@ npm test           # vitest
 ## 数据库（M1）
 
 - 位置：`<数据根>/db/mammoth.db`（SQLite，WAL；`<数据根>/artifacts`、`<数据根>/cache` 同时创建）。
-- 迁移：**Flyway 13.12.1**，脚本位于 `services/domain/src/main/resources/db/migration/`；当前 `V1`–`V4`（M1 基线 14 表 + M2 需求/方案 9 表），共 23 张业务表。
+- 迁移：**Flyway 13.12.1**，脚本位于 `services/domain/src/main/resources/db/migration/`；当前 `V1`–`V5`（M1 基线 14 表 + M2 需求/方案 9 表 + M3 交付闭环 9 表），共 32 张业务表。
 - 由于 Spring Boot 4 将 Flyway 自动配置拆到独立模块，本项目**显式声明 `Flyway` bean**（版本固定），迁移在 HTTP 服务开始接受请求前完成；失败即启动失败（fail fast）。只读入口（ADR-0008）不创建该 bean、不执行迁移。
-- `GET /api/meta` 返回 `dataRoot`、`database`、`schemaVersion`（当前为 `4`）。
+- `GET /api/meta` 返回 `dataRoot`、`database`、`schemaVersion`（当前为 `5`）。
 - 手动核对：`sqlite3 <数据根>/db/mammoth.db "SELECT version, description, success FROM flyway_schema_history;"`
 - 迁移不可在已有库上手工修改；新增变更一律新增 `V<n>__*.sql`。
 
@@ -149,6 +149,15 @@ npm test           # vitest
 - **端到端演示**：`node scripts/demo-m1.mjs http://127.0.0.1:8080`（[`docs/demos/M1-DEMO.md`](demos/M1-DEMO.md)）与 `node scripts/demo-m2.mjs http://127.0.0.1:8080`（[`docs/demos/M2-DEMO.md`](demos/M2-DEMO.md)，需空数据根）。
 - MCP 入口与 Web 入口共用同一数据根；MCP 进程会持有 jar（Windows 上重建 jar 前需卸载 bundle）。
 
+## M3 交付闭环（2026-11-13）
+
+- **代码仓库**：`POST /api/projects/{p}/repositories`（owner）注册本地仓库绝对路径；服务端用只读 Git 命令归一化到仓库根、校验非数据根/`~/.dsh`、脱敏远程 URL。禁止把源码放进数据根或知识库。
+- **基线**：`POST /api/projects/{p}/baselines`（owner/editor）为所有 active 仓库捕获 commit/branch/脏树状态；脏工作树默认 409，owner 可 `allowDirty=true` 记录不可复现基线；基线不可修改。
+- **交接包**：`GET /api/projects/{p}/work-items/{w}/handoff`（需批准方案）返回 Markdown（业务/技术渲染 + 任务 + 验收 + 基线）。
+- **实施回收**：`POST .../executions`（owner/editor）以 `baselineId + repositoryId + toCommit` 回收文件级变更；`POST .../executions/{id}/deviations` 人工分类偏差；`GET .../acceptance-matrix` 返回覆盖状态与未完成任务候选。
+- **交付快照**：`POST .../deliveries` 生成 As-built 草稿；`POST .../deliveries/{id}/approve` 需 owner/reviewer 且非作者（四眼），批准时 Markdown 落 Artifact，批准后不可覆盖。
+- **知识闭环**：`POST .../knowledge-proposals` 基于已批准快照；`accept` 需 owner/reviewer 且非提议者，生成**知识草稿**（仍走既有四眼审核发布）；知识列表/详情/检索返回 `stale`（绑定的代码基线落后于最新基线），仅提示不改状态。
+- **安全**：Git 只读白名单（不含 clone/fetch/push/checkout/commit/reset/clean），10 s 超时、1 MiB 输出上限；演示/测试只用临时合成仓库。
 ## 已知限制（当前阶段）
 
 - M1 / M1.5 / M2 已完成本地验收（见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)、[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md)）；UI 已由 Playwright 真实浏览器流程覆盖（2 场景）；
@@ -157,5 +166,5 @@ npm test           # vitest
 - 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
 - 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充；
 - 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）；
-- 数据根已实现单写者锁、网络盘/云同步拒绝与 MCP 只读连接（M3 S1）；**导出/导入、Git 基线、实例锁清理脚本仍未实现**（M3 后续切片）；
+- 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入包、实例锁清理脚本、备份恢复演练自动化仍未实现**（ADR-0008 后续）；
 - 在 DSH `workspace-write` 沙箱中 Playwright 会因 worker 管道 `EPERM` 失败；E2E 需普通终端、CI 或一次性提权。

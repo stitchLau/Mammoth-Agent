@@ -33,3 +33,22 @@
 - **现象**：`npm run test:e2e` 报 `spawn EPERM`（node child_process.fork + 管道）。
 - **根因**：DSH `workspace-write` 文件沙箱禁止命名管道/捕获式子进程，Playwright worker 依赖该机制。
 - **处置**：一次性 `danger-full-access` 提权运行 E2E，结果 2 passed；记录到 `docs/evidence/M3-VERIFICATION.md` §4，后续本机受限会话需同样处理，CI 不受影响（非代码缺陷）。
+## B-M3-006 E2E 基线捕获被后续导航中止
+
+- **现象**：M3 E2E 首跑超时；数据根中仓库已注册但基线为 0，交接包显示"代码基线：未捕获"。
+- **根因**：点击"捕获基线"后表单异步提交，测试立即 page.goto 交付页，浏览器中止了未完成的 POST；同时断言 getByText('当前基线') 命中了表单标题"捕获当前基线"的子串，掩盖了失败。
+- **修复**：等待 POST /baselines 响应并断言唯一基线说明文案；后续同类"提交后导航"的测试遵循同一模式。
+- **回归**：M3 E2E 通过（基线进入交接包与实施记录）。
+
+## B-M3-007 E2E 严格模式定位冲突
+
+- **现象**：getByText(<short sha>) 同时命中表格单元格与"实施记录"下拉选项。
+- **修复**：断言加 .first()；表格/表单定位优先用角色与作用域。
+- **回归**：E2E 3 passed。
+
+## B-M3-008 测试 Git 仓库误建在 Mammoth 数据根内
+
+- **现象**：BaselineWorkflowTest/DeliveryWorkflowTest 注册仓库返回 400 epository path must not be inside the Mammoth data root。
+- **根因**：测试把临时 Git 仓库建在测试数据根目录下；服务按 ADR-0008 正确拒绝。
+- **修复**：测试改用独立临时仓库根（mammoth-m3-*-repos），与数据根分离。
+- **回归**：基线/交付测试通过。

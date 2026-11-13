@@ -118,3 +118,13 @@
 3. 知识过期标记：`applicable_baseline_id` 可空列 + 详情/检索提示（不改状态）；
 4. 与 ADR-0010 兼容：`solution_version` 增加可空 `project_baseline_id`（M3 迁移），不修改已批准版本语义；
 5. 在 `docs/dev-setup.md` 记录"客户仓库路径配置 + 只读权限最小化"的运维要求。
+## 2026-11-13 S2/S3/S4 落地记录（M3）
+
+- **只读适配器**：com.mammoth.domain.git.LocalGitAdapter 实现 inspect / diff / isAncestor / erifyCommit；命令白名单、10 s 超时、1 MiB 输出上限、GIT_TERMINAL_PROMPT=0、--no-optional-locks、core.quotepath=false、core.fsmonitor=false、精确 safe.directory；commit 参数正则校验并在 -- 前隔离。
+- **数据**：V5 建 project_repository / project_baseline / project_baseline_repo；基线不可变，"当前基线"按 captured_at 取最近；同一基线可覆盖多仓库 commit。
+- **仓库注册**：owner 手工填写本地绝对路径；拒绝数据根与 ~/.dsh；使用 ev-parse --show-toplevel 归一化到仓库根；远程 URL 去 userinfo 后存储。
+- **基线捕获**：默认要求干净工作树；脏树 409 并列出仓库；owner 可用 llowDirty=true 记录 dirty=true 的非可复现基线并审计。
+- **变更映射（M3 S4）**：ExecutionRecord 记录 aseline_id + from_commit + to_commit + diverged，execution_change 存文件路径/类型/增删行数；diverged = !isAncestor(from,to)；代码正文不落库。
+- **知识过期（S6）**：knowledge_document.applicable_baseline_id；KnowledgeStalenessService 计算 stale，仅提示、不改状态。
+- **证据**：LocalGitAdapterTest 3、BaselineWorkflowTest 2、DeliveryWorkflowTest 3、docs/evidence/M3-VERIFICATION.md §7、demo-m3.mjs 25/25。
+- **偏差**：重命名的 --numstat 统计可能为 0（--name-status 仍记录 old_path）；子模块不递归；映射网络盘无法可靠识别（使用 UNC/类型启发式）。

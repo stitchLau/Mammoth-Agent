@@ -1,9 +1,9 @@
 # M3 验证证据（实施回收与知识闭环）
 
 - **日期**：2026-11-13（Asia/Shanghai）
-- **范围**：M3 切片 1（运行边界加固，ADR-0008）：数据根实例锁、网络盘/云同步根拒绝、MCP 只读连接
+- **范围**：M3 切片 1–6（运行边界加固 + Git 基线/交接/实施回收/偏差/验收矩阵/交付快照/知识闭环）
 - **规格**：`docs/specs/M3-PHASE3-PLAN.md` §4
-- **结论**：**S1 通过**（后端 71 tests；浏览器 E2E 2 passed；手动集成检查 5 项通过）
+- **结论**：**M3 全部切片通过**（后端 79 tests；前端 build + 25 tests；浏览器 E2E 3 passed；API 演示 25/25；S1 手动集成 5/5）
 
 ## 1. 自动化结果（真实执行）
 
@@ -61,3 +61,40 @@ $env:MAMMOTH_DATA_ROOT=$root
 $env:MAMMOTH_MCP_AGENT_USER_ID='<项目成员用户 id>'
 '{"jsonrpc":"2.0","id":1,"method":"initialize"}' | java -jar services/domain/target/mammoth-domain-service.jar --mcp
 ```
+## 7. S2–S6 验证（2026-11-13）
+
+### 7.1 自动化
+
+| 检查 | 命令 | 结果 |
+|---|---|---|
+| 后端 | mvn -B -ntp -f services/domain/pom.xml verify | **BUILD SUCCESS，79 tests**（S1 71 + GitAdapter 3 + 基线 2 + 交付闭环 3） |
+| 迁移 | MigrationTest | V1–V5 幂等，32 张业务表（+9 表与 1 列） |
+| 前端 | cd apps/web; npm run build; npm test | build 通过；**25 tests** |
+| 浏览器 E2E | 空数据根 + 
+pm run test:e2e | **3 passed（12.8s）**：M1 4.6s / M2 3.7s / M3 3.9s |
+| API 演示 | 
+ode scripts/demo-m3.mjs http://127.0.0.1:18150 | **25/25** |
+
+### 7.2 M3 E2E 路径（pps/web/e2e/m1-ui.spec.ts 第 3 个测试）
+
+注册仓库（真实临时 Git 仓库）→ 捕获基线 → 生成交接包（含基线/任务/只读约束）→ 新增实施 commit → 记录实施并勾选完成任务 → 验收矩阵显示"已覆盖 1" → 生成 As-built 草稿 → 切 reviewer 四眼批准快照 → 显示"已批准"。
+
+### 7.3 API 演示覆盖（25 步）
+
+仓库注册（远程 URL 脱敏）→ 基线捕获（commit/branch）→ 需求/就绪/方案四眼批准 → 交接包 → 实施记录（from→to、变更、diverged=false）→ 验收矩阵 covered → 偏差（额外实现）→ As-built 草稿 → 作者自批 403 → reviewer 批准（Artifact）→ 知识提议 → 提议者自接受 403 → reviewer 接受生成知识草稿 → 新基线后知识 stale=true 且状态仍 draft → 审计含仓库/基线/实施/交付/知识动作 → 登出 401。
+
+### 7.4 验收标准映射（M3）
+
+| 项 | 证据 |
+|---|---|
+| Approved Design 不被覆盖 | SolutionWorkflowTest（M2）保持通过；交付/知识只读引用已批准版本；DeliveryWorkflowTest 批准后快照不可再批准（409） |
+| Actual/As-built 差异可追溯 | DeliveryWorkflowTest.executionRecordDrivesAcceptanceMatrixAndDeviations（变更清单、偏差、矩阵） |
+| 知识更新有来源与审核 | DeliveryWorkflowTest.deliverySnapshotAndKnowledgeProposalCompleteTheLoop（Artifact 来源、草稿状态、四眼接受） |
+| 知识过期提示 | KnowledgeStalenessService + 列表/详情/检索 stale 字段；演示验证 |
+| Git 只读/基线不可变/脏树拒绝 | LocalGitAdapterTest（3）、BaselineWorkflowTest（2） |
+| 权限/审计 | 各服务角色校验；演示审计动作；既有 PermissionIsolationTest 不回归 |
+
+### 7.5 环境说明
+
+- 本机受限沙箱下 Playwright worker 管道受限的问题已通过一次性提权解决（S1 记录）；本批 E2E 在 danger-full-access 会话下运行，CI Linux Runner 不受影响。
+- 演示脚本会创建/删除临时 Git 仓库（os.tmpdir()），不接触真实客户仓库。
