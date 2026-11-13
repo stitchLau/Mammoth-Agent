@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useSession } from '../app/session'
 import { ErrorBanner, LoadingState, PageHeader } from '../components/ui'
 import {
   createCustomer,
@@ -16,6 +17,8 @@ import { formatProjectCode } from '../lib/format'
 
 /** Landing page: project list plus the minimal master-data setup flow (UI-SPEC P03). */
 export default function ProjectsPage() {
+  const { state } = useSession()
+  const orgAdmin = state.status === 'authenticated' && state.user.orgAdmin
   const [projects, setProjects] = useState<Project[] | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -84,43 +87,47 @@ export default function ProjectsPage() {
       <details className="panel" open={projects?.length === 0}>
         <summary>新建客户 / 产品 / 项目</summary>
         <div className="grid">
-          <form
-            className="field"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void run(async () => {
-                await createCustomer(customerName.trim())
-                setCustomerName('')
-                await reload()
-              })
-            }}
-          >
-            <h3>新建客户</h3>
-            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="客户名称" />
-            <button type="submit" disabled={busy || customerName.trim() === ''}>
-              创建客户
-            </button>
-            <p className="hint">{customers.length} 个客户</p>
-          </form>
+          {orgAdmin && (
+            <>
+              <form
+                className="field"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void run(async () => {
+                    await createCustomer(customerName.trim())
+                    setCustomerName('')
+                    await reload()
+                  })
+                }}
+              >
+                <h3>新建客户</h3>
+                <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="客户名称" />
+                <button type="submit" disabled={busy || customerName.trim() === ''}>
+                  创建客户
+                </button>
+                <p className="hint">{customers.length} 个客户</p>
+              </form>
 
-          <form
-            className="field"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void run(async () => {
-                await createProduct(productName.trim())
-                setProductName('')
-                await reload()
-              })
-            }}
-          >
-            <h3>新建产品</h3>
-            <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="产品名称" />
-            <button type="submit" disabled={busy || productName.trim() === ''}>
-              创建产品
-            </button>
-            <p className="hint">{products.length} 个产品</p>
-          </form>
+              <form
+                className="field"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void run(async () => {
+                    await createProduct(productName.trim())
+                    setProductName('')
+                    await reload()
+                  })
+                }}
+              >
+                <h3>新建产品</h3>
+                <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="产品名称" />
+                <button type="submit" disabled={busy || productName.trim() === ''}>
+                  创建产品
+                </button>
+                <p className="hint">{products.length} 个产品</p>
+              </form>
+            </>
+          )}
 
           <form
             className="field"
@@ -154,6 +161,9 @@ export default function ProjectsPage() {
             </button>
           </form>
         </div>
+        {!orgAdmin && (
+          <p className="hint">客户/产品主数据由组织管理员维护；创建项目需要已有客户。</p>
+        )}
       </details>
     </>
   )

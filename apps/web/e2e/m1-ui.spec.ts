@@ -91,8 +91,8 @@ test('M1 UI end-to-end', async ({ page }) => {
     const newPassword = 'NewPassw0rd!2026'
     await page.goto('/settings')
     await page.getByLabel('显示名', { exact: true }).fill('E2E Admin Renamed')
-    await page.getByRole('button', { name: '保存显示名' }).click()
-    await expect(page.getByText('显示名已更新')).toBeVisible()
+    await page.getByRole('button', { name: '保存资料' }).click()
+    await expect(page.getByText('显示名/邮箱已更新')).toBeVisible()
     await expect(page.getByRole('link', { name: 'E2E Admin Renamed' })).toBeVisible()
 
     await page.getByLabel('当前密码').fill(password)
@@ -374,4 +374,77 @@ test('M3 baseline, handoff, execution and delivery approval', async ({ page }) =
   } finally {
     rmSync(repoDir, { recursive: true, force: true })
   }
+})
+
+/**
+ * M4 S1 acceptance (ADR-0006 M4 addendum): an org admin creates a user, resets the password to a
+ * one-time secret, and the temporary session is forced through password rotation before any project
+ * page can be used.
+ */
+test('M4 S1 org admin reset and forced password change', async ({ page }) => {
+  test.skip(!shared.adminUser, 'requires the M1 flow first (shared backend data root)')
+  const adminUser = shared.adminUser ?? ''
+  const adminPassword = shared.adminPassword ?? ''
+  const stamp = Date.now().toString().slice(-6)
+  const username = `m4-user-${stamp}`
+  const initialPassword = 'Passw0rd!2026'
+  const newPassword = 'NewPassw0rd!2026'
+  let temporaryPassword = ''
+
+  await test.step('管理员创建用户并重置口令', async () => {
+    await page.goto('/login')
+    await page.getByLabel('用户名').fill(adminUser)
+    await page.getByLabel('密码').fill(adminPassword)
+    await page.getByRole('button', { name: '登录' }).click()
+    await expect(page).toHaveURL(/\/projects$/)
+
+    const csrfResponse = await page.request.get('/api/auth/csrf')
+    const { token } = (await csrfResponse.json()) as { token: string }
+    const headers = { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token }
+    const createdResponse = await page.request.post('/api/users', {
+      headers,
+      data: {
+        username,
+        displayName: 'M4 Reset User',
+        password: initialPassword,
+        email: `${username}@example.com`,
+        accountType: 'human',
+      },
+    })
+    expect(createdResponse.ok()).toBeTruthy()
+    const created = (await createdResponse.json()) as { id: string }
+
+    await page.goto('/settings')
+    await expect(page.getByRole('heading', { name: '组织成员管理' })).toBeVisible()
+    await expect(page.getByText(username, { exact: true })).toBeVisible()
+
+    const resetResponse = await page.request.post(`/api/users/${created.id}/reset-password`, {
+      headers,
+    })
+    expect(resetResponse.ok()).toBeTruthy()
+    temporaryPassword = ((await resetResponse.json()) as { temporaryPassword: string }).temporaryPassword
+    expect(temporaryPassword.length).toBeGreaterThanOrEqual(8)
+
+    await page.getByRole('button', { name: '退出' }).click()
+    await expect(page).toHaveURL(/\/login$/)
+
+    await page.getByLabel('用户名').fill(username)
+    await page.getByLabel('密码').fill(temporaryPassword)
+    await page.getByRole('button', { name: '登录' }).click()
+    await expect(page.getByRole('heading', { name: '需要修改密码' })).toBeVisible()
+  })
+
+  await test.step('临时口令会话只能改密，改密后重新登录', async () => {
+    await page.getByLabel('当前密码（临时口令）').fill(temporaryPassword)
+    await page.getByLabel('新密码（至少 8 位）').fill(newPassword)
+    await page.getByLabel('确认新密码').fill(newPassword)
+    await page.getByRole('button', { name: '修改密码并重新登录' }).click()
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.getByText(/密码已修改/)).toBeVisible()
+
+    await page.getByLabel('用户名').fill(username)
+    await page.getByLabel('密码').fill(newPassword)
+    await page.getByRole('button', { name: '登录' }).click()
+    await expect(page).toHaveURL(/\/projects$/)
+  })
 })

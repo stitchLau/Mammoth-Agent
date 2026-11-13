@@ -21,6 +21,10 @@ public class SessionService {
   public static final String COOKIE_NAME = "MAMMOTH_SESSION";
   public static final long TTL_SECONDS = 8L * 60 * 60;
 
+  /** Authenticated session facts needed by the HTTP filter (ADR-0006 M4 addendum). */
+  public record SessionInfo(String userId, boolean passwordResetRequired) {
+  }
+
   private final JdbcTemplate jdbcTemplate;
   private final SecureRandom random = new SecureRandom();
 
@@ -30,25 +34,40 @@ public class SessionService {
 
   @Transactional
   public String create(String userId) {
+    return create(userId, false);
+  }
+
+  @Transactional
+  public String create(String userId, boolean passwordResetRequired) {
     byte[] raw = new byte[32];
     random.nextBytes(raw);
     String token = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
     long now = Instant.now().getEpochSecond();
     jdbcTemplate.update(
-        "INSERT INTO session (token_hash, user_id, created_at, expires_at) VALUES (?,?,?,?)",
-        sha256(token), userId, now, now + TTL_SECONDS);
+        "INSERT INTO session (token_hash, user_id, created_at, expires_at, password_reset_required)"
+            + " VALUES (?,?,?,?,?)",
+        sha256(token), userId, now, now + TTL_SECONDS, passwordResetRequired ? 1 : 0);
     return token;
   }
 
   /** Returns the user id for a valid, unexpired, unrevoked session token. */
   public Optional<String> validate(String token) {
+    return validateSession(token).map(SessionInfo::userId);
+  }
+
+  /** Returns the full session facts, including the forced-password-change marker. */
+  public Optional<SessionInfo> validateSession(String token) {
     if (token == null || token.isBlank()) {
       return Optional.empty();
     }
     long now = Instant.now().getEpochSecond();
-    var rows = jdbcTemplate.queryForList(
-        "SELECT user_id FROM session WHERE token_hash=? AND revoked_at IS NULL AND expires_at>?",
-        String.class, sha256(token), now);
+    var rows = jdbcTemplate.query(
+        "SELECT user_id, password_reset_required FROM session"
+            + " WHERE token_hash=? AND revoked_at IS NULL AND expires_at>?",
+        (resultSet, rowNum) -> new SessionInfo(
+            resultSet.getString("user_id"),
+            resultSet.getInt("password_reset_required") != 0),
+        sha256(token), now);
     return rows.stream().findFirst();
   }
 

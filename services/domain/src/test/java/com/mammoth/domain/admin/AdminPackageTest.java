@@ -122,7 +122,7 @@ class AdminPackageTest {
         manifest.load(new java.io.InputStreamReader(input, StandardCharsets.UTF_8));
       }
       assertThat(manifest.getProperty("formatVersion")).isEqualTo("1");
-      assertThat(manifest.getProperty("schemaVersion")).isEqualTo("6");
+      assertThat(manifest.getProperty("schemaVersion")).isEqualTo("7");
       String appUsers = new String(
           archive.getInputStream(archive.getEntry("data/app_user.sql")).readAllBytes(),
           StandardCharsets.UTF_8);
@@ -211,7 +211,7 @@ class AdminPackageTest {
     BackupService.Result backup = new BackupService(source.bootstrap(), source.dataSource(),
         source.store()).backup(tempDir.resolve("backups"));
     assertThat(backup.directory()).exists();
-    assertThat(backup.schemaVersion()).isEqualTo(6);
+    assertThat(backup.schemaVersion()).isEqualTo(7);
     assertThat(backup.artifacts()).isEqualTo(1);
     Path backupDb = backup.directory().resolve("db").resolve("mammoth.db");
     assertThat(backupDb).exists();

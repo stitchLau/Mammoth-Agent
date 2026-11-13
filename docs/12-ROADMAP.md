@@ -58,9 +58,9 @@
 
 产出：Jira/CSM、MCP、企业微信/邮件、外部 Agent 适配、多用户共享和组织管理。
 
-**状态：S0 草案（2026-11-13）** — 负责人已确认收敛口径：单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/远程网关/多实例延后。
+**状态：S0/S1 已完成（2026-11-13）** — 负责人已确认收敛口径：单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/远程网关/多实例延后。S1 已落地 `org_admin`/用户停用重置/Agent 账号/强制改密（后端 103 tests、E2E 4 passed）。
 
-- 计划：[`docs/specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)（S1 组织/用户 → S2 BG-01/Agent/MCP 审计 → S3 导入框架 → S4 Jira 文件/BG-03 → S5 通知/任务/邮件企微 → S6 团队服务器预案）
+- 计划：[`docs/specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)（S1 已实施；S2 BG-01/Agent/MCP 审计 → S3 导入框架 → S4 Jira 文件/BG-03 → S5 通知/任务/邮件企微 → S6 团队服务器预案）
 - 生产集成：[`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)（Jira 只读 API、CSM、渠道启用、远程 Agent、团队服务器试点）
 - 威胁模型：[`docs/specs/M4-THREAT-MODEL.md`](specs/M4-THREAT-MODEL.md)
 - 决策：ADR-0011（外部集成/凭据）、ADR-0012（服务端/PG=M5）、ADR-0013（通知/外发）**Proposed**；ADR-0006/0008 增补

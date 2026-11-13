@@ -1,15 +1,25 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '../app/session'
 import { ErrorBanner, PageHeader } from '../components/ui'
-import { changePassword, updateProfile } from '../lib/api'
+import {
+  changePassword,
+  createUser,
+  disableUser,
+  enableUser,
+  listUsers,
+  resetUserPassword,
+  setUserOrgAdmin,
+  updateProfile,
+  type UserSummary,
+} from '../lib/api'
 
 export default function SettingsPage() {
   const { state, signIn, signOut, setNotice } = useSession()
   const navigate = useNavigate()
-  const [displayName, setDisplayName] = useState(
-    state.status === 'authenticated' ? state.user.displayName : '',
-  )
+  const currentUser = state.status === 'authenticated' ? state.user : null
+  const [displayName, setDisplayName] = useState(currentUser?.displayName ?? '')
+  const [email, setEmail] = useState(currentUser?.email ?? '')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -17,15 +27,40 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
+  const [users, setUsers] = useState<UserSummary[]>([])
+  const [userError, setUserError] = useState<string | null>(null)
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null)
+  const [newUser, setNewUser] = useState({
+    username: '',
+    displayName: '',
+    email: '',
+    password: '',
+    accountType: 'human',
+  })
+
+  const reloadUsers = useCallback(async () => {
+    if (!currentUser?.orgAdmin) {
+      setUsers([])
+      return
+    }
+    setUsers(await listUsers())
+  }, [currentUser?.orgAdmin])
+
+  useEffect(() => {
+    reloadUsers().catch((problem: unknown) =>
+      setUserError(problem instanceof Error ? problem.message : String(problem)),
+    )
+  }, [reloadUsers])
+
   async function saveProfile(event: React.FormEvent) {
     event.preventDefault()
     setBusy(true)
     setError(null)
     setMessage(null)
     try {
-      const updated = await updateProfile(displayName.trim())
+      const updated = await updateProfile(displayName.trim(), email.trim())
       signIn(updated)
-      setMessage('显示名已更新')
+      setMessage('显示名/邮箱已更新')
     } catch (problem: unknown) {
       setError(problem instanceof Error ? problem.message : String(problem))
     } finally {
@@ -57,14 +92,41 @@ export default function SettingsPage() {
     }
   }
 
+  async function runUserAction(action: () => Promise<void>) {
+    setBusy(true)
+    setUserError(null)
+    try {
+      await action()
+      await reloadUsers()
+    } catch (problem: unknown) {
+      setUserError(problem instanceof Error ? problem.message : String(problem))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function createAccount(event: React.FormEvent) {
+    event.preventDefault()
+    void runUserAction(async () => {
+      await createUser(
+        newUser.username.trim(),
+        newUser.displayName.trim(),
+        newUser.password,
+        newUser.email.trim() === '' ? null : newUser.email.trim(),
+        newUser.accountType,
+      )
+      setNewUser({ username: '', displayName: '', email: '', password: '', accountType: 'human' })
+    })
+  }
+
   return (
     <>
-      <PageHeader title="账号设置" subtitle="显示名与密码；修改密码会注销所有会话" />
+      <PageHeader title="账号与组织设置" subtitle="显示名/邮箱、密码与组织成员管理" />
       {error && <ErrorBanner message={error} />}
       {message && <p className="state notice">{message}</p>}
 
-      <h2>显示名</h2>
-      <form className="knowledge-form" aria-label="修改显示名" onSubmit={(event) => void saveProfile(event)}>
+      <h2>显示名与邮箱</h2>
+      <form className="knowledge-form" aria-label="修改资料" onSubmit={(event) => void saveProfile(event)}>
         <div className="row">
           <input
             aria-label="显示名"
@@ -72,14 +134,22 @@ export default function SettingsPage() {
             onChange={(event) => setDisplayName(event.target.value)}
             placeholder="显示名"
           />
+          <input
+            aria-label="邮箱（通知用）"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="邮箱（可选，用于通知）"
+          />
           <button type="submit" disabled={busy || displayName.trim() === ''}>
-            保存显示名
+            保存资料
           </button>
         </div>
-        {state.status === 'authenticated' && (
+        {currentUser && (
           <p className="hint">
-            用户名：<span className="mono">{state.user.username}</span> · 用户 ID：
-            <span className="mono">{state.user.id}</span>
+            用户名：<span className="mono">{currentUser.username}</span> · 用户 ID：
+            <span className="mono">{currentUser.id}</span>
+            {currentUser.orgAdmin ? ' · 组织管理员' : ''}
           </p>
         )}
       </form>
@@ -116,6 +186,149 @@ export default function SettingsPage() {
           </button>
         </div>
       </form>
+
+      {currentUser?.orgAdmin && (
+        <>
+          <h2>组织成员管理</h2>
+          {userError && <ErrorBanner message={userError} onRetry={() => void reloadUsers()} />}
+          {temporaryPassword && (
+            <p className="state notice">
+              临时口令（仅显示一次，请转交用户并让其立即修改）：
+              <span className="mono"> {temporaryPassword}</span>{' '}
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => void navigator.clipboard?.writeText(temporaryPassword)}
+              >
+                复制
+              </button>
+            </p>
+          )}
+
+          <table className="table">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>邮箱</th>
+                <th>类型</th>
+                <th>状态</th>
+                <th>组织管理员</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => {
+                const isSelf = user.id === currentUser.id
+                return (
+                  <tr key={user.id}>
+                    <td>
+                      {user.displayName}（<span className="mono">{user.username}</span>）
+                    </td>
+                    <td>{user.email ?? '—'}</td>
+                    <td>{user.accountType === 'agent' ? 'Agent' : '人类'}</td>
+                    <td>{user.status === 'active' ? '启用' : '停用'}</td>
+                    <td>{user.orgAdmin ? '是' : '否'}</td>
+                    <td className="actions">
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy || isSelf}
+                        onClick={() =>
+                          void runUserAction(async () => {
+                            await (user.status === 'active'
+                              ? disableUser(user.id)
+                              : enableUser(user.id))
+                          })
+                        }
+                      >
+                        {user.status === 'active' ? '停用' : '启用'}
+                      </button>
+                      {user.accountType !== 'agent' && (
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            if (!window.confirm(`重置 ${user.displayName} 的口令？`)) return
+                            void runUserAction(async () => {
+                              const result = await resetUserPassword(user.id)
+                              setTemporaryPassword(result.temporaryPassword)
+                            })
+                          }}
+                        >
+                          重置口令
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy || (isSelf && user.orgAdmin)}
+                        onClick={() =>
+                          void runUserAction(async () => {
+                            await setUserOrgAdmin(user.id, !user.orgAdmin)
+                          })
+                        }
+                      >
+                        {user.orgAdmin ? '取消管理员' : '设为管理员'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+
+          <form className="knowledge-form" aria-label="创建用户" onSubmit={(event) => void createAccount(event)}>
+            <h3>创建用户</h3>
+            <div className="row">
+              <input
+                aria-label="新用户名"
+                value={newUser.username}
+                onChange={(event) => setNewUser({ ...newUser, username: event.target.value })}
+                placeholder="用户名（至少 2 位）"
+              />
+              <input
+                aria-label="新用户显示名"
+                value={newUser.displayName}
+                onChange={(event) => setNewUser({ ...newUser, displayName: event.target.value })}
+                placeholder="显示名"
+              />
+              <input
+                aria-label="新用户邮箱"
+                type="email"
+                value={newUser.email}
+                onChange={(event) => setNewUser({ ...newUser, email: event.target.value })}
+                placeholder="邮箱（可选）"
+              />
+              <input
+                aria-label="新用户密码"
+                type="password"
+                value={newUser.password}
+                onChange={(event) => setNewUser({ ...newUser, password: event.target.value })}
+                placeholder="密码（至少 8 位）"
+              />
+              <select
+                aria-label="新用户类型"
+                value={newUser.accountType}
+                onChange={(event) => setNewUser({ ...newUser, accountType: event.target.value })}
+              >
+                <option value="human">人类用户</option>
+                <option value="agent">Agent 账号（不可登录）</option>
+              </select>
+              <button
+                type="submit"
+                disabled={
+                  busy ||
+                  newUser.username.trim().length < 2 ||
+                  newUser.password.length < 8
+                }
+              >
+                创建用户
+              </button>
+            </div>
+          </form>
+        </>
+      )}
     </>
   )
 }

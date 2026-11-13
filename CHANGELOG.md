@@ -1,5 +1,15 @@
 # Changelog
 
+## V0.14.0 — 2026-11-13
+
+- **M4 S1（组织/用户生命周期与权限收紧）**：
+  - **数据**：`V7__org_admin_user_lifecycle.sql`——`app_user.email/account_type/password_reset_required`、`session.password_reset_required`、`role_assignment` 唯一索引、最早 active 用户回填 `org_admin`；`MIN_SCHEMA_VERSION=7`。
+  - **后端**：`org_admin`（复用 `role_assignment`）；用户停用/启用（撤销会话）、管理员重置一次性口令+强制改密、`account_type=agent` 禁登；`POST/GET /api/users` 收紧为 org_admin（空库 bootstrap 例外）；`/api/users/directory` 供项目 owner 添加成员；客户/产品创建仅 org_admin；`AuthController` 返回 email/accountType/passwordResetRequired/orgAdmin；强制改密会话仅能访问 `/api/auth/{me,password,logout,csrf}`。
+  - **前端**：`ForcePasswordChangePage` + `RequireAuth` 门禁；`SettingsPage` 邮箱、组织成员管理、停用/启用、重置口令、Agent 账号；`MembersPage` 最小目录与 org_admin 建用户限制；`ProjectsPage` 主数据仅 org_admin。
+  - **测试**：后端 **103 tests**（89 + 14）；前端 build + **25 tests**；Playwright **4 passed**（新增 M4 S1 场景）；M3 验收 **18/18**、ADR-0008 **9/9**、M3 演示 **25/25**。
+  - **ADR**：ADR-0006 增补转 **Accepted v1.1**（`org_admin`/用户生命周期/Agent 账号）；ADR-0011/0012/0013 仍 Proposed。
+- **说明**：S1 未实现 S2 的 BG-01/MCP 审计、S3 导入、S5 通知/任务；下一阶段 S2。CI 远端仍未验证。
+
 ## V0.13.0 — 2026-11-13
 
 - **M4 S0（准入决策与规格，未写业务代码）**：

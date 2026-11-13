@@ -50,7 +50,7 @@
 - ADR-0003：关系数据库、ORM 和迁移机制。**Accepted v1.0**
 - ADR-0004：文件存储与共享工作区。**Accepted v1.0**
 - ADR-0005：全文/向量检索引擎。**Accepted v1.0**
-- ADR-0006：身份认证、组织隔离和权限模型。**Accepted v1.0**
+- ADR-0006：身份认证、组织隔离和权限模型。**Accepted v1.1（2026-11-13：org_admin/用户生命周期/Agent 账号）**
 - ADR-0007：项目代码基线、Git Worktree 和知识更新机制。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0007-GIT-BASELINE.md`
 - ADR-0008：项目工作区与正式知识空间。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0008-WORKSPACE.md`
 - ADR-0009：文档解析（OPEN）；ADR-0010：需求上下文基线（Accepted v1.0）
@@ -76,6 +76,8 @@ Domain Service
  └─ delivery：BG-01 zip、BG-03 矩阵
 
 边界：单节点 writer + SQLite；MCP 只读；无出站（除非渠道/API 配置启用）；PG/多实例=M5
+
+**S1 已落地（2026-11-13）**：`org_admin`（`role_assignment`）、用户停用/启用/管理员重置/强制改密、Agent 账号、`/api/users/directory`、客户/产品主数据 org_admin 门禁；V7；后端 103 tests、E2E 4 passed。
 ```
 
 新增外部依赖（计划）：`spring-boot-starter-mail`（邮件，配置后启用）、CSV 解析（`commons-csv` 或内置，S3 评审）、GreenMail（仅测试，Apache-2.0）。所有依赖需来源/许可证/漏洞检查。

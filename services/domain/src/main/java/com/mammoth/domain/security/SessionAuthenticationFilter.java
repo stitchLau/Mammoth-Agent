@@ -20,6 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class SessionAuthenticationFilter extends OncePerRequestFilter {
 
+  public static final String ROLE_USER = "ROLE_USER";
+  public static final String ROLE_PASSWORD_RESET_REQUIRED = "ROLE_PASSWORD_RESET_REQUIRED";
+
   private final SessionService sessionService;
 
   public SessionAuthenticationFilter(SessionService sessionService) {
@@ -31,9 +34,12 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
       FilterChain filterChain) throws ServletException, IOException {
     String token = sessionToken(request);
     if (token != null) {
-      sessionService.validate(token).ifPresent(userId -> {
+      sessionService.validateSession(token).ifPresent(session -> {
+        String authority = session.passwordResetRequired()
+            ? ROLE_PASSWORD_RESET_REQUIRED
+            : ROLE_USER;
         var authentication = new UsernamePasswordAuthenticationToken(
-            userId, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            session.userId(), null, List.of(new SimpleGrantedAuthority(authority)));
         SecurityContextHolder.getContext().setAuthentication(authentication);
       });
     }

@@ -44,8 +44,8 @@ class MigrationTest {
         .load();
 
     MigrateResult first = flyway.migrate();
-    assertThat(first.migrationsExecuted).isEqualTo(6);
-    assertThat(first.targetSchemaVersion).isEqualTo("6");
+    assertThat(first.migrationsExecuted).isEqualTo(7);
+    assertThat(first.targetSchemaVersion).isEqualTo("7");
 
     MigrateResult second = flyway.migrate();
     assertThat(second.migrationsExecuted).isZero();
@@ -61,7 +61,62 @@ class MigrationTest {
         }
       }
       assertThat(tables).containsAll(EXPECTED_TABLES);
+      assertThat(columns(statement, "app_user"))
+          .contains("email", "account_type", "password_reset_required");
+      assertThat(columns(statement, "session")).contains("password_reset_required");
     }
+  }
+
+  @Test
+  void v7BackfillsOrgAdminForTheOldestUser() throws Exception {
+    String url = "jdbc:sqlite:" + tempDir.resolve("backfill-test.db").toAbsolutePath();
+    Flyway.configure()
+        .dataSource(url, null, null)
+        .locations("classpath:db/migration")
+        .target("6")
+        .load()
+        .migrate();
+
+    try (Connection connection = DriverManager.getConnection(url);
+         Statement statement = connection.createStatement()) {
+      statement.execute("INSERT INTO organization (id, name, created_at)"
+          + " VALUES ('org-1', 'Org', '2026-01-01T00:00:00Z')");
+      statement.execute("INSERT INTO app_user"
+          + " (id, org_id, username, display_name, password_hash, status, created_at)"
+          + " VALUES ('user-old', 'org-1', 'old', 'Old', 'hash', 'active',"
+          + " '2026-01-01T00:00:00Z')");
+      statement.execute("INSERT INTO app_user"
+          + " (id, org_id, username, display_name, password_hash, status, created_at)"
+          + " VALUES ('user-new', 'org-1', 'new', 'New', 'hash', 'active',"
+          + " '2026-01-02T00:00:00Z')");
+    }
+
+    Flyway.configure()
+        .dataSource(url, null, null)
+        .locations("classpath:db/migration")
+        .load()
+        .migrate();
+
+    try (Connection connection = DriverManager.getConnection(url);
+         Statement statement = connection.createStatement();
+         ResultSet resultSet = statement.executeQuery(
+             "SELECT user_id, role, scope_type FROM role_assignment")) {
+      assertThat(resultSet.next()).isTrue();
+      assertThat(resultSet.getString("user_id")).isEqualTo("user-old");
+      assertThat(resultSet.getString("role")).isEqualTo("org_admin");
+      assertThat(resultSet.getString("scope_type")).isEqualTo("organization");
+      assertThat(resultSet.next()).isFalse();
+    }
+  }
+
+  private static List<String> columns(Statement statement, String table) throws Exception {
+    List<String> columns = new ArrayList<>();
+    try (ResultSet resultSet = statement.executeQuery("PRAGMA table_info(" + table + ")")) {
+      while (resultSet.next()) {
+        columns.add(resultSet.getString("name"));
+      }
+    }
+    return columns;
   }
 
   @Test
@@ -82,7 +137,7 @@ class MigrationTest {
         versions.add(resultSet.getString("version"));
         assertThat(resultSet.getBoolean("success")).isTrue();
       }
-      assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6");
+      assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7");
     }
   }
 }

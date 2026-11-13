@@ -7,10 +7,10 @@ import {
   addMember,
   changeMemberRole,
   createUser,
-  listUsers,
+  listUserDirectory,
   removeMember,
+  type DirectoryEntry,
   type Member,
-  type UserSummary,
 } from '../lib/api'
 import { clampPage, pageSlice } from '../lib/pagination'
 import { canManageMembers, ROLES, roleLabel } from '../lib/permissions'
@@ -21,7 +21,8 @@ export default function MembersPage() {
   const { project, role, members, reloadMembers } = useProject()
   const { state } = useSession()
   const selfId = state.status === 'authenticated' ? state.user.id : ''
-  const [users, setUsers] = useState<UserSummary[]>([])
+  const canCreateUsers = state.status === 'authenticated' && state.user.orgAdmin
+  const [users, setUsers] = useState<DirectoryEntry[]>([])
   const [page, setPage] = useState(1)
   const [userId, setUserId] = useState('')
   const [newRole, setNewRole] = useState('viewer')
@@ -31,7 +32,7 @@ export default function MembersPage() {
   const [newUser, setNewUser] = useState({ username: '', displayName: '', password: '', role: 'reviewer' })
 
   const reloadUsers = useCallback(async () => {
-    setUsers(await listUsers())
+    setUsers(await listUserDirectory())
   }, [])
 
   useEffect(() => {
@@ -180,14 +181,17 @@ export default function MembersPage() {
               <button type="submit" disabled={busy || userId === ''}>
                 添加
               </button>
-              <button type="button" className="secondary" onClick={() => setCreating((current) => !current)}>
-                {creating ? '收起' : '新建用户并加入'}
-              </button>
+              {canCreateUsers && (
+                <button type="button" className="secondary" onClick={() => setCreating((current) => !current)}>
+                  {creating ? '收起' : '新建用户并加入'}
+                </button>
+              )}
             </div>
             {candidates.length === 0 && <p className="hint">所有用户都已是项目成员。</p>}
+            {!canCreateUsers && <p className="hint">新建用户需要组织管理员权限；你仍可添加已有用户。</p>}
           </form>
 
-          {creating && (
+          {creating && canCreateUsers && (
             <form className="knowledge-form" aria-label="新建用户" onSubmit={createAndAdd}>
               <h3>新建用户并加入项目</h3>
               <div className="row">

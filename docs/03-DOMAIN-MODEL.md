@@ -114,3 +114,5 @@ M3 实现（2026-11-13）：`ProjectBaseline` 落为"项目 + 仓库集合 → c
 | 验收矩阵业务目标/证据 | BG-03（M4 S4） | 不新增权威表；查询派生 |
 
 M4 边界：外部记录不是权威工作项；通知/任务为运营表（默认不导出）；MCP 只读；单节点 SQLite；PG 多实例=M5。
+
+**S1 已落地（2026-11-13）**：`role_assignment` 用于 `org_admin`；`app_user` 增加 email/account_type/password_reset_required；`session` 增加强制改密标记；`UserService`/`AuthorizationService` 实现生命周期与组织管理；V7。

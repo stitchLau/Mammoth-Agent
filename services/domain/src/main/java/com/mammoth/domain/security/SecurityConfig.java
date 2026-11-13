@@ -50,6 +50,12 @@ public class SecurityConfig {
             // SPA deep links must load the app shell; the SPA then renders login/setup or redirects.
             .requestMatchers("/login", "/setup", "/projects", "/projects/**", "/settings", "/403",
                 "/404").permitAll()
+            // Forced password change: a temporary-password session may only read itself, change its
+            // password, log out or fetch a CSRF token. Everything else requires a full session.
+            .requestMatchers("/api/auth/me", "/api/auth/password", "/api/auth/logout")
+                .hasAnyAuthority(SessionAuthenticationFilter.ROLE_USER,
+                    SessionAuthenticationFilter.ROLE_PASSWORD_RESET_REQUIRED)
+            .requestMatchers("/api/**").hasAuthority(SessionAuthenticationFilter.ROLE_USER)
             .anyRequest().authenticated())
         .exceptionHandling(handling -> handling.authenticationEntryPoint(
             (request, response, error) -> response.sendError(401, "authentication required")))

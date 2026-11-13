@@ -43,6 +43,10 @@ export interface SessionUser {
   id: string
   username: string
   displayName: string
+  email: string | null
+  accountType: string
+  passwordResetRequired: boolean
+  orgAdmin: boolean
 }
 
 export interface KnowledgeHit {
@@ -251,17 +255,59 @@ export interface UserSummary {
   id: string
   username: string
   displayName: string
+  email: string | null
+  accountType: string
   status: string
+  orgAdmin: boolean
   createdAt: string
+}
+
+export interface DirectoryEntry {
+  id: string
+  username: string
+  displayName: string
 }
 
 export function listUsers(): Promise<UserSummary[]> {
   return request<UserSummary[]>('/api/users')
 }
 
+export function listUserDirectory(): Promise<DirectoryEntry[]> {
+  return request<DirectoryEntry[]>('/api/users/directory')
+}
+
+export function disableUser(userId: string): Promise<UserSummary> {
+  return request<UserSummary>(`/api/users/${userId}/disable`, { method: 'POST' })
+}
+
+export function enableUser(userId: string): Promise<UserSummary> {
+  return request<UserSummary>(`/api/users/${userId}/enable`, { method: 'POST' })
+}
+
+export function resetUserPassword(userId: string): Promise<{ temporaryPassword: string }> {
+  return request<{ temporaryPassword: string }>(`/api/users/${userId}/reset-password`, {
+    method: 'POST',
+  })
+}
+
+export function setUserOrgAdmin(userId: string, orgAdmin: boolean): Promise<UserSummary> {
+  return request<UserSummary>(`/api/users/${userId}/org-admin`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orgAdmin }),
+  })
+}
+
 /** First-run bootstrap: only succeeds while the organization has no users. */
-export function createFirstAdmin(username: string, displayName: string, password: string): Promise<{ id: string }> {
-  return request<{ id: string }>('/api/users', jsonBody({ username, displayName, password }))
+export function createFirstAdmin(
+  username: string,
+  displayName: string,
+  password: string,
+): Promise<{ id: string; username: string; bootstrap: boolean; orgAdmin: boolean }> {
+  return request<{ id: string; username: string; bootstrap: boolean; orgAdmin: boolean }>(
+    '/api/users',
+    jsonBody({ username, displayName, password }),
+  )
 }
 
 export interface Member {
@@ -291,8 +337,8 @@ export function updateKnowledge(
   })
 }
 
-export function updateProfile(displayName: string): Promise<SessionUser> {
-  return request<SessionUser>('/api/auth/profile', { ...jsonBody({ displayName }), method: 'PUT' })
+export function updateProfile(displayName: string, email: string | null): Promise<SessionUser> {
+  return request<SessionUser>('/api/auth/profile', { ...jsonBody({ displayName, email }), method: 'PUT' })
 }
 
 export function changePassword(currentPassword: string, newPassword: string): Promise<{ status: string }> {
@@ -302,8 +348,14 @@ export function changePassword(currentPassword: string, newPassword: string): Pr
   })
 }
 
-export function createUser(username: string, displayName: string, password: string): Promise<UserSummary> {
-  return request<UserSummary>('/api/users', jsonBody({ username, displayName, password }))
+export function createUser(
+  username: string,
+  displayName: string,
+  password: string,
+  email: string | null = null,
+  accountType = 'human',
+): Promise<UserSummary> {
+  return request<UserSummary>('/api/users', jsonBody({ username, displayName, password, email, accountType }))
 }
 
 export function changeMemberRole(projectId: string, userId: string, role: string): Promise<Member> {

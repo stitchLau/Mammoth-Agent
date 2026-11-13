@@ -1,6 +1,6 @@
 # M4 阶段计划：企业集成与协同（S0 草案）
 
-- **状态**：Draft（S0，待负责人评审 ADR/规格后进入 S1）
+- **状态**：S0 完成（ADR/规格/威胁模型）；**S1 已实施并通过本地验证（2026-11-13）**；S2 待开始
 - **日期**：2026-11-13
 - **基线**：`main` @ `3231b43`（以 `git log -1` 为准）
 - **依据**：`docs/04-MVP-STRATEGY.md` Phase 4、`docs/12-ROADMAP.md` M4、`docs/13-OPEN-DECISIONS.md`、`decisions/ADR-0006`（含 2026-11-13 增补）、`ADR-0007`、`ADR-0008`（含增补）、`ADR-0011`、`ADR-0012`、`ADR-0013`
@@ -128,6 +128,16 @@ S0 准入（本文件/ADR/威胁模型/夹具清单）
 ### 6.5 DoD
 
 代码 + V7 + 前端 + 测试 + 审计 + `docs/08`/`ADR-0006` 更新；不破坏 M1–M3 回归。
+
+### 6.6 S1 实施记录（2026-11-13）
+
+- **数据**：`V7__org_admin_user_lifecycle.sql`——`app_user.email/account_type/password_reset_required`、`session.password_reset_required`、`role_assignment` 唯一索引、最早用户 `org_admin` 回填；`MIN_SCHEMA_VERSION=7`。
+- **后端**：`RoleAssignment`/`RoleAssignmentRepository`；`AuthorizationService.isOrgAdmin/requireOrgAdmin`；`UserService.createAsAdmin/disable/enable/resetPassword/setOrgAdmin/directory`；`SessionService.validateSession` + 临时口令会话；`SecurityConfig` 强制改密白名单；`AuthController` 返回 email/accountType/passwordResetRequired/orgAdmin；`CatalogService` 主数据 org_admin 门禁；`UserController` 生命周期 API。
+- **前端**：`ForcePasswordChangePage` + `RequireAuth` 门禁；`SettingsPage` 邮箱/组织成员管理/停用启用/重置口令/Agent 账号；`MembersPage` 最小目录 + 仅 org_admin 可建用户；`ProjectsPage` 客户/产品仅 org_admin。
+- **测试**：`OrgAdminTest` 4、`UserLifecycleTest` 4、`PasswordResetTest` 1、`UserDirectoryTest` 1、`PasswordResetAccessTest` 2（真实 HTTP）、`AccountSettingsTest` +1、`MigrationTest` V7/回填；后端 **103 tests**。
+- **回归**：前端 build + **25 tests**；Playwright **4 passed**（新增 M4 S1 场景）；`m3-acceptance-drill` **18/18**、`admin-drill` **9/9**、`demo-m3.mjs` **25/25**。
+- **偏差/限制**：`UserService.create` 保留为内部/测试 provisioning primitive（HTTP 走 `createAsAdmin`）；org_admin 列表 `isOrgAdmin` 为 N+1 查询（小团队可接受）；管理员重置后用户必须改密（服务端强制）；未做邮件找回/SSO；未做组织级多租户。
+- **未做（S1 范围外）**：S2 BG-01/MCP 审计、S3 导入、S5 通知/任务；ADR-0011/0012/0013 仍为 Proposed（S1 只落地 ADR-0006 增补）。
 
 ## 7. S2：外部 Agent 前置（BG-01 + Agent 账号 + MCP 审计）
 

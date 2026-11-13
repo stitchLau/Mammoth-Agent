@@ -2,6 +2,7 @@ package com.mammoth.domain.security;
 
 import com.mammoth.domain.persistence.AppUser;
 import com.mammoth.domain.persistence.AppUserRepository;
+import com.mammoth.domain.service.AuthorizationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
@@ -25,31 +26,36 @@ public class AuthController {
   private final SessionService sessionService;
   private final AppUserRepository appUserRepository;
   private final AccountService accountService;
+  private final AuthorizationService authorizationService;
 
   public AuthController(
       AuthenticationService authenticationService,
       SessionService sessionService,
       AppUserRepository appUserRepository,
-      AccountService accountService) {
+      AccountService accountService,
+      AuthorizationService authorizationService) {
     this.authenticationService = authenticationService;
     this.sessionService = sessionService;
     this.appUserRepository = appUserRepository;
     this.accountService = accountService;
+    this.authorizationService = authorizationService;
   }
 
   public record LoginRequest(String username, String password) {
   }
 
-  public record ProfileRequest(String displayName) {
+  public record ProfileRequest(String displayName, String email) {
   }
 
   public record PasswordRequest(String currentPassword, String newPassword) {
   }
 
-  public record MeResponse(String id, String username, String displayName) {
+  public record MeResponse(String id, String username, String displayName, String email,
+      String accountType, boolean passwordResetRequired, boolean orgAdmin) {
 
-    static MeResponse from(AppUser user) {
-      return new MeResponse(user.getId(), user.getUsername(), user.getDisplayName());
+    static MeResponse from(AppUser user, boolean orgAdmin) {
+      return new MeResponse(user.getId(), user.getUsername(), user.getDisplayName(),
+          user.getEmail(), user.getAccountType(), user.isPasswordResetRequired(), orgAdmin);
     }
   }
 
@@ -72,7 +78,7 @@ public class AuthController {
         .build();
     httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     return appUserRepository.findByUsername(request.username().trim())
-        .map(MeResponse::from)
+        .map(user -> MeResponse.from(user, authorizationService.isOrgAdmin(user)))
         .orElseThrow();
   }
 
@@ -86,13 +92,14 @@ public class AuthController {
   public MeResponse me() {
     AppUser user = appUserRepository.findById(CurrentUser.id())
         .orElseThrow(() -> com.mammoth.domain.web.ApiException.unauthorized("unknown user"));
-    return MeResponse.from(user);
+    return MeResponse.from(user, authorizationService.isOrgAdmin(user));
   }
 
   @PutMapping("/profile")
   public MeResponse profile(@RequestBody ProfileRequest request) {
-    AppUser user = accountService.updateDisplayName(CurrentUser.id(), request.displayName());
-    return MeResponse.from(user);
+    AppUser user = accountService.updateProfile(
+        CurrentUser.id(), request.displayName(), request.email());
+    return MeResponse.from(user, authorizationService.isOrgAdmin(user));
   }
 
   @PutMapping("/password")

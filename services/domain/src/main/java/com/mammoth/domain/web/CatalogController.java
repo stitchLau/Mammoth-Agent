@@ -48,7 +48,7 @@ public class CatalogController {
   @PostMapping("/customers")
   public CustomerResponse createCustomer(@RequestBody CreateNamedRequest request) {
     AppUser actor = CurrentUser.require(authorizationService);
-    return CustomerResponse.from(catalogService.createCustomer(actor, request.name()));
+    return CustomerResponse.from(catalogService.createCustomerAsAdmin(actor, request.name()));
   }
 
   @GetMapping("/customers")
@@ -60,7 +60,7 @@ public class CatalogController {
   @PostMapping("/products")
   public ProductResponse createProduct(@RequestBody CreateNamedRequest request) {
     AppUser actor = CurrentUser.require(authorizationService);
-    return ProductResponse.from(catalogService.createProduct(actor, request.name()));
+    return ProductResponse.from(catalogService.createProductAsAdmin(actor, request.name()));
   }
 
   @GetMapping("/products")

@@ -19,16 +19,33 @@ public class CatalogService {
   private final ProductRepository productRepository;
   private final OrganizationService organizationService;
   private final AuditService auditService;
+  private final AuthorizationService authorizationService;
 
   public CatalogService(
       CustomerRepository customerRepository,
       ProductRepository productRepository,
       OrganizationService organizationService,
-      AuditService auditService) {
+      AuditService auditService,
+      AuthorizationService authorizationService) {
     this.customerRepository = customerRepository;
     this.productRepository = productRepository;
     this.organizationService = organizationService;
     this.auditService = auditService;
+    this.authorizationService = authorizationService;
+  }
+
+  /** HTTP-facing master data write: organization admins only. */
+  @Transactional
+  public Customer createCustomerAsAdmin(AppUser actor, String name) {
+    authorizationService.requireOrgAdmin(actor);
+    return createCustomer(actor, name);
+  }
+
+  /** HTTP-facing master data write: organization admins only. */
+  @Transactional
+  public Product createProductAsAdmin(AppUser actor, String name) {
+    authorizationService.requireOrgAdmin(actor);
+    return createProduct(actor, name);
   }
 
   @Transactional

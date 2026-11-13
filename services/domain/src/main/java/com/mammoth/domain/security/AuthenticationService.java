@@ -38,12 +38,13 @@ public class AuthenticationService {
       throw ApiException.badRequest("username and password are required");
     }
     AppUser user = appUserRepository.findByUsername(username.trim()).orElse(null);
-    if (user == null || !user.isActive() || !passwordEncoder.matches(password, user.getPasswordHash())) {
+    if (user == null || !user.isActive() || user.isAgent()
+        || !passwordEncoder.matches(password, user.getPasswordHash())) {
       rateLimiter.recordFailure(key);
       throw new ApiException(HttpStatus.UNAUTHORIZED, "invalid username or password");
     }
     rateLimiter.clear(key);
-    return sessionService.create(user.getId());
+    return sessionService.create(user.getId(), user.isPasswordResetRequired());
   }
 
   @Transactional

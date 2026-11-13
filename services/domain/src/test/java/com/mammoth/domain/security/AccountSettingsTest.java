@@ -65,6 +65,23 @@ class AccountSettingsTest {
   }
 
   @Test
+  void emailCanBeSetClearedAndValidated() {
+    AppUser user = user();
+
+    AppUser withEmail = accountService.updateProfile(user.getId(), user.getDisplayName(),
+        "user@example.com");
+    assertThat(withEmail.getEmail()).isEqualTo("user@example.com");
+
+    AppUser cleared = accountService.updateProfile(user.getId(), user.getDisplayName(), "");
+    assertThat(cleared.getEmail()).isNull();
+
+    assertThatThrownBy(() -> accountService.updateProfile(
+        user.getId(), user.getDisplayName(), "not-an-email"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("email is not valid");
+  }
+
+  @Test
   void passwordChangeRequiresCurrentPasswordAndRevokesSessions() {
     AppUser user = user();
     String token = authenticationService.login(user.getUsername(), "Passw0rd!2026");

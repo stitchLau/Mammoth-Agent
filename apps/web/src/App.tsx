@@ -5,6 +5,7 @@ import ArtifactsPage from './pages/ArtifactsPage'
 import BaselinesPage from './pages/BaselinesPage'
 import DeliveryPage from './pages/DeliveryPage'
 import ErrorPage from './pages/ErrorPage'
+import ForcePasswordChangePage from './pages/ForcePasswordChangePage'
 import KnowledgeDetailPage from './pages/KnowledgeDetailPage'
 import KnowledgePage from './pages/KnowledgePage'
 import LoginPage from './pages/LoginPage'
@@ -27,6 +28,9 @@ function RequireAuth() {
   }
   if (state.status === 'anonymous') {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
+  }
+  if (state.user.passwordResetRequired) {
+    return <ForcePasswordChangePage />
   }
   return <AppShell />
 }

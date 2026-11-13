@@ -91,6 +91,8 @@ Mammoth 以 DSH 作为 Vibe Coding 工具与候选 Runtime，DSH Host 环境本�
 - BG-01 交接包固定文件清单、秘密扫描、sha256 manifest、角色校验；不含凭据/源码。
 - 远程 Agent 网关/服务令牌在 M4.5 评估，需 TLS/令牌/限速/跨项目测试。
 
+**S1 已落地（2026-11-13）**：`org_admin`（复用 `role_assignment`）、用户停用/启用/会话撤销、管理员一次性口令+强制改密、Agent 账号禁登；`/api/users` 非 bootstrap 仅 org_admin；强制改密会话仅放行 `/api/auth/{me,password,logout,csrf}`；客户/产品主数据仅 org_admin。验证见 `docs/evidence/M4-VERIFICATION.md` §1。
+
 ### 9.4 团队服务器（ADR-0012）
 
 - M4 默认单机 localhost；团队部署必须反向代理 TLS、Secure Cookie、只信任配置代理、默认绑定 127.0.0.1。

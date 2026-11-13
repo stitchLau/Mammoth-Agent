@@ -32,8 +32,20 @@
 - MCP 进程只读不能写 `audit_log`：采用本地 JSONL + writer 入库（D-033/ADR-0008 增补）。
 - PG 多实例明确 M5，不在 M4/M4.5；服务器/证书暂不处理（D-031/ADR-0012）。
 
-## 4. 下一步
+## 4. 切片 1（S1，2026-11-13）
 
-- 负责人评审 S0 的 ADR/M4/M4.5/威胁模型；确认后 ADR 转 Accepted。
-- 进入 **S1**：V7 + `org_admin` + 用户停用/重置/会话撤销 + 建用户/目录收紧 + 强制改密；先写测试再实现。
-- S1 完成后按 S2→S5 推进；S6 视负责人是否要团队服务器。
+| 阶段 | 内容 | 结果 |
+|---|---|---|
+| 规格 | M4 计划 §6（S1）、ADR-0006 增补（org_admin/用户生命周期/Agent 账号） | 先测试后实现 |
+| 数据 | `V7__org_admin_user_lifecycle.sql`：`app_user.email/account_type/password_reset_required`、`session.password_reset_required`、`role_assignment` 唯一索引、最早用户回填 org_admin；`MIN_SCHEMA_VERSION=7` | 迁移幂等/回填测试通过 |
+| 后端 | `RoleAssignment`/Repository；`AuthorizationService.isOrgAdmin/requireOrgAdmin`；`UserService` 生命周期；`SessionService.validateSession`；`SecurityConfig` 强制改密白名单；`AuthController` 新字段；`CatalogService` 主数据门禁；`UserController` API | 103 tests |
+| 前端 | `ForcePasswordChangePage` + `RequireAuth` 门禁；`SettingsPage` 邮箱/组织成员管理；`MembersPage` 最小目录；`ProjectsPage` 主数据仅 org_admin | build + 25 tests |
+| E2E | 新增 M4 S1：管理员建用户→重置口令→临时会话强制改密→新口令登录 | **4 passed（15.1s）** |
+| 回归 | `m3-acceptance-drill`、`admin-drill`、`demo-m3` | **18/18、9/9、25/25** |
+| 偏差 | `UserService.create` 保留内部/测试 provisioning；orgAdmin 列表 N+1；未做邮件找回/SSO | 见 M4 计划 §6.6 |
+
+## 5. 下一步
+
+- S1 已完成；进入 **S2**：BG-01 交接包 zip + 专用 Agent 账号 + MCP 审计（本地 JSONL + writer 入库）。
+- S1 遗留：`UserService.create` 内部原语的使用边界、orgAdmin 列表查询优化（小团队可接受）。
+- S2–S5 按计划推进；S6 视负责人是否要团队服务器。

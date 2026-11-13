@@ -23,4 +23,23 @@ public final class CurrentUser {
   public static AppUser require(AuthorizationService authorizationService) {
     return authorizationService.requireActiveUser(id());
   }
+
+  /** True when the current session has the full (non-temporary-password) authority. */
+  public static boolean hasFullSession() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication != null && authentication.getAuthorities().stream()
+        .anyMatch(authority -> SessionAuthenticationFilter.ROLE_USER.equals(authority.getAuthority()));
+  }
+
+  /** Endpoints reachable without a full session must call this before mutating anything. */
+  public static void requireFullSession() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !(authentication.getPrincipal() instanceof String)) {
+      throw com.mammoth.domain.web.ApiException.unauthorized("authentication required");
+    }
+    if (!hasFullSession()) {
+      throw com.mammoth.domain.web.ApiException.forbidden(
+          "password change required before this action");
+    }
+  }
 }
