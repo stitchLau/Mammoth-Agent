@@ -138,3 +138,12 @@ ode scripts/m3-acceptance-drill.mjs | **18/18**：批准方案→交接→实施
 pm run test:e2e | 3 passed（M1/M2/M3，UI 仅增加知识状态操作面板，回归通过） |
 
 **限制**：演练项目为脱敏/合成数据（未接触真实客户数据）；"真实客户项目"验收仍需负责人提供授权脱敏项目。剩余技术债见 docs/specs/M3.5-BACKLOG.md。
+## 10. UI 证据截图（2026-11-13 补）
+
+由 scripts/capture-m2m3-screenshots.mjs 在脱敏数据 + 真实后端上生成（非模拟）：
+
+- [screenshots/m3-baselines.png](screenshots/m3-baselines.png)：仓库注册与不可变基线
+- [screenshots/m3-delivery-closure.png](screenshots/m3-delivery-closure.png)：交接包、实施记录、人工偏差、验收矩阵、As-built、知识提议
+- [screenshots/m3-knowledge-supersede.png](screenshots/m3-knowledge-supersede.png)：知识状态操作（替代/废弃）
+
+M2 三张截图见 docs/evidence/M2-VERIFICATION.md 与 screenshots/m2-*.png。

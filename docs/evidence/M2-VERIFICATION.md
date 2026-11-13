@@ -64,7 +64,7 @@
 
 - **CI 远端仍未运行**（无远端执行环境）：新增测试与 E2E 只在本机验证。
 - **真实 DSH 会话调用**：`get_requirement_context` 只有服务级/工具描述测试；未在本轮真实 DSH 会话中重新调用（M1 已实测 `search_project_knowledge`，MCP 传输层未改动）。
-- **截图**：本轮未生成 M2 截图（M1.5 截图脚本未扩展）；UI 由 Playwright 真实浏览器流程验证。
+- **截图**：M2 UI 证据已补（2026-11-13）：[`screenshots/m2-requirements-list.png`](screenshots/m2-requirements-list.png)、[`m2-requirement-readiness.png`](screenshots/m2-requirement-readiness.png)、[`m2-solution-dual-view.png`](screenshots/m2-solution-dual-view.png)；由 `scripts/capture-m2m3-screenshots.mjs` 在脱敏数据上生成。
 - **视觉/品牌**：仍沿用中性色基线（Q-001 未关闭）。
 - **生产化**：TLS、共享会话、PostgreSQL 方言、后端分页未做（M2 明确非目标）。
 - **PDF/Office 解析**：证据为原始资料 + 人工摘录（ADR-0009 仍 OPEN）。

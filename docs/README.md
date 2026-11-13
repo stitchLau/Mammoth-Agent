@@ -9,8 +9,8 @@
 - **ADR-0008 补齐**：导出/导入包、备份/恢复、实例锁清理 CLI 已实现并通过真实演练。
 - **M3.5 技术债**：[`docs/specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md)（交接包文件导出、Baseline 部署/DDL 版本、验收矩阵证据链接）。
 - 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`](handoffs/SESSION-HANDOFF-2026-11-13-M3.md)
-- M3 规格：[`docs/specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`docs/evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`docs/process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`docs/quality/M3-BUGS.md`](quality/M3-BUGS.md)
-- M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md)
+- M3 规格：[`docs/specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`docs/evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`docs/process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`docs/quality/M3-BUGS.md`](quality/M3-BUGS.md) · 验收：[`docs/M3-ACCEPTANCE.md`](M3-ACCEPTANCE.md)
+- M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md) · 验收：[`docs/M2-ACCEPTANCE.md`](M2-ACCEPTANCE.md)
 - 历史记录：[`docs/process/M1-TIMELINE.md`](process/M1-TIMELINE.md) · [`docs/evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) · [`docs/quality/M1-BUGS.md`](quality/M1-BUGS.md)
 
 ## 产品与领域（先读）
@@ -21,7 +21,7 @@
 | [`01-PRODUCT-CHARTER.md`](01-PRODUCT-CHARTER.md) | 产品定位与目标 |
 | [`02-PRODUCT-BOUNDARIES.md`](02-PRODUCT-BOUNDARIES.md) | 边界（不做什么） |
 | [`03-DOMAIN-MODEL.md`](03-DOMAIN-MODEL.md) | 领域模型 |
-| [`04-MVP-STRATEGY.md`](04-MVP-STRATEGY.md) | 阶段策略（M2 范围参考） |
+| [`04-MVP-STRATEGY.md`](04-MVP-STRATEGY.md) | 阶段策略（M4 范围参考） |
 | [`05-ARCHITECTURE-BASELINE.md`](05-ARCHITECTURE-BASELINE.md) | 架构基线 |
 | [`06-KNOWLEDGE-AND-RAG.md`](06-KNOWLEDGE-AND-RAG.md) | 知识与检索 |
 | [`07-WORK-ITEM-LIFECYCLE.md`](07-WORK-ITEM-LIFECYCLE.md) | 工作项生命周期 |
@@ -37,9 +37,9 @@
 | [`specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) | M2 计划、状态机、就绪规则、一致性规则与实施记录 |
 | [`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) | M3 计划、切片顺序与 S1–S6/M3.5 实施记录 |
 | [`specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md) | M3.5 技术债与延期清单（BG-01–BG-03） |
-| [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) | M1 验收记录 |
+| [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) / [`M2-ACCEPTANCE.md`](M2-ACCEPTANCE.md) / [`M3-ACCEPTANCE.md`](M3-ACCEPTANCE.md) | 阶段验收记录（口径、结果、AC 映射、残留） |
 | [`specs/UI-SPEC.md`](specs/UI-SPEC.md) | UI 规格（路线 A）与 M1.5 实施记录 |
-| [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1/M1.5/M2 决策补充日志 |
+| [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1–M3.5 决策补充日志（D-001–D-027） |
 | [`../decisions/`](../decisions/) | ADR-0001 – ADR-0008 + ADR-0010（ADR-0009 文档解析仍 OPEN，暂无文件） |
 
 ## 过程、质量与证据
@@ -49,7 +49,7 @@
 | [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) / [`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) | 提交级执行时间线 |
 | [`quality/M1-BUGS.md`](quality/M1-BUGS.md) / [`quality/M2-BUGS.md`](quality/M2-BUGS.md) / [`quality/M3-BUGS.md`](quality/M3-BUGS.md) | 缺陷台账（根因/修复/回归） |
 | [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) / [`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图 |
-| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5/M2/M3-S1 历史快照 + M3 当前快照） |
+| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5/M2/M3-S1 历史快照 + M3/M3.5 当前快照） |
 
 ## 运行与集成
 
@@ -63,12 +63,12 @@
 ## 方法、角色与提示词
 
 - [`10-VIBE-CODING-PLAYBOOK.md`](10-VIBE-CODING-PLAYBOOK.md)、[`11-DEEPSEEK-HARNESS-GUIDE.md`](11-DEEPSEEK-HARNESS-GUIDE.md)、[`AGENT-USAGE-QUICKSTART.md`](AGENT-USAGE-QUICKSTART.md)
-- [`agents/`](agents/)（角色定义与编排）、[`prompts/`](prompts/)（任务提示词，M2 启动用 [`prompts/09-M2-KICKOFF.md`](prompts/09-M2-KICKOFF.md)）、[`checklists/`](checklists/)（DoD/安全/发布）、[`templates/`](templates/)（ADR/Spec/Review/Handoff）
+- [`agents/`](agents/)（角色定义与编排）、[`prompts/`](prompts/)（任务提示词，M2 启动用 [`prompts/09-M2-KICKOFF.md`](prompts/09-M2-KICKOFF.md)、M4 启动用 [`prompts/10-M4-KICKOFF.md`](prompts/10-M4-KICKOFF.md)）、[`checklists/`](checklists/)（DoD/安全/发布）、[`templates/`](templates/)（ADR/Spec/Review/Handoff）
 - [`spikes/`](spikes/)（S1–S7 Spike 报告）、[`project-discovery.md`](project-discovery.md)（初始勘察）
 
 ## 新会话推荐阅读顺序
 
 1. `AGENTS.md` → `docs/00-MASTER-GUIDE.md`
 2. 本索引 → `docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`
-3. 按 M4/后续任务读 `docs/04`、`docs/13`、`docs/12`、`docs/03`、`docs/07`、`docs/specs/M3-PHASE3-PLAN.md` 与 ADR-0007/0008
+3. 按 M4 读 `docs/04`、`docs/13`、`docs/12`、`docs/03`、`docs/07`、`docs/specs/M3.5-BACKLOG.md`、`docs/M3-ACCEPTANCE.md` 与 ADR-0007/0008；启动用 `docs/prompts/10-M4-KICKOFF.md`
 4. 需要实现细节时读 `docs/dev-setup.md`、`docs/evidence/M3-VERIFICATION.md`、代码与测试

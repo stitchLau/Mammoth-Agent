@@ -1,6 +1,6 @@
-# 决策补充日志（M1 / M1.5 / M2）
+# 决策补充日志（M1–M3.5）
 
-> ADR（`decisions/ADR-0001`–`0010`）记录**架构级**决策；本文件记录 M1/M1.5/M2 过程中经负责人确认、但未单独立 ADR 的决策与默认值。日期均为 2026-11-12（Asia/Shanghai）。M2 期间负责人授权"过程中的疑问均按 Agent 建议执行"，D-010 起按该授权记录。
+> ADR（`decisions/ADR-0001`–`0010`）记录**架构级**决策；本文件记录 M1–M3.5 过程中经负责人确认、但未单独立 ADR 的决策与默认值。D-001–D-009 为 2026-11-12，D-010 起为 2026-11-12/13（Asia/Shanghai）。M2 期间负责人授权"过程中的疑问均按 Agent 建议执行"，D-010 起按该授权记录。
 
 | ID | 决策 | 结论 | 确认方式 | 影响/记录 |
 |---|---|---|---|---|
@@ -24,6 +24,13 @@
 | D-018 | ADR-0007 定案 | 本地只读 Git + 人工捕获不可变基线；白名单只读命令；不 clone/fetch/push/checkout；多仓库基线=commit 集合；脏树默认拒绝；代码不进知识库；知识过期只提示不改状态 | 负责人 2026-11-13 指示先定 ADR-0007/0008 | `decisions/ADR-0007-GIT-BASELINE.md` |
 | D-019 | ADR-0008 定案 | 单机本地单写者；数据根必须本地固定盘且拒绝网络盘/云同步根；实例锁；MCP 只读连接且不执行迁移；跨机仅导出/导入（不含凭据，仅空库导入）；备份 `VACUUM INTO`/backup API | 负责人 2026-11-13 指示 | `decisions/ADR-0008-WORKSPACE.md` |
 | D-020 | M3 迁移职责 | Flyway 迁移只由 Web/管理入口执行；MCP 入口改只读连接（`query_only`），消除双进程迁移风险 | 由 D-019 推导，M3 首个切片实现 | `ADR-0008` §决策 4/13 |
+| D-021 | M3 范围与切片 | 按 S1 运行边界 → S2 仓库/基线 → S3 交接包 → S4 实施回收 → S5 偏差/矩阵 → S6 As-built/知识闭环逐片实现；先出规格再编码 | 负责人"完成M3阶段"，授权按建议执行 | `M3-PHASE3-PLAN.md` §3/§10 |
+| D-022 | Git 基线实现口径 | 多仓库基线=commit 集合；脏树默认 409，仅 owner 可 `allowDirty`；只读适配器白名单；实施记录按仓库逐条（from=基线 commit，diverged=`!isAncestor`） | 负责人 M3 授权 | `ADR-0007` 落地记录；`BaselineService`/`ExecutionService` |
+| D-023 | 实施回收与偏差 | 任务完成由人勾选；偏差=系统未完成候选 + 人工分类；变更仅文件级；矩阵按验收标准/任务完成度聚合 | 负责人 M3 授权 | `M3-PHASE3-PLAN.md` §10.3 偏差 2/3 |
+| D-024 | 交接包 v1 | 交接包为 Markdown API 响应，不含凭据；文件导出（zip/Artifact/下载）登记 BG-01 | 负责人 M3 授权；M3.5 复盘确认 | `M3.5-BACKLOG.md` BG-01 |
+| D-025 | 知识生命周期 | 提议接受生成草稿，发布仍走四眼 verify；M3.5 增加 `superseded`/`deprecated` 与 `supersede`（新替旧），历史保留、仅 verified 可检索 | 负责人"补第 2 项" | `V6` 迁移；`KnowledgeService`；`M3-PHASE3-PLAN.md` §12 |
+| D-026 | ADR-0008 补齐 | 导出/导入/备份/恢复 CLI；导入仅空库、校验 checksum、密码锁定、指定管理员重置；锁清理 `--admin-clear-lock` + PS 脚本 | 负责人"导出/导入与备份演练/锁清理" | `ADR-0008` 补齐章节；`dev-setup.md` |
+| D-027 | M3.5 技术债 | BG-01 交接包文件导出、BG-02 Baseline 部署/DDL 版本、BG-03 矩阵业务目标/证据链接登记为 M3.5，不阻塞 M3 关闭 | 负责人"把 3–5 项登记为 M3.5/技术债" | `docs/specs/M3.5-BACKLOG.md`；`12-ROADMAP.md` |
 
 ## M3 前置（2026-11-13 已解除）
 
@@ -38,7 +45,7 @@
 |---|---|---|
 | Q-005 | 应用内 LLM 与 Agent 草案写入（ADR-0011） | 未定；M2 明确不接 |
 | Q-006 | 文档解析管线（ADR-0009） | OPEN；M2 用人工摘录 |
-| Q-007 | ProjectBaseline 与方案版本绑定 | 依赖 ADR-0007，M3 前定 |
+| Q-007 | ProjectBaseline 与方案版本绑定 | **已关闭（M3）**：实现 `project_baseline` 与 `solution_version.baseline_id`；ADR-0007 Accepted |
 | Q-008 | 需求工作项的评论/讨论、通知 | 未实现，入 M3/M4 backlog |
 
 ## 遗留待决（M1/M1.5 提出，M2 未关闭）
@@ -49,3 +56,5 @@
 | Q-002 | 知识正文最终编辑形态（Markdown vs 富文本） | 暂用纯文本，M2 再评（富文本需 XSS 安全评审） |
 | Q-003 | 最终 UI 是否内嵌 DSH 侧栏浏览器 | 当前按 ADR-0002 独立 SPA；若改变需新 ADR |
 | Q-004 | 生产认证目标（组织级 SSO/令牌） | ADR-0006 后续任务 |
+
+> M3.5 技术债（BG-01–BG-03）见 `docs/specs/M3.5-BACKLOG.md`；M4 准入由负责人决定。

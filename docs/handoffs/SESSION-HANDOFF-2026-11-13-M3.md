@@ -84,3 +84,9 @@ node scripts/demo-m3.mjs http://127.0.0.1:18150      # 25/25
 - **技术债登记**：docs/specs/M3.5-BACKLOG.md（BG-01 交接包文件导出、BG-02 Baseline 部署/DDL 版本、BG-03 矩阵业务目标/证据链接）；ROADMAP 切片状态已修正。
 - **验证**：后端 **89 tests**；前端 build + 25 tests；E2E 3 passed；验收演练 18/18；ADR-0008 演练 9/9。
 - **剩余**：真实客户项目验收需负责人提供授权脱敏项目；BG-01–BG-03 未实现；导出加密/账号重置/增量导出仍为后续。
+## 2026-11-13 资料补全（M2/M3 归档）
+
+- 新增阶段验收记录：[docs/M2-ACCEPTANCE.md](../M2-ACCEPTANCE.md)、[docs/M3-ACCEPTANCE.md](../M3-ACCEPTANCE.md)。
+- 新增 M2/M3 UI 截图：docs/evidence/screenshots/m2-*.png（3 张）、m3-*.png（3 张），由 scripts/capture-m2m3-screenshots.mjs 生成；证据文件已回链。
+- 决策日志补齐 D-021–D-027（M3 范围、Git 基线、实施/偏差、交接包、知识生命周期、ADR-0008 补齐、M3.5 技术债）。
+- M4 新会话启动 Prompt：[docs/prompts/10-M4-KICKOFF.md](../prompts/10-M4-KICKOFF.md)（整段粘贴；先出准入方案，不先写代码）。

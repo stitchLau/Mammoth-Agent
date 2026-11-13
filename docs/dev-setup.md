@@ -141,6 +141,7 @@ npm test           # vitest
   也可用 `MAMMOTH_E2E_BASE` 指向已有环境；E2E 会创建临时客户/项目/知识/需求/方案，**不要在真实数据根运行**。
   E2E 现含 2 个场景（M1 知识闭环、M2 需求→方案批准）；同一空数据根下顺序执行，拆分运行需独立数据根（见 `docs/evidence/M2-VERIFICATION.md` §2）。
 - **CI**：E2E 已加入 `.github/workflows/ci.yml` 的 `e2e` job（远端 Runner 尚未在本机验证）。
+- **截图**：`node scripts/capture-m2m3-screenshots.mjs` 用脱敏数据生成 M2/M3 UI 证据（输出到 `docs/evidence/screenshots/`）。
 
 ## DSH 集成与演示
 
