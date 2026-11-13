@@ -188,6 +188,59 @@ public class KnowledgeService {
     return document;
   }
 
+  /**
+   * Mark a verified document as replaced by a newer verified document (docs/06 §7). Superseded
+   * knowledge stays in the database for traceability but is no longer searchable.
+   */
+  @Transactional
+  public KnowledgeDocument supersede(AppUser actor, String projectId, String documentId,
+      String replacementDocumentId) {
+    KnowledgeDocument document = requireDocument(projectId, documentId);
+    requireReviewerRole(actor, projectId);
+    if (!KnowledgeDocument.VERIFIED.equals(document.getStatus())) {
+      throw ApiException.conflict("only verified knowledge can be superseded");
+    }
+    String replacementId = requireText(replacementDocumentId, "replacementDocumentId");
+    if (replacementId.equals(documentId)) {
+      throw ApiException.badRequest("a document cannot supersede itself");
+    }
+    KnowledgeDocument replacement = requireDocument(projectId, replacementId);
+    if (!KnowledgeDocument.VERIFIED.equals(replacement.getStatus())) {
+      throw ApiException.conflict("replacement document must be verified first");
+    }
+    document.supersede(replacementId, Ids.nowIso());
+    documentRepository.save(document);
+    auditService.record(actor.getId(), "knowledge.supersede", "knowledge_document", documentId,
+        com.mammoth.domain.support.JsonLite.write(
+            com.mammoth.domain.support.JsonLite.object("replacementDocumentId", replacementId)));
+    return document;
+  }
+
+  /** Mark a verified document as deprecated; it remains readable for audit but is not searchable. */
+  @Transactional
+  public KnowledgeDocument deprecate(AppUser actor, String projectId, String documentId,
+      String note) {
+    KnowledgeDocument document = requireDocument(projectId, documentId);
+    requireReviewerRole(actor, projectId);
+    if (!KnowledgeDocument.VERIFIED.equals(document.getStatus())) {
+      throw ApiException.conflict("only verified knowledge can be deprecated");
+    }
+    document.deprecate(note == null || note.isBlank() ? null : note.trim(), Ids.nowIso());
+    documentRepository.save(document);
+    auditService.record(actor.getId(), "knowledge.deprecate", "knowledge_document", documentId,
+        null);
+    return document;
+  }
+
+  private void requireReviewerRole(AppUser actor, String projectId) {
+    ProjectMember membership = projectMemberRepository
+        .findByProjectIdAndUserId(projectId, actor.getId())
+        .orElseThrow(() -> ApiException.forbidden("no access to project " + projectId));
+    if (!REVIEW_ROLES.contains(membership.getRole())) {
+      throw ApiException.forbidden(
+          "role " + membership.getRole() + " cannot change knowledge status (owner or reviewer required)");
+    }
+  }
   @Transactional(readOnly = true)
   public List<KnowledgeDocument> list(String projectId, String status) {
     if (status == null || status.isBlank()) {

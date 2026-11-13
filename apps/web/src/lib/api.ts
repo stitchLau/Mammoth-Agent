@@ -76,6 +76,8 @@ export interface KnowledgeDocument {
   reviewedAt: string | null
   applicableBaselineId: string | null
   stale: boolean
+  supersededBy: string | null
+  deprecationNote: string | null
   createdAt: string
   updatedAt: string
   sourceRefs: SourceRef[]
@@ -209,6 +211,27 @@ export function verifyKnowledge(projectId: string, documentId: string): Promise<
   })
 }
 
+export function supersedeKnowledge(
+  projectId: string,
+  documentId: string,
+  replacementDocumentId: string,
+): Promise<KnowledgeDocument> {
+  return request<KnowledgeDocument>(
+    `/api/projects/${projectId}/knowledge/${documentId}/supersede`,
+    jsonBody({ replacementDocumentId }),
+  )
+}
+
+export function deprecateKnowledge(
+  projectId: string,
+  documentId: string,
+  note: string | null,
+): Promise<KnowledgeDocument> {
+  return request<KnowledgeDocument>(
+    `/api/projects/${projectId}/knowledge/${documentId}/deprecate`,
+    jsonBody({ note }),
+  )
+}
 export function searchKnowledge(projectId: string, query: string): Promise<KnowledgeHit[]> {
   return request<KnowledgeHit[]>(
     `/api/projects/${projectId}/knowledge/search?q=${encodeURIComponent(query)}&topK=5`,

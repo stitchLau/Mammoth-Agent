@@ -58,8 +58,9 @@ public class KnowledgeController {
 
   public record KnowledgeResponse(String id, String projectId, String docType, String title,
       String body, String status, int version, String createdBy, String reviewer,
-      String reviewedAt, String applicableBaselineId, boolean stale, String createdAt,
-      String updatedAt, List<SourceRefResponse> sourceRefs) {
+      String reviewedAt, String applicableBaselineId, boolean stale, String supersededBy,
+      String deprecationNote, String createdAt, String updatedAt,
+      List<SourceRefResponse> sourceRefs) {
   }
 
   public record SearchHitResponse(String documentId, String title, String chunkId, int ordinal,
@@ -147,6 +148,27 @@ public class KnowledgeController {
     return toResponse(knowledgeService.verify(actor, projectId, documentId));
   }
 
+  public record SupersedeRequest(String replacementDocumentId) {
+  }
+
+  public record DeprecateRequest(String note) {
+  }
+
+  @PostMapping("/{documentId}/supersede")
+  public KnowledgeResponse supersede(@PathVariable String projectId,
+      @PathVariable String documentId, @RequestBody SupersedeRequest request) {
+    AppUser actor = CurrentUser.require(authorizationService);
+    return toResponse(knowledgeService.supersede(actor, projectId, documentId,
+        request.replacementDocumentId()));
+  }
+
+  @PostMapping("/{documentId}/deprecate")
+  public KnowledgeResponse deprecate(@PathVariable String projectId,
+      @PathVariable String documentId, @RequestBody(required = false) DeprecateRequest request) {
+    AppUser actor = CurrentUser.require(authorizationService);
+    return toResponse(knowledgeService.deprecate(actor, projectId, documentId,
+        request == null ? null : request.note()));
+  }
   private KnowledgeResponse toResponse(KnowledgeDocument document) {
     List<SourceRefResponse> refs = knowledgeService.sourceRefs(document.getId()).stream()
         .map(ref -> new SourceRefResponse(ref.getArtifactId(), ref.getLocator(), ref.getNote()))
@@ -155,7 +177,8 @@ public class KnowledgeController {
         document.getId(), document.getScopeId(), document.getDocType(), document.getTitle(),
         document.getBody(), document.getStatus(), document.getVersion(), document.getCreatedBy(),
         document.getReviewer(), document.getReviewedAt(), document.getApplicableBaselineId(),
-        stalenessService.isStale(document), document.getCreatedAt(), document.getUpdatedAt(), refs);
+        stalenessService.isStale(document), document.getSupersededBy(),
+        document.getDeprecationNote(), document.getCreatedAt(), document.getUpdatedAt(), refs);
   }
 
 }

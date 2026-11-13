@@ -22,6 +22,8 @@ const STATUS_FILTERS = [
   { value: 'draft', label: '草稿' },
   { value: 'needs_review', label: '待审核' },
   { value: 'verified', label: '已验证' },
+  { value: 'superseded', label: '已被替代' },
+  { value: 'deprecated', label: '已废弃' },
 ]
 
 export default function KnowledgePage() {

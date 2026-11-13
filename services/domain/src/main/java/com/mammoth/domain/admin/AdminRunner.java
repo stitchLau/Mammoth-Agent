@@ -46,6 +46,12 @@ public final class AdminRunner {
   public static void run(String[] args) {
     Map<String, String> options = parse(args);
     try {
+      if (options.containsKey("admin-clear-lock")) {
+        LockCleanupService cleanup = new LockCleanupService();
+        LockCleanupService.Result result = cleanup.clear(Path.of(require(options, "data-root")));
+        print("clear-lock", describe(result));
+        return;
+      }
       if (options.containsKey("admin-restore")) {
         RestoreService restore = new RestoreService();
         RestoreService.Result result = restore.restore(
@@ -137,6 +143,13 @@ public final class AdminRunner {
           "databaseBytes", backup.databaseBytes(),
           "artifacts", backup.artifacts(),
           "schemaVersion", backup.schemaVersion());
+    }
+    if (result instanceof LockCleanupService.Result cleanup) {
+      return JsonLite.object(
+          "root", cleanup.root().toString(),
+          "deleted", cleanup.deleted(),
+          "holderDeleted", cleanup.holderDeleted(),
+          "holder", cleanup.holder());
     }
     if (result instanceof RestoreService.Result restore) {
       return JsonLite.object(

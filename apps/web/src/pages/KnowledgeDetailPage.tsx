@@ -4,15 +4,23 @@ import { useSession } from '../app/session'
 import { BackLink, ErrorBanner, LoadingState, PageHeader, StatusBadge } from '../components/ui'
 import { useProject } from './ProjectLayout'
 import {
+  deprecateKnowledge,
   getKnowledge,
   listArtifacts,
+  listKnowledge,
   submitKnowledgeReview,
+  supersedeKnowledge,
   updateKnowledge,
   verifyKnowledge,
   type Artifact,
   type KnowledgeDocument,
 } from '../lib/api'
-import { canEditKnowledge, canSubmitForReview, verifyBlockedReason } from '../lib/permissions'
+import {
+  canChangeKnowledgeStatus,
+  canEditKnowledge,
+  canSubmitForReview,
+  verifyBlockedReason,
+} from '../lib/permissions'
 
 export default function KnowledgeDetailPage() {
   const { projectId = '', documentId = '' } = useParams()
@@ -21,6 +29,9 @@ export default function KnowledgeDetailPage() {
   const userId = state.status === 'authenticated' ? state.user.id : ''
   const [document, setDocument] = useState<KnowledgeDocument | null>(null)
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>([])
+  const [replacementId, setReplacementId] = useState('')
+  const [deprecationNote, setDeprecationNote] = useState('')
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -30,12 +41,20 @@ export default function KnowledgeDetailPage() {
   const [error, setError] = useState<string | null>(null)
 
   const reload = useCallback(async () => {
-    const [loaded, artifactList] = await Promise.all([
+    const [loaded, artifactList, documentList] = await Promise.all([
       getKnowledge(projectId, documentId),
       listArtifacts(projectId),
+      listKnowledge(projectId),
     ])
     setDocument(loaded)
     setArtifacts(artifactList)
+    setDocuments(documentList)
+    setReplacementId(
+      (current) =>
+        current ||
+        documentList.find((entry) => entry.id !== documentId && entry.status === 'verified')?.id ||
+        '',
+    )
     setTitle(loaded.title)
     setBody(loaded.body)
     setArtifactId(loaded.sourceRefs[0]?.artifactId ?? artifactList[0]?.id ?? '')
@@ -164,6 +183,78 @@ export default function KnowledgeDetailPage() {
           <pre>{document.body}</pre>
         </article>
       )}
+
+      {document.status === 'verified' && canChangeKnowledgeStatus(role) && (
+        <>
+          <h2>知识状态</h2>
+          <form
+            className="knowledge-form"
+            aria-label="标记为已被替代"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void run(async () => {
+                await supersedeKnowledge(project.id, document.id, replacementId)
+                await reload()
+              })
+            }}
+          >
+            <h3>用更新的已验证文档替代本文档</h3>
+            <div className="row">
+              <select
+                value={replacementId}
+                onChange={(event) => setReplacementId(event.target.value)}
+                aria-label="替代文档"
+              >
+                {documents
+                  .filter((entry) => entry.id !== document.id && entry.status === 'verified')
+                  .map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.title}
+                    </option>
+                  ))}
+              </select>
+              <button type="submit" disabled={busy || replacementId === ''}>
+                标记为已被替代
+              </button>
+            </div>
+          </form>
+          <form
+            className="knowledge-form"
+            aria-label="标记为已废弃"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void run(async () => {
+                await deprecateKnowledge(
+                  project.id,
+                  document.id,
+                  deprecationNote.trim() === '' ? null : deprecationNote.trim(),
+                )
+                setDeprecationNote('')
+                await reload()
+              })
+            }}
+          >
+            <h3>废弃本文档（不删除历史）</h3>
+            <div className="row">
+              <input
+                value={deprecationNote}
+                onChange={(event) => setDeprecationNote(event.target.value)}
+                placeholder="废弃原因（可选）"
+                aria-label="废弃原因"
+              />
+              <button type="submit" disabled={busy}>
+                标记为已废弃
+              </button>
+            </div>
+          </form>
+        </>
+      )}
+      {document.supersededBy && (
+        <p className="hint">
+          已被文档 {document.supersededBy.slice(0, 8)}… 替代；仍保留审计历史，但不再参与检索。
+        </p>
+      )}
+      {document.deprecationNote && <p className="hint">废弃说明：{document.deprecationNote}</p>}
 
       <h2>来源引用</h2>
       <ul className="refs">

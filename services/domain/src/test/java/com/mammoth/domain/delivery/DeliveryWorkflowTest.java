@@ -10,6 +10,7 @@ import com.mammoth.domain.baseline.ProjectRepositoryService;
 import com.mammoth.domain.execution.ExecutionService;
 import com.mammoth.domain.git.GitFixtures;
 import com.mammoth.domain.knowledge.KnowledgeDocument;
+import com.mammoth.domain.knowledge.KnowledgeSearchAdapter;
 import com.mammoth.domain.knowledge.KnowledgeService;
 import com.mammoth.domain.knowledge.KnowledgeStalenessService;
 import com.mammoth.domain.persistence.AppUser;
@@ -93,6 +94,9 @@ class DeliveryWorkflowTest {
 
   @Autowired
   private KnowledgeService knowledgeService;
+
+  @Autowired
+  private KnowledgeSearchAdapter searchAdapter;
 
   @Autowired
   private KnowledgeStalenessService stalenessService;
@@ -309,6 +313,30 @@ class DeliveryWorkflowTest {
     assertThat(knowledgeService.requireDocument(fixture.project().getId(),
         document.getId()).getStatus()).isEqualTo(KnowledgeDocument.DRAFT);
 
+    // Publish the delivery knowledge through the normal four-eyes flow, then supersede an older doc.
+    knowledgeService.submitForReview(fixture.owner(), fixture.project().getId(), document.getId());
+    KnowledgeDocument published = knowledgeService.verify(fixture.reviewer(),
+        fixture.project().getId(), document.getId());
+    assertThat(published.getStatus()).isEqualTo(KnowledgeDocument.VERIFIED);
+    assertThat(stalenessService.isStale(published)).isTrue();
+
+    KnowledgeDocument older = knowledgeService.create(fixture.owner(), fixture.project().getId(),
+        "delivery", "收货扫码旧知识", "旧版本：收货扫码重复入库由人工处理。",
+        List.of(new KnowledgeService.SourceRefInput(
+            knowledgeService.sourceRefs(published.getId()).get(0).getArtifactId(), null, null)));
+    knowledgeService.submitForReview(fixture.owner(), fixture.project().getId(), older.getId());
+    knowledgeService.verify(fixture.reviewer(), fixture.project().getId(), older.getId());
+    KnowledgeDocument superseded = knowledgeService.supersede(fixture.reviewer(),
+        fixture.project().getId(), older.getId(), published.getId());
+    assertThat(superseded.getStatus()).isEqualTo(KnowledgeDocument.SUPERSEDED);
+    assertThat(superseded.getSupersededBy()).isEqualTo(published.getId());
+    assertThat(searchAdapter.search(fixture.project().getId(), "收货扫码", 10))
+        .isNotEmpty()
+        .allSatisfy(hit -> assertThat(hit.documentId()).isEqualTo(published.getId()));
+
+    knowledgeService.deprecate(fixture.reviewer(), fixture.project().getId(), published.getId(),
+        "演示：标记废弃");
+    assertThat(searchAdapter.search(fixture.project().getId(), "收货扫码", 10)).isEmpty();
     KnowledgeUpdateProposal rejected = deliveryService.createProposal(fixture.owner(),
         fixture.project().getId(), fixture.item().getId(), snapshot.getId(), "重复提议");
     assertThat(deliveryService.rejectProposal(fixture.reviewer(), fixture.project().getId(),

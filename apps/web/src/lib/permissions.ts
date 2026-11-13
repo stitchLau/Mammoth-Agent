@@ -105,3 +105,7 @@ export function solutionApproveBlockedReason(
   }
   return '当前状态不可批准'
 }
+/** M3.5: owner/reviewer may supersede or deprecate verified knowledge. */
+export function canChangeKnowledgeStatus(role: Role | null | undefined): boolean {
+  return role === 'owner' || role === 'reviewer'
+}

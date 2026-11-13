@@ -223,4 +223,86 @@ class KnowledgeWorkflowTest {
         .isInstanceOf(ApiException.class)
         .hasMessageContaining("only draft documents can be edited");
   }
-}
+
+  @Test
+  void supersedeAndDeprecateKeepHistoryButRemoveFromSearch() {
+    AppUser owner = user("owner6");
+    AppUser reviewer = user("reviewer6");
+    AppUser viewer = user("viewer6");
+    Project project = project(owner);
+    projectService.addMember(owner, project.getId(), reviewer.getId(), AuthorizationService.REVIEWER);
+    projectService.addMember(owner, project.getId(), viewer.getId(), AuthorizationService.VIEWER);
+    ArtifactRecord artifact = artifact(owner, project, "盘点差异处理原始资料。");
+
+    KnowledgeDocument oldDocument = knowledgeService.create(owner, project.getId(), "process",
+        "盘点差异流程（旧）", "盘点差异由主管手工处理，无系统冻结。",
+        List.of(new KnowledgeService.SourceRefInput(artifact.getId(), "§1", null)));
+    KnowledgeDocument newDocument = knowledgeService.create(owner, project.getId(), "process",
+        "盘点差异流程（新）", "盘点差异先系统冻结库存，再由主管复核差异。",
+        List.of(new KnowledgeService.SourceRefInput(artifact.getId(), "§2", null)));
+    knowledgeService.submitForReview(owner, project.getId(), oldDocument.getId());
+    knowledgeService.verify(reviewer, project.getId(), oldDocument.getId());
+    knowledgeService.submitForReview(owner, project.getId(), newDocument.getId());
+    knowledgeService.verify(reviewer, project.getId(), newDocument.getId());
+
+    assertThat(searchAdapter.search(project.getId(), "盘点差异", 10)).hasSize(2);
+
+    KnowledgeDocument superseded = knowledgeService.supersede(reviewer, project.getId(),
+        oldDocument.getId(), newDocument.getId());
+    assertThat(superseded.getStatus()).isEqualTo(KnowledgeDocument.SUPERSEDED);
+    assertThat(superseded.getSupersededBy()).isEqualTo(newDocument.getId());
+    assertThat(searchAdapter.search(project.getId(), "盘点差异", 10))
+        .allSatisfy(hit -> assertThat(hit.documentId()).isEqualTo(newDocument.getId()));
+
+    KnowledgeDocument deprecated = knowledgeService.deprecate(owner, project.getId(),
+        newDocument.getId(), "已被下一版流程文档取代");
+    assertThat(deprecated.getStatus()).isEqualTo(KnowledgeDocument.DEPRECATED);
+    assertThat(deprecated.getDeprecationNote()).isEqualTo("已被下一版流程文档取代");
+    assertThat(searchAdapter.search(project.getId(), "盘点差异", 10)).isEmpty();
+
+    // History is still readable and auditable.
+    assertThat(knowledgeService.requireDocument(project.getId(), oldDocument.getId()).getStatus())
+        .isEqualTo(KnowledgeDocument.SUPERSEDED);
+    assertThat(auditLogRepository.countByAction("knowledge.supersede")).isPositive();
+    assertThat(auditLogRepository.countByAction("knowledge.deprecate")).isPositive();
+
+    assertThatThrownBy(() -> knowledgeService.supersede(viewer, project.getId(),
+        oldDocument.getId(), newDocument.getId()))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("cannot change knowledge status");
+    assertThatThrownBy(() -> knowledgeService.supersede(owner, project.getId(),
+        oldDocument.getId(), newDocument.getId()))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("only verified knowledge");
+    assertThatThrownBy(() -> knowledgeService.deprecate(owner, project.getId(),
+        oldDocument.getId(), "again"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("only verified knowledge");
+  }
+
+  @Test
+  void supersedeRequiresAVerifiedReplacementAndRejectsSelf() {
+    AppUser owner = user("owner7");
+    AppUser reviewer = user("reviewer7");
+    Project project = project(owner);
+    projectService.addMember(owner, project.getId(), reviewer.getId(), AuthorizationService.REVIEWER);
+    ArtifactRecord artifact = artifact(owner, project, "规则资料。");
+
+    KnowledgeDocument verified = knowledgeService.create(owner, project.getId(), "process",
+        "规则（已验证）", "规则正文。",
+        List.of(new KnowledgeService.SourceRefInput(artifact.getId(), null, null)));
+    knowledgeService.submitForReview(owner, project.getId(), verified.getId());
+    knowledgeService.verify(reviewer, project.getId(), verified.getId());
+    KnowledgeDocument draft = knowledgeService.create(owner, project.getId(), "process",
+        "规则（草稿）", "草稿正文。",
+        List.of(new KnowledgeService.SourceRefInput(artifact.getId(), null, null)));
+
+    assertThatThrownBy(() -> knowledgeService.supersede(reviewer, project.getId(),
+        verified.getId(), verified.getId()))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("cannot supersede itself");
+    assertThatThrownBy(() -> knowledgeService.supersede(reviewer, project.getId(),
+        verified.getId(), draft.getId()))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("replacement document must be verified");
+  }}

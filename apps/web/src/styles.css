@@ -584,7 +584,8 @@ button:disabled {
 .status-blocked,
 .status-rejected,
 .status-withdrawn,
-.status-superseded {
+.status-superseded,
+.status-deprecated {
   color: var(--danger);
   border-color: var(--danger);
 }

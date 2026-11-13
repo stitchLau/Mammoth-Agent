@@ -38,6 +38,10 @@ export function knowledgeStatusLabel(status: string): string {
       return '待审核'
     case 'verified':
       return '已验证'
+    case 'superseded':
+      return '已被替代'
+    case 'deprecated':
+      return '已废弃'
     default:
       return status
   }

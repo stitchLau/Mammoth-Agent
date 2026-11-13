@@ -12,6 +12,8 @@ public class KnowledgeDocument {
   public static final String DRAFT = "draft";
   public static final String NEEDS_REVIEW = "needs_review";
   public static final String VERIFIED = "verified";
+  public static final String SUPERSEDED = "superseded";
+  public static final String DEPRECATED = "deprecated";
 
   @Id
   private String id;
@@ -38,6 +40,11 @@ public class KnowledgeDocument {
 
   /** Code baseline this knowledge was derived from (ADR-0007); null for ordinary knowledge. */
   private String applicableBaselineId;
+
+  /** Verified document that replaces this one after supersede (docs/06 §7). */
+  private String supersededBy;
+
+  private String deprecationNote;
 
   private String createdAt;
 
@@ -112,6 +119,27 @@ public class KnowledgeDocument {
   /** Attach the knowledge to a code baseline (delivery loop); null means "not baseline-specific". */
   public void attachBaseline(String baselineId) {
     this.applicableBaselineId = baselineId;
+  }
+
+  public String getSupersededBy() {
+    return supersededBy;
+  }
+
+  public String getDeprecationNote() {
+    return deprecationNote;
+  }
+
+  /** A verified document is replaced by a newer verified document; never deleted. */
+  public void supersede(String replacementDocumentId, String now) {
+    this.status = SUPERSEDED;
+    this.supersededBy = replacementDocumentId;
+    this.updatedAt = now;
+  }
+
+  public void deprecate(String note, String now) {
+    this.status = DEPRECATED;
+    this.deprecationNote = note;
+    this.updatedAt = now;
   }
 
   public String getCreatedAt() {
