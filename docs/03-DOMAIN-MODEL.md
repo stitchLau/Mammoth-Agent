@@ -94,4 +94,4 @@
 | 验收矩阵 | `acceptance_criterion` + `SolutionRenderer.traceability`（派生，不建冗余表） |
 | ApprovalRecord | `approval_record`（submit/approve/request_changes；与 `audit_log` 互补） |
 
-尚未实现且保持为领域概念：`ProjectBaseline`、`DevelopmentTask` 与 Git commit 映射、`ExecutionRecord`、`DeliverySnapshot`（M3）。
+尚未实现且保持为领域概念：`ProjectBaseline`、`DevelopmentTask` 与 Git commit 映射、`ExecutionRecord`、`DeliverySnapshot`（M3）。其中 `ProjectBaseline` 按 ADR-0007 落为"项目 + 仓库集合 → commit"的不可变基线（`project_repository`/`project_baseline`/`project_baseline_repo`），`ExecutionRecord` 引用 `from_baseline_id` 与 `to_commit`；知识"过期"按 ADR-0007 仅做提示，不自动改状态。

@@ -70,3 +70,27 @@ node scripts/demo-m2.mjs http://127.0.0.1:18132      # 26/26
 - 证据不可更新/删除是产品约束，不是遗漏。
 - 仍未做生产化（TLS/共享会话/PG 方言）；不要把本地演示当部署就绪。
 - `docs/evidence/M2-VERIFICATION.md` 中的数字对应提交 `e6f0cb6`；后续改动需更新证据。
+
+## 2026-11-13 更新：ADR-0007/0008 已定案（M3 前置解除）
+
+负责人指示"先定 ADR-0007/0008"。已按建议定案并记录（决策人：项目负责人，2026-11-13）：
+
+- **ADR-0007（Accepted v1.0）**：`decisions/ADR-0007-GIT-BASELINE.md`
+  - 本地**只读** Git + **人工捕获不可变基线**；不 clone/fetch/pull/push/checkout/commit/reset；不写工作树；
+  - 只读命令白名单：`rev-parse`、`status --porcelain=v2 --branch`、`log --format`、`diff --name-status`、`diff --stat`、`worktree list --porcelain`、`remote get-url`（脱敏）；
+  - 基线 = 项目 + 仓库集合 → commit；多仓库/多分支；脏树默认拒绝（owner 覆盖记 `reproducible=false`）；
+  - 代码内容不复制进知识库；变更映射只存文件清单/统计（diff 正文仅作为 Artifact，限大小）；
+  - DSH 临时 worktree **不得**注册为项目仓库（rc.2 归档会清理，S1 F6）；
+  - 知识"过期"只做提示，不自动改状态（仍走人工四眼）。
+- **ADR-0008（Accepted v1.0）**：`decisions/ADR-0008-WORKSPACE.md`
+  - v1 单机本地**单写者**；数据根必须本地固定盘，拒绝 UNC/网络映射盘/云同步目录；
+  - 数据根实例锁（`.mammoth-instance.lock`，M3 实现）；陈旧锁人工清理；
+  - **MCP 入口改只读连接**（`query_only`，不跑 Flyway、不写库），迁移只由 Web/管理入口执行（M3 实现，当前 MCP 仍跑完整上下文）；
+  - 跨机仅**导出/导入包**（不含凭据/密码哈希；仅空库导入；owner 执行并审计）；不做双向合并；
+  - 备份用 `VACUUM INTO`/backup API + Artifact 目录校验（已实测 WAL 下成功；需专用连接且无进行中语句）。
+
+**验证证据（2026-11-13，本机只读探针）**：git 2.50.1 的只读命令全部成功且工作树保持干净；`safe.directory` 精确路径可用；SQLite `VACUUM INTO` 在 WAL 下成功（副本读回 1 行），失败模式"statements in progress"已复现；只读连接与写连接并存可读、写入被拒；数据根默认在本地固定盘（DriveType=3/NTFS）。
+
+**尚未实现（仅决策）**：实例锁、网络盘/云同步拒绝、MCP 只读连接、导出/导入、`GitAdapter`/基线表、知识过期字段。均列入 M3 切片（见 `docs/12-ROADMAP.md` M3）。
+
+**下一步**：进入 M3 规格（建议先做 ADR-0008 的实例锁 + 只读 MCP，再做 ADR-0007 的仓库注册/基线捕获），每片沿用"规格→实现→测试→证据→交接"。

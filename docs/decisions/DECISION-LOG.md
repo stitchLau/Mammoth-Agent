@@ -21,6 +21,16 @@
 | D-015 | 方案视图形态 | 单模型只读双视图渲染 + 结构层编辑，不提供视图级编辑 | 负责人授权 | `M2-PHASE2-PLAN.md` §4.4 |
 | D-016 | M2 状态机上限 | 需求状态止于 `approved`，`in_development` 起由 M3 接管 | 负责人授权 | `M2-PHASE2-PLAN.md` §4.2 |
 | D-017 | M2 生产化 | 不先做 TLS/共享会话/PG 方言/后端分页；只做与新表相关的必要加固 | 负责人授权 | `M2-PHASE2-PLAN.md` §2 |
+| D-018 | ADR-0007 定案 | 本地只读 Git + 人工捕获不可变基线；白名单只读命令；不 clone/fetch/push/checkout；多仓库基线=commit 集合；脏树默认拒绝；代码不进知识库；知识过期只提示不改状态 | 负责人 2026-11-13 指示先定 ADR-0007/0008 | `decisions/ADR-0007-GIT-BASELINE.md` |
+| D-019 | ADR-0008 定案 | 单机本地单写者；数据根必须本地固定盘且拒绝网络盘/云同步根；实例锁；MCP 只读连接且不执行迁移；跨机仅导出/导入（不含凭据，仅空库导入）；备份 `VACUUM INTO`/backup API | 负责人 2026-11-13 指示 | `decisions/ADR-0008-WORKSPACE.md` |
+| D-020 | M3 迁移职责 | Flyway 迁移只由 Web/管理入口执行；MCP 入口改只读连接（`query_only`），消除双进程迁移风险 | 由 D-019 推导，M3 首个切片实现 | `ADR-0008` §决策 4/13 |
+
+## M3 前置（2026-11-13 已解除）
+
+| ID | 事项 | 状态 |
+|---|---|---|
+| ADR-0007 | Git 代码基线与变更映射 | **Accepted v1.0**；M3 实现 `project_repository`/`project_baseline`/`project_baseline_repo` 与只读 `GitAdapter` |
+| ADR-0008 | 项目工作区与正式知识空间 | **Accepted v1.0**；M3 实现实例锁、网络盘/云同步拒绝、MCP 只读连接、导出/导入与备份演练 |
 
 ## M2 待决（进入 M3 前）
 

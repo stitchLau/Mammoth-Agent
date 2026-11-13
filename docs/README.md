@@ -2,10 +2,11 @@
 
 > 仓库级常驻指令见 [`AGENTS.md`](../AGENTS.md)；产品总指导见 [`docs/00-MASTER-GUIDE.md`](00-MASTER-GUIDE.md)。文档冲突时按 Master Guide 的优先级处理。
 
-## 当前状态（2026-11-12）
+## 当前状态（2026-11-13）
 
-- **M1 / M1.5 / M2 已完成**（本地验证通过）；下一阶段 **M3（实施回收与知识闭环）**。
-- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`](handoffs/SESSION-HANDOFF-2026-11-12-M2.md)
+- **M1 / M1.5 / M2 已完成**（本地验证通过）；M3 前置 **ADR-0007/0008 已定案**（2026-11-13）。
+- 下一阶段 **M3（实施回收与知识闭环）**；先做 ADR-0008 的实例锁/只读 MCP 与 ADR-0007 的仓库注册/基线捕获。
+- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`](handoffs/SESSION-HANDOFF-2026-11-12-M2.md)（含 2026-11-13 ADR 更新）
 - M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md)
 - 历史记录：[`docs/process/M1-TIMELINE.md`](process/M1-TIMELINE.md) · [`docs/evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) · [`docs/quality/M1-BUGS.md`](quality/M1-BUGS.md)
 
@@ -34,7 +35,7 @@
 | [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) | M1 验收记录 |
 | [`specs/UI-SPEC.md`](specs/UI-SPEC.md) | UI 规格（路线 A）与 M1.5 实施记录 |
 | [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1/M1.5/M2 决策补充日志 |
-| [`../decisions/`](../decisions/) | ADR-0001 – ADR-0010 |
+| [`../decisions/`](../decisions/) | ADR-0001 – ADR-0008 + ADR-0010（ADR-0009 文档解析仍 OPEN，暂无文件） |
 
 ## 过程、质量与证据
 

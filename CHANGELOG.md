@@ -1,5 +1,13 @@
 # Changelog
 
+## V0.9.1 — 2026-11-13
+
+- **ADR-0007 定案（Accepted v1.0）**：本地只读 Git + 人工捕获不可变代码基线；白名单只读命令，不 clone/fetch/push/checkout、不写工作树；多仓库基线 = commit 集合；脏树默认拒绝；代码内容不进知识库；知识过期只提示不改状态；DSH 临时 worktree 不得作为基线。见 `decisions/ADR-0007-GIT-BASELINE.md`。
+- **ADR-0008 定案（Accepted v1.0）**：单机本地单写者 + 显式导出/导入包；数据根必须本地固定盘，拒绝 UNC/网络盘/云同步目录；数据根实例锁；MCP 入口改只读连接且不执行 Flyway；跨机导出/导入不含凭据、仅空库导入；备份用 `VACUUM INTO`/backup API。见 `decisions/ADR-0008-WORKSPACE.md`。
+- **证据（2026-11-13 本机探针）**：git 2.50.1 只读命令可用且不改工作树；`safe.directory` 精确路径生效；SQLite `VACUUM INTO`（WAL 下）成功、副本读回 1 行，并复现"statements in progress"失败模式；只读连接与写连接并存可读、写入被拒；数据根默认在本地固定盘（DriveType=3/NTFS）。
+- **文档**：`docs/13-OPEN-DECISIONS.md` 状态更新；`docs/decisions/DECISION-LOG.md` D-018–D-020；`docs/05-ARCHITECTURE-BASELINE.md` 决策状态；`docs/12-ROADMAP.md` M3 前置与切片建议；M2 交接补充 2026-11-13 更新。
+- **注意**：实例锁、网络盘拒绝、MCP 只读连接、导出/导入、`GitAdapter`/基线表均**尚未实现**，仅完成决策，列入 M3。
+
 ## V0.9.0 — 2026-11-12
 
 - **M2 需求与方案（第一轮完整闭环）**：

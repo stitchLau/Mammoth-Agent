@@ -45,13 +45,15 @@
 
 ## 6. 关键架构决策待办
 
-- ADR-0001：DSH 集成策略（Bundle、Profile、Fork 或独立壳）。
-- ADR-0002：应用语言/框架及 UI 扩展边界。
-- ADR-0003：关系数据库、ORM 和迁移机制。
-- ADR-0004：文件存储与共享工作区。
-- ADR-0005：全文/向量检索引擎。
-- ADR-0006：身份认证、组织隔离和权限模型。
-- ADR-0007：项目代码基线、Git Worktree 和知识更新机制。
+- ADR-0001：DSH 集成策略（Bundle、Profile、Fork 或独立壳）。**Accepted v1.0**
+- ADR-0002：应用语言/框架及 UI 扩展边界。**Accepted v1.0**
+- ADR-0003：关系数据库、ORM 和迁移机制。**Accepted v1.0**
+- ADR-0004：文件存储与共享工作区。**Accepted v1.0**
+- ADR-0005：全文/向量检索引擎。**Accepted v1.0**
+- ADR-0006：身份认证、组织隔离和权限模型。**Accepted v1.0**
+- ADR-0007：项目代码基线、Git Worktree 和知识更新机制。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0007-GIT-BASELINE.md`
+- ADR-0008：项目工作区与正式知识空间。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0008-WORKSPACE.md`
+- ADR-0009：文档解析（OPEN）；ADR-0010：需求上下文基线（Accepted v1.0）
 
 ## 7. 可观测性
 
