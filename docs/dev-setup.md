@@ -46,15 +46,25 @@ npm test           # vitest
 复制 `.env.example` 为 `.env` 并按需修改（不要提交真实密钥）：
 
 - `MAMMOTH_SERVER_PORT`（默认 8080）
-- `MAMMOTH_DATA_ROOT`（留空 = OS 应用数据目录；**禁止**位于源码仓库或 `~/.dsh`，启动会失败）
+- `MAMMOTH_DATA_ROOT`（留空 = OS 应用数据目录；**禁止**位于源码仓库、`~/.dsh`、网络路径或云同步目录，启动会失败——ADR-0008）
+- `MAMMOTH_DATA_ROOT_READ_ONLY`（默认 false；MCP 入口会强制只读，仅诊断时手动使用）
+- `MAMMOTH_ALLOW_UNSUPPORTED_ROOT`（默认 false；仅受控测试/一次性迁移可放开网络盘/云同步校验）
 - `VITE_API_BASE_URL`（前端开发代理目标）
+
+## 数据根与运行模式（ADR-0008，2026-11-13）
+
+- **单写者**：Web/管理入口启动时对 `<数据根>/.mammoth-instance.lock` 取独占 OS 锁；第二个写实例**启动失败**，错误信息包含持有者（来自 `.mammoth-instance-holder`：pid/host/startedAt）与锁路径。进程崩溃时 OS 自动释放锁；残留文件不影响下次启动（可手动删除）。
+- **只读入口（MCP）**：`java -jar ... --mcp` 强制 `mammoth.data-root.read-only=true`（System property，配置文件的默认值不能覆盖；拒绝 `--mammoth.data-root.read-only=false`）。只读入口不取写锁、不创建目录、不执行 Flyway、以只读连接 + `PRAGMA query_only=ON` 打开数据库。
+- **前置**：只读入口要求数据根已由 Web/管理入口初始化（至少一次迁移且存在默认组织）；否则启动失败并提示先启动 Web 入口。迁移只能由写入口执行。
+- **路径校验**：拒绝 UNC（`\\server\share`）、已知云同步目录（OneDrive/Dropbox/Google Drive/iCloud 等路径片段）、已知远端文件系统类型（SMB/CIFS/NFS/AFPFS/WebDAV/FUSE-SSHFS）。Windows 映射网络盘可能报告为 NTFS，JVM 无法可靠识别——按运维规范使用本地固定盘。
+- **备份/恢复**：SQLite 用 `VACUUM INTO`/backup API（禁止运行中热复制 `.db`）；Artifact 目录复制后按 sha256 校验；恢复需停止写实例与只读进程。导出/导入包与实例锁清理手册在 M3 后续切片补齐。
 
 ## 数据库（M1）
 
 - 位置：`<数据根>/db/mammoth.db`（SQLite，WAL；`<数据根>/artifacts`、`<数据根>/cache` 同时创建）。
-- 迁移：**Flyway 13.12.1**，脚本位于 `services/domain/src/main/resources/db/migration/`；`V1__m1_baseline.sql` 建 14 张 M1 基线表。
-- 由于 Spring Boot 4 将 Flyway 自动配置拆到独立模块，本项目**显式声明 `Flyway` bean**（版本固定），迁移在 HTTP 服务开始接受请求前完成；失败即启动失败（fail fast）。
-- `GET /api/meta` 返回 `dataRoot`、`database`、`schemaVersion`（当前为 `1`）。
+- 迁移：**Flyway 13.12.1**，脚本位于 `services/domain/src/main/resources/db/migration/`；当前 `V1`–`V4`（M1 基线 14 表 + M2 需求/方案 9 表），共 23 张业务表。
+- 由于 Spring Boot 4 将 Flyway 自动配置拆到独立模块，本项目**显式声明 `Flyway` bean**（版本固定），迁移在 HTTP 服务开始接受请求前完成；失败即启动失败（fail fast）。只读入口（ADR-0008）不创建该 bean、不执行迁移。
+- `GET /api/meta` 返回 `dataRoot`、`database`、`schemaVersion`（当前为 `4`）。
 - 手动核对：`sqlite3 <数据根>/db/mammoth.db "SELECT version, description, success FROM flyway_schema_history;"`
 - 迁移不可在已有库上手工修改；新增变更一律新增 `V<n>__*.sql`。
 
@@ -146,4 +156,6 @@ npm test           # vitest
 - 本地 localhost 为 HTTP（无 TLS）；局域网/服务端部署必须先做 TLS；
 - 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
 - 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充；
-- 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）。
+- 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）；
+- 数据根已实现单写者锁、网络盘/云同步拒绝与 MCP 只读连接（M3 S1）；**导出/导入、Git 基线、实例锁清理脚本仍未实现**（M3 后续切片）；
+- 在 DSH `workspace-write` 沙箱中 Playwright 会因 worker 管道 `EPERM` 失败；E2E 需普通终端、CI 或一次性提权。

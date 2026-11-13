@@ -4,9 +4,10 @@
 
 ## 当前状态（2026-11-13）
 
-- **M1 / M1.5 / M2 已完成**（本地验证通过）；M3 前置 **ADR-0007/0008 已定案**（2026-11-13）。
-- 下一阶段 **M3（实施回收与知识闭环）**；先做 ADR-0008 的实例锁/只读 MCP 与 ADR-0007 的仓库注册/基线捕获。
-- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`](handoffs/SESSION-HANDOFF-2026-11-12-M2.md)（含 2026-11-13 ADR 更新）
+- **M1 / M1.5 / M2 已完成**（本地验证通过）；**M3 进行中：切片 1（运行边界加固）已完成**。
+- 下一步 **M3 S2：仓库注册 + 基线捕获 + 只读 GitAdapter**（ADR-0007）。
+- 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3-S1.md`](handoffs/SESSION-HANDOFF-2026-11-13-M3-S1.md)
+- M3 规格：[`docs/specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`docs/evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`docs/process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`docs/quality/M3-BUGS.md`](quality/M3-BUGS.md)
 - M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md)
 - 历史记录：[`docs/process/M1-TIMELINE.md`](process/M1-TIMELINE.md) · [`docs/evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) · [`docs/quality/M1-BUGS.md`](quality/M1-BUGS.md)
 
@@ -32,6 +33,7 @@
 |---|---|
 | [`specs/M1-PHASE1-PLAN.md`](specs/M1-PHASE1-PLAN.md) | M1 计划与 DoD |
 | [`specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) | M2 计划、状态机、就绪规则、一致性规则与实施记录 |
+| [`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) | M3 计划、切片顺序与 S1 实施记录 |
 | [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) | M1 验收记录 |
 | [`specs/UI-SPEC.md`](specs/UI-SPEC.md) | UI 规格（路线 A）与 M1.5 实施记录 |
 | [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1/M1.5/M2 决策补充日志 |
@@ -41,17 +43,17 @@
 
 | 文档 | 内容 |
 |---|---|
-| [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) | 提交级执行时间线 |
-| [`quality/M1-BUGS.md`](quality/M1-BUGS.md) / [`quality/M2-BUGS.md`](quality/M2-BUGS.md) | 缺陷台账（根因/修复/回归） |
-| [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图 |
-| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5 历史快照 + M2 当前快照） |
+| [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) / [`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) | 提交级执行时间线 |
+| [`quality/M1-BUGS.md`](quality/M1-BUGS.md) / [`quality/M2-BUGS.md`](quality/M2-BUGS.md) / [`quality/M3-BUGS.md`](quality/M3-BUGS.md) | 缺陷台账（根因/修复/回归） |
+| [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) / [`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图 |
+| [`handoffs/`](handoffs/) | 会话交接（M0/M1.5/M2 历史快照 + M3 S1 当前快照） |
 
 ## 运行与集成
 
 | 文档 | 内容 |
 |---|---|
-| [`dev-setup.md`](dev-setup.md) | 构建/启动/接口/数据根/CI/E2E |
-| [`dsh-mcp-integration.md`](dsh-mcp-integration.md) | DSH ↔ Domain Service MCP 接入（含 M2 `get_requirement_context`） |
+| [`dev-setup.md`](dev-setup.md) | 构建/启动/接口/数据根（ADR-0008 锁与只读模式）/CI/E2E |
+| [`dsh-mcp-integration.md`](dsh-mcp-integration.md) | DSH ↔ Domain Service MCP 接入（含 `get_requirement_context`，MCP 强制只读） |
 | [`demos/M1-DEMO.md`](demos/M1-DEMO.md) / [`demos/M2-DEMO.md`](demos/M2-DEMO.md) | 端到端演示脚本说明 |
 | [`../integrations/dsh/`](../integrations/dsh/) | DSH bundle 模板 |
 
@@ -64,6 +66,6 @@
 ## 新会话推荐阅读顺序
 
 1. `AGENTS.md` → `docs/00-MASTER-GUIDE.md`
-2. 本索引 → `docs/handoffs/SESSION-HANDOFF-2026-11-12-M2.md`
-3. 按 M3 任务读 `docs/04`、`docs/13`、`docs/12`、`docs/03`、`docs/07` 与 `docs/specs/M2-PHASE2-PLAN.md`
-4. 需要实现细节时读 `docs/dev-setup.md`、`docs/evidence/M2-VERIFICATION.md`、代码与测试
+2. 本索引 → `docs/handoffs/SESSION-HANDOFF-2026-11-13-M3-S1.md`
+3. 按 M3 任务读 `docs/04`、`docs/13`、`docs/12`、`docs/03`、`docs/07`、`docs/specs/M3-PHASE3-PLAN.md` 与两份 ADR（0007/0008）
+4. 需要实现细节时读 `docs/dev-setup.md`、`docs/evidence/M3-VERIFICATION.md`、代码与测试

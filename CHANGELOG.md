@@ -1,5 +1,16 @@
 # Changelog
 
+## V0.10.0 — 2026-11-13
+
+- **M3 切片 1（运行边界加固，ADR-0008）**：
+  - **数据根实例锁**：写实例独占 `<数据根>/.mammoth-instance.lock`，持有者元数据写入旁路 `.mammoth-instance-holder`；第二个写实例启动失败并显示 pid/host/startedAt 与清理指引。
+  - **数据根位置校验**：拒绝 UNC 路径、已知云同步目录（OneDrive/Dropbox/Google Drive/iCloud 等）、已知远端文件系统类型（SMB/CIFS/NFS/AFPFS/WebDAV/FUSE-SSHFS）；`mammoth.data-root.allow-unsupported`（`MAMMOTH_ALLOW_UNSUPPORTED_ROOT`）仅限受控覆盖。
+  - **MCP 强制只读**：`--mcp` 不取写锁、不创建目录、不执行 Flyway、以只读连接 + `PRAGMA query_only=ON` 打开数据库；拒绝 `--mammoth.data-root.read-only=false`；未初始化数据根给出可操作错误（先启动 Web/管理入口）。
+  - **迁移职责**：Flyway 仅由写入口执行（`OrganizationService` 改为 `ObjectProvider<Flyway>`，只读模式不写默认组织）。
+- **验证**：后端 `mvn verify` **71 tests**（M2 基线 62 + 新增 9）；E2E 2 passed（9.2s）；手动集成 5/5（双写拒绝、UNC/OneDrive 拒绝、MCP 与写实例并存、空根 fail fast）。
+- **文档**：`docs/specs/M3-PHASE3-PLAN.md`、`docs/evidence/M3-VERIFICATION.md`、`docs/process/M3-TIMELINE.md`、`docs/quality/M3-BUGS.md`、交接、`dev-setup` 运行模式章节、ADR-0008 S1 记录、README/ROADMAP/13-OPEN-DECISIONS 更新。
+- **已知限制**：Windows 映射网络盘可能报告 NTFS（JVM 无法可靠识别）；导出/导入、Git 基线、实例锁清理脚本仍在后续切片；受限沙箱下 Playwright 需提权。
+
 ## V0.9.1 — 2026-11-13
 
 - **ADR-0007 定案（Accepted v1.0）**：本地只读 Git + 人工捕获不可变代码基线；白名单只读命令，不 clone/fetch/push/checkout、不写工作树；多仓库基线 = commit 集合；脏树默认拒绝；代码内容不进知识库；知识过期只提示不改状态；DSH 临时 worktree 不得作为基线。见 `decisions/ADR-0007-GIT-BASELINE.md`。

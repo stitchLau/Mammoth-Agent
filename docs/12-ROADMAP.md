@@ -43,14 +43,14 @@
 
 **前置（2026-11-13 已解除）**：ADR-0007（本地只读 Git + 人工不可变基线）与 ADR-0008（单机单写者 + 导出/导入、MCP 只读连接）已 Accepted。M3 首个切片建议顺序：
 
-1. 数据根实例锁 + 网络盘/云同步拒绝 + MCP 只读连接（ADR-0008）；
+1. **S1（已完成 2026-11-13）**：数据根实例锁 + 网络盘/云同步拒绝 + MCP 只读连接（ADR-0008）；71 tests、手动 5 项、E2E 2 passed，见 `docs/evidence/M3-VERIFICATION.md`；
 2. 仓库注册 + 基线捕获 + 只读 `GitAdapter`（ADR-0007，`V5` 迁移）；
 3. 开发交接包（Approved Design 快照 + 任务 + 验收 + 基线）；
 4. `ExecutionRecord`（from/to commit、变更清单、diverged）与偏差分析；
 5. 验收矩阵与 As-built/交付快照；
 6. 知识更新提议 + 人工发布 + 过期提示。
 
-约束：Git 只读、不 clone/fetch/push；代码内容不进知识库；飞书/CI/Jira 集成不在 M3。
+约束：Git 只读、不 clone/fetch/push；代码内容不进知识库；Jira/CI 集成不在 M3。
 
 ## M4：企业集成和协同
 

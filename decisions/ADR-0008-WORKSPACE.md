@@ -50,7 +50,7 @@
 
 1. **v1 形态：单机本地、单写者**。正式知识空间 = Mammoth 数据根（`db/` + `artifacts/`）；`cache/` 为可删除派生数据（索引可重建）。
 2. **数据根必须位于本地固定磁盘**（Windows NTFS/APFS/ext4 等）。启动时拒绝：UNC 路径、映射网络驱动器、已知云同步目录（OneDrive/Dropbox/Google Drive/iCloud 等路径特征）。测试或受控环境可用显式开关（如 `MAMMOTH_ALLOW_UNSUPPORTED_ROOT=true`）覆盖，但必须记录警告，不得作为默认。
-3. **单写者实例锁**：数据根下 `.mammoth-instance.lock`（含 PID、主机名、启动时间、心跳）；Web/写实例启动时独占；已有活动实例则**拒绝启动**并给出提示。陈旧锁只能人工确认后清理，**不自动抢锁**。
+3. **单写者实例锁**：数据根下 `.mammoth-instance.lock`（独占 OS 文件锁）；持有者元数据（PID、主机名、启动时间、角色）写入旁路 `.mammoth-instance-holder`，供被阻塞进程读取（Windows 强制锁下被锁文件不可读）。Web/写实例启动时独占；已有活动实例则**拒绝启动**并给出提示。陈旧锁只能人工确认后清理，**不自动抢锁**（OS 在进程退出时已释放锁，残留文件可删除或覆盖）。
 4. **MCP/只读进程不写库**：MCP 入口以**只读连接**打开 SQLite（`SQLiteConfig.setReadOnly(true)`，等价 `mode=ro` + `PRAGMA query_only=ON`），**不执行 Flyway**、不写业务表；迁移只由 Web/管理入口执行。若数据根尚未初始化（无 schema），MCP 给出可操作错误并提示先启动 Web/管理入口完成迁移，**不得自行迁移**。实测只读连接在写连接打开时可读、写入被拒（见证据表）。
 5. **代码工作区不是 Mammoth 数据**：客户代码留在其本地仓库路径（ADR-0007 只读注册），不复制进数据根、FTS 或向量索引；Mammoth 只存仓库路径、commit 与变更清单。
 6. **跨机同步 v1 = 导出/导入包**：`<数据根>/exports/<时间戳>-mammoth-export.zip`，含 `manifest.json`（schema 版本、应用版本、表计数、每个文件 sha256）与业务数据；**默认不含**用户密码哈希、会话、DSH 数据、任何凭据。
@@ -120,3 +120,16 @@
 3. M3：导出/导入包 v1（manifest + sha256 + 空库导入 + 审计）；
 4. M3：备份/恢复脚本与演练记录（`VACUUM INTO` + Artifact 校验）；
 5. 把本 ADR 的约束写入 `docs/dev-setup.md`（运维/备份/迁移）与 `docs/08-SECURITY-AND-TRUST.md`（导出物分级）。
+
+## 2026-11-13 S1 落地记录（M3）
+
+M3 切片 1 已实现本 ADR 的以下部分（证据：`docs/evidence/M3-VERIFICATION.md`、`docs/specs/M3-PHASE3-PLAN.md` §8）：
+
+- 决策 2（路径校验）：UNC、已知云同步目录、已知远端文件系统类型（SMB/CIFS/NFS/AFPFS/WebDAV/FUSE-SSHFS）在启动时拒绝；`mammoth.data-root.allow-unsupported=true` 可覆盖（仅测试/受控迁移）。
+- 决策 3（单写者）：`DataRootInstanceLock` 独占锁 + `.mammoth-instance-holder` 元数据；第二写实例启动失败并显示持有者。
+- 决策 4（只读进程）：MCP 入口强制只读（System property 覆盖配置文件、拒绝 `--mammoth.data-root.read-only=false`）；不取锁、不建目录、不执行迁移；只读连接 + `PRAGMA query_only=ON`；数据根未初始化时提示先用 Web 入口初始化。
+- 测试：`DataRootResolverTest`（8）、`DataRootBootstrapTest`（4）、`DataRootInstanceLockTest`（2）、`ReadOnlyModeTest`（1）；手动集成 5 项（双写拒绝、UNC/云同步拒绝、MCP 只读并存、未初始化根失败）。
+
+**偏差**：holder 元数据从锁文件内改为旁路文件（Windows 强制锁），详见 `docs/quality/M3-BUGS.md` B-M3-001。
+
+**仍未实现**：导出/导入包、实例锁清理脚本、备份/恢复演练、Windows 映射网络盘检测（JVM 限制）。
