@@ -23,6 +23,7 @@
     <!-- Pinned to the version validated in docs/spikes/S4-DATABASE-SPIKE.md (SQLite support). -->
     <flyway.version>13.12.1</flyway.version>
     <sqlite-jdbc.version>3.54.1.0</sqlite-jdbc.version>
+    <commons-csv.version>1.14.1</commons-csv.version>
   </properties>
 
   <dependencies>
@@ -62,6 +63,15 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>${commons-csv.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

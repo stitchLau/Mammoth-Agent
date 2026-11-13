@@ -4,6 +4,7 @@ import com.mammoth.domain.artifact.ArtifactService;
 import com.mammoth.domain.persistence.AppUser;
 import com.mammoth.domain.persistence.ProjectMember;
 import com.mammoth.domain.persistence.ProjectMemberRepository;
+import com.mammoth.domain.notification.NotificationService;
 import com.mammoth.domain.service.AuditService;
 import com.mammoth.domain.service.AuthorizationService;
 import com.mammoth.domain.support.Ids;
@@ -36,6 +37,7 @@ public class KnowledgeService {
   private final ArtifactService artifactService;
   private final ProjectMemberRepository projectMemberRepository;
   private final AuditService auditService;
+  private final NotificationService notificationService;
 
   public KnowledgeService(
       KnowledgeDocumentRepository documentRepository,
@@ -43,13 +45,15 @@ public class KnowledgeService {
       KnowledgeChunkRepository chunkRepository,
       ArtifactService artifactService,
       ProjectMemberRepository projectMemberRepository,
-      AuditService auditService) {
+      AuditService auditService,
+      NotificationService notificationService) {
     this.documentRepository = documentRepository;
     this.sourceRefRepository = sourceRefRepository;
     this.chunkRepository = chunkRepository;
     this.artifactService = artifactService;
     this.projectMemberRepository = projectMemberRepository;
     this.auditService = auditService;
+    this.notificationService = notificationService;
   }
 
   /** One evidence reference supplied by the caller. */
@@ -161,6 +165,7 @@ public class KnowledgeService {
     document.submitForReview();
     documentRepository.save(document);
     auditService.record(actor.getId(), "knowledge.submit_review", "knowledge_document", documentId, null);
+    notificationService.knowledgeReviewRequested(actor, projectId, documentId, document.getTitle());
     return document;
   }
 

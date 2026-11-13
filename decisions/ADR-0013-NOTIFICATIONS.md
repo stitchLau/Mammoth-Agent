@@ -1,6 +1,6 @@
 # ADR-0013: 通知与外部发送（站内默认启用，邮件/企微完整实现但默认关闭）
 
-- 状态：**Proposed**（2026-11-13 负责人确认“站内默认启用；邮件/企微完整实现、配置后启用”；详细内容待 S0 评审后转 Accepted）
+- 状态：**Accepted v1.0（2026-11-13，M4 S5 站内通知 + 邮件/企微默认关闭）**；真实 SMTP/企微启用与联调留 M4.5
 - 日期：2026-11-13
 - 决策人：项目负责人（方向确认）；Lead Agent 起草
 - 相关需求/功能：M4 通知渠道、服务端任务、外部 Agent 协作告警
@@ -98,3 +98,8 @@
 2. M4 S5：通知/任务/渠道实现 + 本地 SMTP/HTTP 测试；
 3. M4.5-3：负责人配置 SMTP/企微并做测试发送、监控与运维手册；
 4. 同步 `docs/dev-setup.md` 配置说明与 `docs/08` 外发边界。
+
+## 实施记录（2026-11-13）
+
+- M4 S5 落地 V10（notification/notification_delivery/server_job）、站内默认启用、邮件/企微完整实现但默认关闭、writer-only worker、重试/死信、org_admin 状态/测试发送。
+- 真实 SMTP/企微未启用；测试使用 Mock JavaMailSender + 本地 HTTP stub；启用配置/真实联调留 M4.5。

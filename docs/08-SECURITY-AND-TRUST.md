@@ -74,7 +74,7 @@ Mammoth 以 DSH 作为 Vibe Coding 工具与候选 Runtime，DSH Host 环境本�
 - **凭据**：仅环境变量/OS 凭据存储（`SecretProvider`）；禁止入库、入仓、入导出/交接包、入日志/截图；只读服务账号；缺失即禁用。
 - **网络**：主机白名单、HTTPS（带凭据）、禁止任意重定向、超时/响应上限、错误脱敏；负责人提供的 Jira 地址当前为 HTTP，未 HTTPS/未书面风险接受前不得发送凭据。
 - **导入内容**：按 Confidential 处理；原始文件 Artifact + sha256；不自动进 RAG；不把外部附件正文入库。
-- **审计**：`integration.import`、`integration.import.dry_run`、`external_record.map/reject`、`handoff.export`。
+- **审计**：`integration.import.preview`、`integration.import`、`integration.import.reuse`、`external_record.map/reject`、`handoff.export`。
 
 ### 9.2 通知与外部发送（ADR-0013）
 
@@ -83,6 +83,8 @@ Mammoth 以 DSH 作为 Vibe Coding 工具与候选 Runtime，DSH Host 环境本�
 - 模板代码化/版本化；禁止头注入/超长；正文摘要化，不含凭据/源码/完整敏感正文。
 - 外发走 `notification_delivery` + `server_job`：重试/退避/死信/限速；`webhook-url`/SMTP 密码视为凭据，日志/导出脱敏。
 - MCP 只读进程不运行任务、不发通知；worker 仅 writer。
+
+**实施记录（2026-11-13）**：S3 只读导入已落地（preview 零落库、apply 事务、重复文件/版本幂等、人工映射证据）；S5 站内通知默认启用、邮件/企微默认关闭、`server_job` writer-only、重试/死信、渠道状态不回显秘密；真实 Jira/CSM/SMTP/企微未调用，真实外发/只读 API 留 M4.5。
 
 ### 9.3 外部 Agent 与 MCP 审计（ADR-0006/0008 增补）
 

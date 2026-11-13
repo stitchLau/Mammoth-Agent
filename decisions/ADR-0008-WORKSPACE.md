@@ -145,7 +145,7 @@ M3 切片 1 已实现本 ADR 的以下部分（证据：`docs/evidence/M3-VERIFI
 - **实例锁清理（2026-11-13 补齐）**：`--admin-clear-lock --data-root=<root>` + `RestoreService` 同风格纯文件操作；仅在无活动写实例时删除锁与 holder，运行中拒绝并显示持有者；`scripts/clear-data-root-lock.ps1` 为运维封装；`LockCleanupServiceTest` 4 tests。
 - **未实现（后续）**：导出包加密与密钥管理、账号批量重置流程、增量导出。
 
-## 2026-11-13 M4 S0 增补：新表分类、Agent 审计与团队服务器边界（Proposed）
+## 2026-11-13 M4 S0 增补：新表分类、Agent 审计与团队服务器边界（Accepted，M4 S2/S3/S5 实施）
 
 > 负责人 2026-11-13 确认：M4 仍单节点单写者 + SQLite；团队服务器/证书暂不处理；PG 多实例归 M5。本增补细化 ADR-0008 在 M4 的落地口径。
 

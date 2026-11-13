@@ -39,7 +39,7 @@ Spike 的输出是 ADR，不是临时堆代码。
 
 CSM、Jira、MCP、企业微信、邮件、外部 Agent 适配、多用户协作、共享存储、组织权限细化、服务端任务运行。
 
-**2026-11-13 落地口径**：M4-core 收敛为单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 Jira/CSM API、真实邮件/企微启用、PG 多实例、远程 Agent 网关列入 M4.5/M5，见 `docs/specs/M4-PHASE4-PLAN.md`、`docs/specs/M4.5-PHASE45-PLAN.md`。不删除上述能力，只调整交付顺序。
+**2026-11-13 落地口径**：M4-core 收敛为单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 Jira/CSM API、真实邮件/企微启用、PG 多实例、远程 Agent 网关列入 M4.5/M5，见 `docs/specs/M4-PHASE4-PLAN.md`、`docs/specs/M4.5-PHASE45-PLAN.md`。不删除上述能力，只调整交付顺序。**状态：M4 S1–S5 已于 2026-11-13 本机验收；S6 文档化延期；验收见 `docs/M4-ACCEPTANCE.md`。**
 
 ## 非功能底线
 

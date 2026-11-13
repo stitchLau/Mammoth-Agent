@@ -7,6 +7,8 @@ import com.mammoth.domain.baseline.ProjectBaselineRepoRepository;
 import com.mammoth.domain.baseline.ProjectBaselineRepository;
 import com.mammoth.domain.baseline.ProjectRepository;
 import com.mammoth.domain.baseline.ProjectRepositoryRepository;
+import com.mammoth.domain.external.ExternalRecord;
+import com.mammoth.domain.external.ExternalRecordRepository;
 import com.mammoth.domain.git.GitAdapter;
 import com.mammoth.domain.persistence.AppUser;
 import com.mammoth.domain.service.AuditService;
@@ -15,6 +17,7 @@ import com.mammoth.domain.solution.AcceptanceCriterion;
 import com.mammoth.domain.solution.AcceptanceCriterionRepository;
 import com.mammoth.domain.solution.SolutionDesignItem;
 import com.mammoth.domain.solution.SolutionDesignItemRepository;
+import com.mammoth.domain.solution.SolutionConsistency;
 import com.mammoth.domain.solution.SolutionTask;
 import com.mammoth.domain.solution.SolutionTaskRepository;
 import com.mammoth.domain.solution.SolutionVersion;
@@ -28,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +68,7 @@ public class ExecutionService {
   private final GitAdapter gitAdapter;
   private final AuthorizationService authorizationService;
   private final AuditService auditService;
+  private final ExternalRecordRepository externalRecordRepository;
 
   public ExecutionService(WorkItemService workItemService,
       SolutionVersionRepository versionRepository,
@@ -80,7 +85,8 @@ public class ExecutionService {
       BaselineService baselineService,
       GitAdapter gitAdapter,
       AuthorizationService authorizationService,
-      AuditService auditService) {
+      AuditService auditService,
+      ExternalRecordRepository externalRecordRepository) {
     this.workItemService = workItemService;
     this.versionRepository = versionRepository;
     this.solutionTaskRepository = solutionTaskRepository;
@@ -97,14 +103,20 @@ public class ExecutionService {
     this.gitAdapter = gitAdapter;
     this.authorizationService = authorizationService;
     this.auditService = auditService;
+    this.externalRecordRepository = externalRecordRepository;
   }
 
   public record Detail(List<ExecutionRecord> records, List<ExecutionChange> changes,
       List<ExecutionTask> taskStates, List<ExecutionDeviation> deviations) {
   }
 
-  public record MatrixRow(String criterionId, String criterionText, String designItemTitle,
-      String coverage, int totalTasks, int doneTasks, int partialTasks) {
+  public record EvidenceRef(String externalRecordId, String externalKey, String sourceUrl) {
+  }
+
+  public record MatrixRow(String criterionId, String criterionText, String designItemId,
+      String designItemTitle, String goal, String coverage, int totalTasks, int doneTasks,
+      int partialTasks, List<String> executionRecordIds, int changeCount,
+      List<EvidenceRef> evidenceRefs, List<String> deviationIds) {
   }
 
   public record MissingTask(String taskId, String title, String status) {
@@ -112,7 +124,8 @@ public class ExecutionService {
 
   public record Analysis(String solutionVersionId, List<MatrixRow> matrix,
       List<MissingTask> missingTasks, List<ExecutionDeviation> deviations,
-      List<ExecutionRecord> records, int covered, int partial, int unverified) {
+      List<ExecutionRecord> records, List<EvidenceRef> workItemEvidenceRefs, int covered,
+      int partial, int unverified) {
   }
 
   @Transactional
@@ -240,9 +253,27 @@ public class ExecutionService {
 
     Map<String, String> statusByTask = aggregateTaskStatus(taskStates);
     Map<String, String> designTitles = new HashMap<>();
+    Map<String, SolutionDesignItem> designById = new HashMap<>();
     for (SolutionDesignItem designItem : items) {
       designTitles.put(designItem.getId(), designItem.getTitle());
+      designById.put(designItem.getId(), designItem);
     }
+    Map<String, Set<String>> recordIdsByTask = new HashMap<>();
+    for (ExecutionTask state : taskStates) {
+      recordIdsByTask.computeIfAbsent(state.getTaskId(), ignored -> new LinkedHashSet<>())
+          .add(state.getExecutionRecordId());
+    }
+    Map<String, Integer> changeCountByRecord = new HashMap<>();
+    if (!records.isEmpty()) {
+      for (ExecutionChange change : changeRepository.findByExecutionRecordIdInOrderByFilePathAsc(
+          records.stream().map(ExecutionRecord::getId).toList())) {
+        changeCountByRecord.merge(change.getExecutionRecordId(), 1, Integer::sum);
+      }
+    }
+    List<EvidenceRef> workItemEvidenceRefs = externalRecordRepository
+        .findByProjectIdAndMappedWorkItemIdAndMappedCriterionIdIsNullAndStatus(
+            projectId, workItemId, ExternalRecord.STATUS_MAPPED)
+        .stream().map(ExecutionService::evidenceRef).toList();
 
     List<MatrixRow> matrix = new ArrayList<>();
     int covered = 0;
@@ -275,9 +306,30 @@ public class ExecutionService {
         coverage = "partial";
         partial++;
       }
-      matrix.add(new MatrixRow(criterion.getId(), criterion.getText(),
-          designTitles.getOrDefault(criterion.getDesignItemId(), ""), coverage, linked.size(), done,
-          partialCount));
+      Set<String> executionRecordIds = new LinkedHashSet<>();
+      Set<String> linkedTaskIds = new LinkedHashSet<>();
+      for (SolutionTask task : linked) {
+        linkedTaskIds.add(task.getId());
+        executionRecordIds.addAll(recordIdsByTask.getOrDefault(task.getId(), Set.of()));
+      }
+      int changeCount = executionRecordIds.stream()
+          .mapToInt(recordId -> changeCountByRecord.getOrDefault(recordId, 0)).sum();
+      SolutionDesignItem designItem = designById.get(criterion.getDesignItemId());
+      String goal = rootGoal(designItem, designById);
+      Set<String> subtree = designItem == null ? Set.of()
+          : SolutionConsistency.subtreeIds(designItem, items);
+      List<EvidenceRef> evidenceRefs = externalRecordRepository
+          .findByProjectIdAndMappedCriterionIdAndStatus(projectId, criterion.getId(),
+              ExternalRecord.STATUS_MAPPED)
+          .stream().map(ExecutionService::evidenceRef).toList();
+      List<String> deviationIds = deviations.stream()
+          .filter(deviation -> matchesCriterion(deviation, criterion.getId(), linkedTaskIds,
+              subtree))
+          .map(ExecutionDeviation::getId).toList();
+      matrix.add(new MatrixRow(criterion.getId(), criterion.getText(), criterion.getDesignItemId(),
+          designTitles.getOrDefault(criterion.getDesignItemId(), ""), goal, coverage, linked.size(),
+          done, partialCount, List.copyOf(executionRecordIds), changeCount, evidenceRefs,
+          deviationIds));
     }
 
     List<MissingTask> missingTasks = new ArrayList<>();
@@ -289,8 +341,43 @@ public class ExecutionService {
       }
     }
 
-    return new Analysis(versionId, matrix, missingTasks, deviations, records, covered, partial,
-        unverified);
+    return new Analysis(versionId, matrix, missingTasks, deviations, records,
+        workItemEvidenceRefs, covered, partial, unverified);
+  }
+
+  private static EvidenceRef evidenceRef(ExternalRecord record) {
+    return new EvidenceRef(record.getId(), record.getExternalKey(), record.getSourceUrlSanitized());
+  }
+
+  private static boolean matchesCriterion(ExecutionDeviation deviation, String criterionId,
+      Set<String> linkedTaskIds, Set<String> designSubtree) {
+    if (deviation.getTargetType() == null || deviation.getTargetId() == null) {
+      return false;
+    }
+    return switch (deviation.getTargetType()) {
+      case ExecutionDeviation.TARGET_CRITERION -> criterionId.equals(deviation.getTargetId());
+      case ExecutionDeviation.TARGET_TASK -> linkedTaskIds.contains(deviation.getTargetId());
+      case ExecutionDeviation.TARGET_DESIGN_ITEM -> designSubtree.contains(deviation.getTargetId());
+      default -> false;
+    };
+  }
+
+  private static String rootGoal(SolutionDesignItem designItem,
+      Map<String, SolutionDesignItem> designById) {
+    SolutionDesignItem current = designItem;
+    SolutionDesignItem nearestBusiness = null;
+    while (current != null) {
+      if (SolutionDesignItem.BUSINESS.equals(current.getItemKind())) {
+        if (current.getParentId() == null) {
+          return current.getTitle();
+        }
+        if (nearestBusiness == null) {
+          nearestBusiness = current;
+        }
+      }
+      current = current.getParentId() == null ? null : designById.get(current.getParentId());
+    }
+    return nearestBusiness == null ? "" : nearestBusiness.getTitle();
   }
 
   /** The latest state per task wins; done beats partial beats skipped. */

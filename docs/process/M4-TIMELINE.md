@@ -7,6 +7,7 @@
 | 提交 | 内容 |
 |---|---|
 | S0 提交（见 `git log`） | `docs(m4)`：S0 ADR-0011/0012/0013、ADR-0006/0008 增补、M4/M4.5 规格、威胁模型、文档同步、交接 |
+| S3–S5 提交（见 `git log`） | `feat(m4): import, Jira file/BG-03, notifications/jobs, M4 acceptance`（含 V9/V10、UI、测试、文档） |
 
 ## 2. S0 准入（2026-11-13）
 
@@ -55,8 +56,22 @@
 | 回归 | 后端 109 tests；前端 25；E2E 4（含 ZIP）；演练 18/18、9/9；演示 25/25 | 全部通过 |
 | 偏差 | journal 全量读取 + event_id 去重（大文件需轮转）；无专门审计 UI；zip 不加密 | 见 M4 计划 §17 |
 
-## 6. 下一步
+## 6. 切片 3–6（S3–S6，2026-11-13）
 
-- S2 已完成；进入 **S3**：通用只读导入框架（CSV/JSON、来源/批次/外部记录、幂等、dry-run、审计；V9）。
+| 阶段 | 内容 | 结果 |
+|---|---|---|
+| S3 数据 | `V9__external_import.sql`：`external_source`/`import_batch`/`external_record`；`MIN_SCHEMA_VERSION` 最终 10；外部三表加入 `AdminTables` | `MigrationTest`/`AdminPackageTest` 通过 |
+| S3 导入 | Commons CSV 1.14.1；UTF-8/GBK/BOM；Jira 中文表头 profile；preview 零落库；apply 事务/幂等/版本；map/reject；`ImportsPage` | `ExternalImportTest` 4；E2E M4 S3 |
+| S4 | `MatrixRow` goal/记录/变更/证据/偏差；`DeliveryPage` 列与偏差目标；Jira 文件导入 | `DeliveryWorkflowTest` 通过 |
+| S5 数据 | `V10__notifications_jobs.sql`：`notification`/`notification_delivery`/`server_job`；运营表不导出 | schema 10 |
+| S5 通知 | 站内默认；邮件/企微完整默认关闭；事件接入 Solution/Delivery/Knowledge/Import；通知 UI/未读数/已读 | `NotificationWorkflowTest` 3、`NotificationChannelTest` 3；E2E M2 |
+| S5 任务 | writer-only `NotificationJobWorker`；幂等/退避/死信；org_admin 任务列表/重试；`job.failed` | `NotificationJobWorkerTest` 1 |
+| S6 | 负责人决定不做服务器/证书；仅本机/Docker 文档；BG-02 留 M5 | 文档化延期 |
+| 回归 | 后端 120 tests；前端 25；E2E 5（19.4s）；演练 18/18、9/9；演示 25/25、8/8 | 全部通过 |
+| 偏差 | dry-run 拆为 preview+apply（收紧）；邮件测试用 Mock JavaMailSender 而非 SMTP sink；CSM 未接入 | 见 M4 计划 §18 |
+
+## 7. 下一步
+
+- M4 本机验收完成；负责人复核后进入 **M4.5**：Jira 只读 API、CSM 文件/接口、SMTP/企微启用、远程 Agent、团队服务器试点；PG 多实例留 M5。
 - S3 前确认：CSV 解析依赖（`commons-csv` vs 内置）、导入映射 profile 形态、导入上限。
 - S4 Jira 文件/BG-03、S5 通知/任务、S6 团队服务器按计划推进。

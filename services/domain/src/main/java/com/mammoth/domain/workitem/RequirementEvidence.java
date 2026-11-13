@@ -20,8 +20,11 @@ public class RequirementEvidence {
   public static final String TYPE_MEETING = "meeting";
   public static final String TYPE_EMAIL = "email";
   public static final String TYPE_ARTIFACT = "artifact";
+  public static final String TYPE_JIRA = "jira";
+  public static final String TYPE_EXTERNAL = "external";
   public static final Set<String> TYPES =
-      Set.of(TYPE_NOTE, TYPE_CONVERSATION, TYPE_MEETING, TYPE_EMAIL, TYPE_ARTIFACT);
+      Set.of(TYPE_NOTE, TYPE_CONVERSATION, TYPE_MEETING, TYPE_EMAIL, TYPE_ARTIFACT, TYPE_JIRA,
+          TYPE_EXTERNAL);
 
   @Id
   private String id;

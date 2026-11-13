@@ -113,8 +113,13 @@ public class DeliveryController {
       List<DeviationResponse> deviations) {
   }
 
-  public record MatrixRowResponse(String criterionId, String criterionText, String designItemTitle,
-      String coverage, int totalTasks, int doneTasks, int partialTasks) {
+  public record EvidenceRefResponse(String externalRecordId, String externalKey, String sourceUrl) {
+  }
+
+  public record MatrixRowResponse(String criterionId, String criterionText, String designItemId,
+      String designItemTitle, String goal, String coverage, int totalTasks, int doneTasks,
+      int partialTasks, List<String> executionRecordIds, int changeCount,
+      List<EvidenceRefResponse> evidenceRefs, List<String> deviationIds) {
   }
 
   public record MissingTaskResponse(String taskId, String title, String status) {
@@ -122,7 +127,8 @@ public class DeliveryController {
 
   public record AnalysisResponse(String solutionVersionId, List<MatrixRowResponse> matrix,
       List<MissingTaskResponse> missingTasks, List<DeviationResponse> deviations,
-      List<ExecutionRecordResponse> records, int covered, int partial, int unverified) {
+      List<ExecutionRecordResponse> records, List<EvidenceRefResponse> workItemEvidenceRefs,
+      int covered, int partial, int unverified) {
   }
 
   public record SnapshotResponse(String id, String projectId, String workItemId,
@@ -212,14 +218,20 @@ public class DeliveryController {
     return new AnalysisResponse(analysis.solutionVersionId(),
         analysis.matrix().stream()
             .map(row -> new MatrixRowResponse(row.criterionId(), row.criterionText(),
-                row.designItemTitle(), row.coverage(), row.totalTasks(), row.doneTasks(),
-                row.partialTasks()))
+                row.designItemId(), row.designItemTitle(), row.goal(), row.coverage(),
+                row.totalTasks(), row.doneTasks(), row.partialTasks(), row.executionRecordIds(),
+                row.changeCount(),
+                row.evidenceRefs().stream().map(ref -> new EvidenceRefResponse(ref.externalRecordId(),
+                    ref.externalKey(), ref.sourceUrl())).toList(),
+                row.deviationIds()))
             .toList(),
         analysis.missingTasks().stream()
             .map(task -> new MissingTaskResponse(task.taskId(), task.title(), task.status()))
             .toList(),
         analysis.deviations().stream().map(DeviationResponse::from).toList(),
         analysis.records().stream().map(ExecutionRecordResponse::from).toList(),
+        analysis.workItemEvidenceRefs().stream().map(ref -> new EvidenceRefResponse(
+            ref.externalRecordId(), ref.externalKey(), ref.sourceUrl())).toList(),
         analysis.covered(), analysis.partial(), analysis.unverified());
   }
 

@@ -7,10 +7,16 @@ import {
   createUser,
   disableUser,
   enableUser,
+  listJobs,
   listUsers,
+  notificationChannels,
   resetUserPassword,
+  retryJob,
   setUserOrgAdmin,
+  testNotificationChannel,
   updateProfile,
+  type ChannelStatusView,
+  type JobView,
   type UserSummary,
 } from '../lib/api'
 
@@ -30,6 +36,9 @@ export default function SettingsPage() {
   const [users, setUsers] = useState<UserSummary[]>([])
   const [userError, setUserError] = useState<string | null>(null)
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null)
+  const [channels, setChannels] = useState<Record<string, ChannelStatusView>>({})
+  const [jobs, setJobs] = useState<JobView[]>([])
+  const [adminMessage, setAdminMessage] = useState<string | null>(null)
   const [newUser, setNewUser] = useState({
     username: '',
     displayName: '',
@@ -41,9 +50,18 @@ export default function SettingsPage() {
   const reloadUsers = useCallback(async () => {
     if (!currentUser?.orgAdmin) {
       setUsers([])
+      setChannels({})
+      setJobs([])
       return
     }
-    setUsers(await listUsers())
+    const [userList, channelList, jobList] = await Promise.all([
+      listUsers(),
+      notificationChannels(),
+      listJobs(),
+    ])
+    setUsers(userList)
+    setChannels(channelList)
+    setJobs(jobList)
   }, [currentUser?.orgAdmin])
 
   useEffect(() => {
@@ -328,6 +346,80 @@ export default function SettingsPage() {
             </div>
           </form>
         </>
+      )}
+      {currentUser?.orgAdmin && (
+        <section>
+          <h2>通知渠道</h2>
+          {adminMessage && <p className="state notice">{adminMessage}</p>}
+          <p className="hint">邮件/企微默认关闭；启用需在服务端配置环境变量后重启。</p>
+          <ul className="refs">
+            {Object.entries(channels).map(([name, status]) => (
+              <li key={name}>
+                <span className="code">{name}</span>{' '}
+                {status.enabled ? '已启用' : '未启用'}
+                {name !== 'inApp' && (
+                  <>
+                    {' '}· {status.configured ? '已配置' : `缺少 ${status.missing ?? '配置'}`}
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={busy || !status.enabled || !status.configured}
+                      onClick={() =>
+                        void runUserAction(async () => {
+                          await testNotificationChannel(name)
+                          setAdminMessage(`${name} 测试通知已发送`)
+                        })
+                      }
+                    >
+                      测试发送
+                    </button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <h2>后台任务</h2>
+          {jobs.length === 0 ? (
+            <p className="hint">没有后台任务。</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>状态</th>
+                  <th>尝试</th>
+                  <th>错误</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs.map((job) => (
+                  <tr key={job.id}>
+                    <td>{job.type}</td>
+                    <td>{job.status}</td>
+                    <td>{job.attempts}</td>
+                    <td>{job.lastError ?? '—'}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy || job.status === 'succeeded'}
+                        onClick={() =>
+                          void runUserAction(async () => {
+                            await retryJob(job.id)
+                          })
+                        }
+                      >
+                        重试
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
       )}
     </>
   )

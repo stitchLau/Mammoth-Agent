@@ -58,14 +58,14 @@
 
 产出：Jira/CSM、MCP、企业微信/邮件、外部 Agent 适配、多用户共享和组织管理。
 
-**状态：S0/S1/S2 已完成（2026-11-13）** — 负责人已确认收敛口径：单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/远程网关/多实例延后。S1 已落地 `org_admin`/用户停用重置/Agent 账号/强制改密；S2 已落地 BG-01 交接包 ZIP + MCP 审计（后端 109 tests、E2E 4 passed）。
+**状态：已完成（2026-11-13，本机验收）** — S1–S5 全部完成；S6 按负责人决定仅文档化延期；证据：`docs/M4-ACCEPTANCE.md`、`docs/evidence/M4-VERIFICATION.md` §3。后端 **120 tests**、前端 25、E2E 5 passed、M3 演练 18/18、ADR-0008 9/9、M3 演示 25/25、M4 演示 8/8。
 
-- 计划：[`docs/specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)（S1/S2 已实施；S3 导入框架 → S4 Jira 文件/BG-03 → S5 通知/任务/邮件企微 → S6 团队服务器预案）
+- 计划：[`docs/specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)（S1–S5 完成；S6 文档化延期）
 - 生产集成：[`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)（Jira 只读 API、CSM、渠道启用、远程 Agent、团队服务器试点）
 - 威胁模型：[`docs/specs/M4-THREAT-MODEL.md`](specs/M4-THREAT-MODEL.md)
-- 决策：ADR-0011（外部集成/凭据）、ADR-0012（服务端/PG=M5）、ADR-0013（通知/外发）**Proposed**；ADR-0006/0008 增补
-- M3.5：BG-01 → M4 S2、BG-03 → M4 S4、BG-02 → M4 S6/M5
-- 约束：M4 不调用负责人提供的 Jira 地址；邮件/企微完整实现但默认关闭；PG 多实例归 M5
+- 决策：ADR-0011/0013 **Accepted（M4 范围）**；ADR-0012 **Proposed**（PG=M5）；ADR-0006/0008 增补
+- M3.5：BG-01 已关闭（S2）、BG-03 已关闭（S4）、BG-02 留 M5
+- 约束：M4 不调用 Jira/CSM/SMTP/企微真实端点；邮件/企微完整实现但默认关闭；PG 多实例归 M5
 
 ## M4.5：生产集成与运营启用
 

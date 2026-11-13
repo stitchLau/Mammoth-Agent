@@ -273,6 +273,10 @@ test('M2 requirement to approved solution', async ({ page }) => {
     await page.getByRole('button', { name: '登录' }).click()
     await expect(page).toHaveURL(/\/projects$/)
 
+    await page.getByRole('link', { name: /通知/ }).click()
+    await expect(page.getByRole('heading', { name: '通知' })).toBeVisible()
+    await expect(page.getByText(/方案待审核/).first()).toBeVisible()
+
     await page.goto(solutionUrl)
     await page.getByLabel('评审意见').fill('同意，纳入本期')
     await page.getByRole('button', { name: '批准方案' }).click()
@@ -450,5 +454,75 @@ test('M4 S1 org admin reset and forced password change', async ({ page }) => {
     await page.getByLabel('密码').fill(newPassword)
     await page.getByRole('button', { name: '登录' }).click()
     await expect(page).toHaveURL(/\/projects$/)
+  })
+})
+
+/**
+ * M4 S3 acceptance: Jira CSV preview/apply is idempotent, an unmapped external record becomes
+ * requirement evidence only after an explicit human mapping, and the matrix/evidence remains visible.
+ */
+test('M4 S3 Jira CSV import and evidence mapping', async ({ page }) => {
+  test.skip(!shared.adminUser, 'requires the M1 flow first (shared backend data root)')
+  const adminUser = shared.adminUser ?? ''
+  const adminPassword = shared.adminPassword ?? ''
+  const projectId = shared.projectId ?? ''
+  const stamp = Date.now().toString().slice(-6)
+  const requirementTitle = `E2E 导入需求 ${stamp}`
+  const externalKey = `JIRA-${stamp}`
+  let requirementId = ''
+
+  await test.step('管理员登录并创建可编辑需求', async () => {
+    await page.goto('/login')
+    await page.getByLabel('用户名').fill(adminUser)
+    await page.getByLabel('密码').fill(adminPassword)
+    await page.getByRole('button', { name: '登录' }).click()
+    await expect(page).toHaveURL(/\/projects$/)
+
+    await page.goto(`/projects/${projectId}/requirements`)
+    await page.getByPlaceholder('需求标题').fill(requirementTitle)
+    await page.getByRole('button', { name: '创建需求' }).click()
+    await page.getByRole('link', { name: requirementTitle }).click()
+    await expect(page).toHaveURL(/\/requirements\/[0-9a-f-]+$/)
+    requirementId = page.url().split('/').pop() ?? ''
+  })
+
+  await test.step('创建 Jira 来源并预检/应用 CSV', async () => {
+    await page.goto(`/projects/${projectId}/imports`)
+    await page.getByLabel('来源名称').fill(`E2E Jira ${stamp}`)
+    await page.getByRole('button', { name: '创建来源' }).click()
+    await expect(page.getByText(`E2E Jira ${stamp}`).first()).toBeVisible()
+
+    const csv = [
+      '问题类型,关键字,概要,描述,Issue URL,状态,经办人,报告人,创建日期,已更新',
+      `缺陷,${externalKey},E2E 导入摘要,导入描述含中文与逗号,http://jira.example/browse/${externalKey},挂起,张三,李四,2026/1/2 9:05,2026/1/3 10:06`,
+    ].join('\n')
+    await page.setInputFiles('input[type="file"]', {
+      name: 'jira.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(csv, 'utf-8'),
+    })
+    await page.getByRole('button', { name: '预检' }).click()
+    await expect(page.getByText(/预检：1 行，接受 1，拒绝 0/)).toBeVisible()
+    await page.getByRole('button', { name: '应用导入' }).click()
+    await expect(page.getByText(/已应用批次/)).toBeVisible()
+  })
+
+  await test.step('人工映射为需求证据', async () => {
+    const row = page.getByRole('row', { name: new RegExp(externalKey) })
+    await expect(row).toBeVisible()
+    await row.getByRole('button', { name: '选择' }).click()
+
+    const options = page.getByLabel('映射需求').locator('option')
+    const target = options.filter({ hasText: requirementTitle })
+    const targetValue = await target.getAttribute('value')
+    expect(targetValue).toBeTruthy()
+    await page.getByLabel('映射需求').selectOption(targetValue!)
+    await page.getByRole('button', { name: '映射', exact: true }).click()
+    await expect(page.getByText('没有待映射记录')).toBeVisible()
+  })
+
+  await test.step('需求详情可见外部证据', async () => {
+    await page.goto(`/projects/${projectId}/requirements/${requirementId}`)
+    await expect(page.getByText(new RegExp(externalKey)).first()).toBeVisible()
   })
 })

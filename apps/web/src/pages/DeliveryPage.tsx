@@ -29,6 +29,7 @@ import {
   type KnowledgeProposalView,
   type Repository,
   type RequirementDetail,
+  type SolutionDetail,
   type SolutionTaskItem,
 } from '../lib/api'
 import { workItemStatusLabel, solutionStatusLabel } from '../lib/format'
@@ -47,6 +48,7 @@ export default function DeliveryPage() {
 
   const [item, setItem] = useState<RequirementDetail | null>(null)
   const [tasks, setTasks] = useState<SolutionTaskItem[]>([])
+  const [solution, setSolution] = useState<SolutionDetail | null>(null)
   const [repositories, setRepositories] = useState<Repository[]>([])
   const [baselines, setBaselines] = useState<Baseline[]>([])
   const [executions, setExecutions] = useState<ExecutionDetailView>({
@@ -70,6 +72,8 @@ export default function DeliveryPage() {
   const [deviationType, setDeviationType] = useState('extra')
   const [deviationDescription, setDeviationDescription] = useState('')
   const [deviationRecordId, setDeviationRecordId] = useState('')
+  const [deviationTargetType, setDeviationTargetType] = useState('')
+  const [deviationTargetId, setDeviationTargetId] = useState('')
   const [snapshotTitle, setSnapshotTitle] = useState('')
   const [proposalTitle, setProposalTitle] = useState('')
   const [handoffNote, setHandoffNote] = useState('')
@@ -99,9 +103,11 @@ export default function DeliveryPage() {
     setDeviationRecordId((current) => current || executionDetail.records[0]?.id || '')
     const approvedVersionId = detail.item.approvedSolutionVersionId
     if (approvedVersionId) {
-      const solution = await getSolutionVersion(project.id, workItemId, approvedVersionId)
-      setTasks(solution.tasks)
+      const approved = await getSolutionVersion(project.id, workItemId, approvedVersionId)
+      setSolution(approved)
+      setTasks(approved.tasks)
     } else {
+      setSolution(null)
       setTasks([])
     }
   }, [project.id, workItemId])
@@ -327,11 +333,13 @@ export default function DeliveryPage() {
             void run(async () => {
               await addDeviation(project.id, workItem.id, deviationRecordId, {
                 deviationType,
-                targetType: null,
-                targetId: null,
+                targetType: deviationTargetType || null,
+                targetId: deviationTargetType ? deviationTargetId || null : null,
                 description: deviationDescription.trim(),
               })
               setDeviationDescription('')
+              setDeviationTargetType('')
+              setDeviationTargetId('')
               await reload()
             })
           }}
@@ -359,13 +367,75 @@ export default function DeliveryPage() {
               <option value="missing">未实现</option>
               <option value="changed">实现变更</option>
             </select>
+            <select
+              value={deviationTargetType}
+              onChange={(event) => {
+                setDeviationTargetType(event.target.value)
+                setDeviationTargetId('')
+              }}
+              aria-label="偏差目标类型"
+            >
+              <option value="">无具体目标</option>
+              <option value="design_item">设计项</option>
+              <option value="task">任务</option>
+              <option value="criterion">验收标准</option>
+            </select>
+            {deviationTargetType === 'design_item' && (
+              <select
+                value={deviationTargetId}
+                onChange={(event) => setDeviationTargetId(event.target.value)}
+                aria-label="偏差设计项"
+              >
+                <option value="">选择设计项</option>
+                {solution?.designItems.map((designItem) => (
+                  <option key={designItem.id} value={designItem.id}>
+                    {designItem.title}
+                  </option>
+                ))}
+              </select>
+            )}
+            {deviationTargetType === 'task' && (
+              <select
+                value={deviationTargetId}
+                onChange={(event) => setDeviationTargetId(event.target.value)}
+                aria-label="偏差任务"
+              >
+                <option value="">选择任务</option>
+                {solution?.tasks.map((task) => (
+                  <option key={task.id} value={task.id}>
+                    {task.title}
+                  </option>
+                ))}
+              </select>
+            )}
+            {deviationTargetType === 'criterion' && (
+              <select
+                value={deviationTargetId}
+                onChange={(event) => setDeviationTargetId(event.target.value)}
+                aria-label="偏差验收标准"
+              >
+                <option value="">选择验收标准</option>
+                {solution?.acceptanceCriteria.map((criterion) => (
+                  <option key={criterion.id} value={criterion.id}>
+                    {criterion.text}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               value={deviationDescription}
               onChange={(event) => setDeviationDescription(event.target.value)}
               placeholder="偏差说明"
               aria-label="偏差说明"
             />
-            <button type="submit" disabled={busy || deviationDescription.trim() === ''}>
+            <button
+              type="submit"
+              disabled={
+                busy
+                || deviationDescription.trim() === ''
+                || (deviationTargetType !== '' && deviationTargetId === '')
+              }
+            >
               记录偏差
             </button>
           </div>
@@ -376,6 +446,11 @@ export default function DeliveryPage() {
           {executions.deviations.map((deviation) => (
             <li key={deviation.id}>
               <span className="code">{deviation.deviationType}</span> {deviation.description}
+              {deviation.targetType && (
+                <span className="hint">
+                  {' '}（{deviation.targetType}:{short(deviation.targetId)}）
+                </span>
+              )}
             </li>
           ))}
         </ul>
@@ -393,30 +468,59 @@ export default function DeliveryPage() {
           <table className="table">
             <thead>
               <tr>
+                <th>业务目标</th>
                 <th>验收标准</th>
                 <th>覆盖</th>
-                <th>任务</th>
+                <th>任务 / 执行</th>
+                <th>执行证据</th>
+                <th>偏差</th>
               </tr>
             </thead>
             <tbody>
               {analysis.matrix.map((row) => (
                 <tr key={row.criterionId}>
+                  <td>{row.goal || '—'}</td>
                   <td>{row.criterionText}</td>
                   <td>{row.coverage}</td>
                   <td>
                     {row.doneTasks}/{row.totalTasks}
+                    <span className="hint">
+                      {' '}· 记录 {row.executionRecordIds.length} · 变更 {row.changeCount}
+                    </span>
                   </td>
+                  <td>
+                    {row.evidenceRefs.length === 0 && '—'}
+                    {row.evidenceRefs.map((ref) => (
+                      <div key={ref.externalRecordId}>
+                        {ref.sourceUrl ? (
+                          <a href={ref.sourceUrl} target="_blank" rel="noreferrer">
+                            {ref.externalKey ?? ref.externalRecordId}
+                          </a>
+                        ) : (
+                          (ref.externalKey ?? ref.externalRecordId)
+                        )}
+                      </div>
+                    ))}
+                  </td>
+                  <td>{row.deviationIds.length === 0 ? '—' : `${row.deviationIds.length} 项`}</td>
                 </tr>
               ))}
               {analysis.matrix.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="hint">
+                  <td colSpan={6} className="hint">
                     批准方案里没有验收标准。
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          {analysis.workItemEvidenceRefs.length > 0 && (
+            <p className="hint">
+              工作项级证据（未绑定验收标准）：
+              {analysis.workItemEvidenceRefs.map((ref) => ref.externalKey ?? ref.externalRecordId)
+                .join('；')}
+            </p>
+          )}
           {analysis.missingTasks.length > 0 && (
             <p className="hint">
               未完成任务候选：{analysis.missingTasks.map((task) => task.title).join('；')}

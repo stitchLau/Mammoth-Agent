@@ -209,9 +209,17 @@ java -jar $jar --admin-restore="$env:TEMP\mammoth-backups\mammoth-backup-<时间
 - **交接包 ZIP（BG-01）**：`GET /api/projects/{p}/work-items/{w}/handoff/package` 生成并落 Artifact；UI 在交付闭环页“生成交接包 ZIP”后显示下载链接。包内 `manifest.properties` 记录每个文件 SHA-256；生成前做秘密模式扫描；审计 `handoff.export`；不含凭据/源码。
 - **注意**：MCP 只读进程不能写 `audit_log`，因此审计以本地 journal 为过渡；不要把它当作数据库直接写入。
 
-## M4 配置预告（S5 实现后生效；2026-11-13 S0）
+## M4 S3/S4：只读导入与 Jira 文件映射（2026-11-13）
 
-> 以下键位是 M4 S5 的设计口径，**当前代码尚未实现**，配置后不会生效；S5 落地时以实际 `application.yml`/环境变量为准。
+- **来源**：项目 owner 在 `/projects/{id}/imports` 创建 `jira`/`csm`/`generic` 来源；来源只保存脱敏 base URL，不保存账号/令牌。
+- **Jira CSV**：支持 Jira Data Center 8.x 中文导出表头（`关键字/概要/描述/状态/问题类型/优先级/Issue URL/创建日期/已更新/经办人/报告人/系统模块` 等），自动识别 UTF-8/GBK/BOM；单文件 ≤50 MB、≤50k 行；JSON 支持数组/`records`/`issues`。
+- **预检与应用**：`POST .../imports/preview` 零落库；`POST .../imports` 一次性写原始 Artifact + 批次 + 外部记录，按 `source+file_sha256` 幂等；同记录内容变化追加新版本。
+- **证据映射**：人工把待映射记录挂到需求（可选验收标准），生成 `jira`/`external` 证据；冻结需求返回 409；不自动改需求/方案。
+- **限制**：M4 只导入文件，不调用 Jira API；CSM 无 API，暂按文件/人工导入评估。
+
+## M4 S5：站内通知、邮件/企微与服务端任务（2026-11-13）
+
+站内通知默认启用；邮件/企微完整实现但默认关闭。用户可在 `/notifications` 查看/已读；org_admin 在 `/settings` 查看渠道状态和测试发送、后台任务。
 
 **站内通知（默认启用）**
 
@@ -219,7 +227,7 @@ java -jar $jar --admin-restore="$env:TEMP\mammoth-backups\mammoth-backup-<时间
 mammoth.notifications.in-app.enabled=true
 ```
 
-**邮件（完整实现、默认关闭；配置后启用）**
+**邮件（默认关闭；启用时必须配齐 host/from）**
 
 ```properties
 mammoth.notifications.email.enabled=false
@@ -233,7 +241,7 @@ spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 ```
 
-**企微群机器人（完整实现、默认关闭；webhook 视为凭据）**
+**企微群机器人（默认关闭；webhook 视为凭据）**
 
 ```properties
 mammoth.notifications.wecom.enabled=false
@@ -244,14 +252,14 @@ mammoth.notifications.wecom.rate-limit-per-minute=20
 mammoth.notifications.wecom.test-webhook-url=  # 可选测试群
 ```
 
-**任务/审计**
+**任务 worker**
 
 ```properties
-mammoth.jobs.enabled=true
 mammoth.jobs.poll-interval-ms=5000
-mammoth.jobs.max-attempts=5
+mammoth.jobs.initial-delay-ms=10000
 ```
 
-- 默认关闭时**零外发**；启用前必须先配置必填参数，缺失会启动/保存失败。
+- 默认关闭时**零外发**；启用但缺必填参数会启动失败；渠道状态只显示 enabled/configured/missing，不回显秘密。
 - 邮件/企微只用于内部通知；向客户/外部群发送需新 ADR。
-- 凭据只放环境变量/OS 存储，不写数据库、不写日志、不写导出/交接包。
+- 凭据只放环境变量/OS 存储，不写数据库、不写日志、不写导出/交接包；`server_job`/通知表默认不进管理导出。
+- worker 只由 writer 进程调度；`read-only=true` 的 MCP 进程不调度。

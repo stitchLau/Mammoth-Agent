@@ -1,4 +1,4 @@
-# 决策补充日志（M1–M4 S0）
+# 决策补充日志（M1–M4）
 
 > ADR（`decisions/ADR-0001`–`0013`）记录**架构级**决策；本文件记录 M1–M4 S0 过程中经负责人确认、但未单独立 ADR 的决策与默认值。D-001–D-009 为 2026-11-12，D-010 起为 2026-11-12/13（Asia/Shanghai）。M2 期间负责人授权"过程中的疑问均按 Agent 建议执行"，D-010 起按该授权记录；M4 由负责人逐项拍板。
 
@@ -42,6 +42,10 @@
 | D-036 | M3.5 BG 顺序 | BG-01 → M4 S2；BG-03 → M4 S4；BG-02 → M4 S6/M5（S6 条件） | 负责人"按你建议" | `docs/specs/M3.5-BACKLOG.md`；`M4-PHASE4-PLAN.md` §8 |
 | D-037 | M4 S1 实施 | `org_admin`（`role_assignment`）+ 用户停用/启用/管理员重置/强制改密/Agent 账号 + 建用户/目录收紧 + 客户/产品主数据仅 org_admin；V7；后端 103 tests、前端 25、E2E 4、演练 18/18/9/9/25/25 | 负责人"开S1" | `M4-PHASE4-PLAN.md` §6.6；`ADR-0006` v1.1 |
 | D-038 | M4 S2 实施 | BG-01 交接包 ZIP（manifest/逐文件 sha256/秘密扫描/Artifact/`handoff.export`）+ 专用 Agent 账号（复用 S1）+ MCP 本地 JSONL 审计 + writer 入库 `agent_call`/`audit_log`；V8；后端 109 tests、前端 25、E2E 4、演练 18/18/9/9/25/25 | 负责人"开S2" | `M4-PHASE4-PLAN.md` §17；`ADR-0008` 增补 |
+| D-039 | M4 S3 实施 | V9 外部导入（source/batch/record）；Commons CSV 1.14.1；UTF-8/GBK/中文 Jira 表头；preview 零落库 + apply 事务；重复文件幂等、版本追加；人工映射证据；UI `ImportsPage` | 负责人批准 M4 完成计划 | `M4-PHASE4-PLAN.md` §18.1；`ExternalImportTest` |
+| D-040 | M4 S4 实施 | Jira 仅文件导入（不调真实 API）；BG-03 矩阵增加业务目标/执行记录/变更/证据/偏差；偏差目标支持设计项/任务/标准 | 负责人批准 M4 完成计划 | `M4-PHASE4-PLAN.md` §18.2；`DeliveryWorkflowTest` |
+| D-041 | M4 S5 实施 | V10 通知/投递/任务；站内默认启用；邮件/企微完整但默认关闭；writer-only worker、重试/死信；通知 UI/渠道状态/任务重试；默认零外发 | 负责人批准 M4 完成计划 | `M4-PHASE4-PLAN.md` §18.3；`Notification*Test` |
+| D-042 | M4 S6/收口 | S6 仅文档化（负责人决定不处理服务器/证书）；BG-02 留 M5；ADR-0011/0013 Accepted（M4 范围），ADR-0012 仍 Proposed；M4 本机验收 | 负责人批准 M4 完成计划 | `docs/M4-ACCEPTANCE.md`；`M4-VERIFICATION.md` |
 
 ## M3 前置（2026-11-13 已解除）
 
@@ -54,13 +58,13 @@
 
 | ID | 事项 | 状态 |
 |---|---|---|
-| ADR-0011 | 外部系统集成与凭据边界 | **Proposed**；方向已确认（只读文件→只读 API→双向；Jira 先于 CSM；凭据不入库）；待 S0 评审转 Accepted |
-| ADR-0012 | 团队服务端部署与数据库演进 | **Proposed**；单节点 + 反向代理 TLS + SQLite；**PG 多实例 = M5**；服务器/证书暂不处理 |
-| ADR-0013 | 通知与外部发送 | **Proposed**；站内默认启用；邮件/企微完整实现、默认关闭、配置后启用 |
-| ADR-0006 增补 | 组织角色/用户生命周期/Agent 账号 | **Proposed**；随 S1 实施 |
-| ADR-0008 增补 | 新表分类/Agent 审计/单写者 | **Proposed**；随 S2/S3/S5 实施 |
-| M4 计划 | S1–S6 切片、权限矩阵、数据模型、测试 | Draft；`docs/specs/M4-PHASE4-PLAN.md` |
-| M4.5 计划 | Jira 只读 API/CSM/通知启用/远程 Agent/团队服务器；PG=M5 | Draft；`docs/specs/M4.5-PHASE45-PLAN.md` |
+| ADR-0011 | 外部系统集成与凭据边界 | **Accepted v1.0（M4 S3/S4 文件导入范围）**；真实 Jira API/CSM 留 M4.5 |
+| ADR-0012 | 团队服务端部署与数据库演进 | **Proposed**；单节点 + 反向代理 TLS + SQLite；**PG 多实例 = M5**；S6 服务器/证书按负责人决定延期 |
+| ADR-0013 | 通知与外部发送 | **Accepted v1.0（M4 S5）**；站内默认启用；邮件/企微完整实现、默认关闭、配置后启用 |
+| ADR-0006 增补 | 组织角色/用户生命周期/Agent 账号 | **Accepted（S1 实施）** |
+| ADR-0008 增补 | 新表分类/Agent 审计/单写者 | **Accepted（S2/S3/S5 实施；notification/job 运营表不导出）** |
+| M4 计划 | S1–S6 切片、权限矩阵、数据模型、测试 | **S1–S5 完成；S6 文档化延期**；`docs/specs/M4-PHASE4-PLAN.md` |
+| M4.5 计划 | Jira 只读 API/CSM/通知启用/远程 Agent/团队服务器；PG=M5 | 待第二轮；`docs/specs/M4.5-PHASE45-PLAN.md` |
 | M5 计划 | PostgreSQL/多实例/HA、共享 Artifact、共享会话/限速、任务并发、迁移/备份/回滚 | Planning；`docs/specs/M5-PHASE5-PLAN.md` |
 
 ## M2 待决（进入 M3 前）
@@ -81,4 +85,4 @@
 | Q-003 | 最终 UI 是否内嵌 DSH 侧栏浏览器 | 当前按 ADR-0002 独立 SPA；若改变需新 ADR |
 | Q-004 | 生产认证目标（组织级 SSO/令牌） | ADR-0006 后续任务 |
 
-> M3.5 技术债（BG-01–BG-03）见 `docs/specs/M3.5-BACKLOG.md`；M4 已由负责人 2026-11-13 拍板进入 S0，S0 ADR/规格待评审后转 Accepted 并开 S1；尚未写业务代码。
+> M3.5 技术债（BG-01–BG-03）见 `docs/specs/M3.5-BACKLOG.md`；BG-01/BG-03 已随 M4 S2/S4 关闭，BG-02 留 M5。M4 S1–S5 已完成本机验收，S6 文档化延期；M4.5 真实集成待第二轮。

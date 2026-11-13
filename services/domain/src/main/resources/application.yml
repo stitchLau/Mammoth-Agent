@@ -37,6 +37,25 @@ mammoth:
   web:
     # Optional explicit SPA dist directory; empty probes apps/web/dist relative to the working dir.
     dist: ${MAMMOTH_WEB_DIST:}
+  notifications:
+    in-app:
+      enabled: ${MAMMOTH_NOTIFICATIONS_IN_APP_ENABLED:true}
+    # ADR-0013: full channel implementations, disabled by default. Enable only with explicit config.
+    email:
+      enabled: ${MAMMOTH_NOTIFICATIONS_EMAIL_ENABLED:false}
+      from: ${MAMMOTH_NOTIFICATIONS_EMAIL_FROM:}
+      test-recipient: ${MAMMOTH_NOTIFICATIONS_EMAIL_TEST_RECIPIENT:}
+    wecom:
+      enabled: ${MAMMOTH_NOTIFICATIONS_WECOM_ENABLED:false}
+      webhook-url: ${MAMMOTH_NOTIFICATIONS_WECOM_WEBHOOK_URL:}
+      msg-type: ${MAMMOTH_NOTIFICATIONS_WECOM_MSG_TYPE:markdown}
+      events: ${MAMMOTH_NOTIFICATIONS_WECOM_EVENTS:solution.submitted,job.failed}
+      rate-limit-per-minute: ${MAMMOTH_NOTIFICATIONS_WECOM_RATE_LIMIT:20}
+      test-webhook-url: ${MAMMOTH_NOTIFICATIONS_WECOM_TEST_WEBHOOK_URL:}
+  jobs:
+    # Writer-only outbox worker; the read-only MCP entrypoint does not schedule it.
+    poll-interval-ms: ${MAMMOTH_JOBS_POLL_INTERVAL_MS:5000}
+    initial-delay-ms: ${MAMMOTH_JOBS_INITIAL_DELAY_MS:10000}
 
 logging:
   level:

@@ -1,5 +1,14 @@
 # Changelog
 
+## V0.16.0 — 2026-11-13
+
+- **M4 S3（只读导入 / V9）**：`external_source`/`import_batch`/`external_record`；Commons CSV 1.14.1；UTF-8/GBK/中文 Jira Data Center 8.x 表头；`/imports/preview` 零落库、`/imports` 事务应用；重复文件/版本幂等；人工映射为 `jira`/`external` 需求证据；`ImportsPage`。
+- **M4 S4（Jira 文件 + BG-03）**：Jira 仅文件导入，不调用真实 API；矩阵增加业务目标/执行记录/变更数/证据引用/偏差；偏差目标支持设计项/任务/验收标准；`DeliveryPage` 更新。
+- **M4 S5（通知/任务 / V10）**：`notification`/`notification_delivery`/`server_job`；站内通知默认启用；邮件/企微完整实现但默认关闭；`NotificationJobWorker` writer-only 重试/死信；`/notifications`、Settings 渠道状态/测试发送/任务重试；默认零外发。
+- **M4 S6/收口**：S6 按负责人决定仅文档化延期；BG-02 留 M5；ADR-0011/0013 转 Accepted（M4 范围），ADR-0012 仍 Proposed；`docs/M4-ACCEPTANCE.md`。
+- **验证（本机）**：后端 **120 tests**；前端 build + **25 tests**；Playwright **5 passed（19.4s）**；M3 验收 **18/18**；ADR-0008 **9/9**（schema 10，35 张导出表）；M3 演示 **25/25**；M4 演示 **8/8**。
+- **限制/二轮**：未调用真实 Jira/CSM/SMTP/企微；邮件测试为 Mock JavaMailSender；真实配置/联调、CSM 导出、服务器/证书留 M4.5。CI 远端仍未验证。
+
 ## V0.15.0 — 2026-11-13
 
 - **M4 S2（外部 Agent 前置：BG-01 + Agent 账号 + MCP 审计）**：

@@ -1,6 +1,7 @@
 package com.mammoth.domain.solution;
 
 import com.mammoth.domain.persistence.AppUser;
+import com.mammoth.domain.notification.NotificationService;
 import com.mammoth.domain.service.AuditService;
 import com.mammoth.domain.service.AuthorizationService;
 import com.mammoth.domain.support.Ids;
@@ -44,6 +45,7 @@ public class SolutionService {
   private final SolutionRenderer renderer;
   private final AuthorizationService authorizationService;
   private final AuditService auditService;
+  private final NotificationService notificationService;
 
   public SolutionService(WorkItemService workItemService,
       SolutionVersionRepository versionRepository,
@@ -54,7 +56,8 @@ public class SolutionService {
       ContextSnapshotService snapshotService,
       SolutionRenderer renderer,
       AuthorizationService authorizationService,
-      AuditService auditService) {
+      AuditService auditService,
+      NotificationService notificationService) {
     this.workItemService = workItemService;
     this.versionRepository = versionRepository;
     this.designItemRepository = designItemRepository;
@@ -65,6 +68,7 @@ public class SolutionService {
     this.renderer = renderer;
     this.authorizationService = authorizationService;
     this.auditService = auditService;
+    this.notificationService = notificationService;
   }
 
   public record Detail(SolutionVersion version, List<SolutionDesignItem> designItems,
@@ -331,6 +335,8 @@ public class SolutionService {
     recordApproval(actor, versionId, ApprovalRecord.ACTION_SUBMIT, null);
     auditService.record(actor.getId(), "solution.submit", "solution_version", versionId,
         JsonLite.write(JsonLite.object("snapshotId", snapshot.getId())));
+    notificationService.solutionSubmitted(actor, projectId, workItemId, versionId,
+        version.getVersion(), version.getTitle());
     return version;
   }
 
@@ -359,6 +365,8 @@ public class SolutionService {
     recordApproval(actor, versionId, ApprovalRecord.ACTION_APPROVE, blankToNull(comment));
     auditService.record(actor.getId(), "solution.approve", "solution_version", versionId,
         JsonLite.write(JsonLite.object("version", version.getVersion())));
+    notificationService.solutionApproved(actor, projectId, workItemId, versionId,
+        version.getVersion(), version.getCreatedBy(), version.getTitle());
     return version;
   }
 
@@ -382,6 +390,8 @@ public class SolutionService {
     recordApproval(actor, versionId, ApprovalRecord.ACTION_REQUEST_CHANGES, normalizedComment);
     auditService.record(actor.getId(), "solution.request_changes", "solution_version", versionId,
         JsonLite.write(JsonLite.object("comment", normalizedComment)));
+    notificationService.solutionChangesRequested(actor, projectId, workItemId, versionId,
+        version.getVersion(), version.getCreatedBy(), version.getTitle());
     return version;
   }
 

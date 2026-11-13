@@ -319,16 +319,23 @@ class DeliveryWorkflowTest {
       assertThat(row.coverage()).isEqualTo("covered");
       assertThat(row.doneTasks()).isEqualTo(1);
       assertThat(row.totalTasks()).isEqualTo(1);
+      assertThat(row.goal()).isNotBlank();
+      assertThat(row.executionRecordIds()).contains(record.getId());
+      assertThat(row.changeCount()).isEqualTo(2);
+      assertThat(row.evidenceRefs()).isEmpty();
+      assertThat(row.deviationIds()).isEmpty();
     });
     assertThat(analysis.missingTasks()).isEmpty();
 
-    executionService.addDeviation(fixture.owner(), fixture.project().getId(),
-        fixture.item().getId(), record.getId(), "extra", "task", fixture.taskId(),
-        "额外增加了扫码日志");
+    var deviation = executionService.addDeviation(
+        fixture.owner(), fixture.project().getId(), fixture.item().getId(), record.getId(), "extra",
+        "task", fixture.taskId(), "额外增加了扫码日志");
     ExecutionService.Analysis withDeviation = executionService.analysis(fixture.owner(),
         fixture.project().getId(), fixture.item().getId());
     assertThat(withDeviation.deviations()).hasSize(1);
     assertThat(withDeviation.deviations().get(0).getDeviationType()).isEqualTo("extra");
+    assertThat(withDeviation.matrix()).singleElement()
+        .satisfies(row -> assertThat(row.deviationIds()).contains(deviation.getId()));
 
     assertThatThrownBy(() -> executionService.record(fixture.owner(), fixture.project().getId(),
         fixture.item().getId(), fixture.repositoryId(), fixture.baselineId(), "not-a-commit",

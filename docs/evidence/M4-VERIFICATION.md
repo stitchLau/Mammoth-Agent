@@ -1,9 +1,9 @@
 # M4 验证证据
 
 - **日期**：2026-11-13（Asia/Shanghai）
-- **范围**：M4 S0–S2（S0 文档；S1 组织/用户；S2 BG-01/Agent/MCP 审计）；S3–S6 实施后追加
+- **范围**：M4 S0–S5（S6 文档化延期）；S3–S5 已于 2026-11-13 实施并回归
 - **规格**：`docs/specs/M4-PHASE4-PLAN.md`
-- **结论**：S0 文档检查通过；S1/S2 自动化、浏览器 E2E 与 CLI 演练通过（本机）；CI 远端未验证。
+- **结论**：S0–S5 文档、自动化、浏览器 E2E 与 CLI 演练通过（本机）；S6 按负责人决定仅文档化；CI 远端未验证。
 
 ## 0. S0（2026-11-13）
 
@@ -48,17 +48,35 @@
 
 **S2 关键验证**：zip 含 `manifest.properties`（每个文件 sha256）、方案/任务/验收/基线/README/SECURITY；秘密模式命中 `password=...` 时拒绝；`handoff.export` 审计；MCP journal 写入不含参数/正文；writer 入库 `agent_call` + `audit_log` 幂等；损坏 journal 行跳过；`read-only=true` 时调度配置禁用。
 
-## 3. S3–S6（待填）
+## 3. S3–S6（2026-11-13）
 
 | 切片 | 检查 | 结果 |
 |---|---|---|
-| S3 | 导入框架/幂等/dry-run 测试 | 待执行 |
-| S4 | Jira 文件映射/BG-03 | 待执行 |
-| S5 | 通知/任务/本地 SMTP/HTTP stub | 待执行 |
-| S6 | 团队服务器预案（条件） | 待执行 |
+| S3 | `ExternalImportTest` 4；`MigrationTest` V9/V10；`AdminPackageTest` schema 10 | **通过**：GBK/中文 Jira 表头、preview 零持久化、apply 幂等、版本追加、映射/拒绝、坏行 |
+| S4 | `DeliveryWorkflowTest` 5（含矩阵 goal/记录/变更/偏差） | **通过**：Jira profile 文件导入；BG-03 字段/UI 构建通过 |
+| S5 | `NotificationWorkflowTest` 3、`NotificationChannelTest` 3、`NotificationJobWorkerTest` 1 | **通过**：站内默认/去重/零外发、Mock 邮件消息、本地 HTTP 企微 stub、失败→重试→死信 |
+| S5 UI | E2E M2 增加通知收件箱；M4 S3 E2E 覆盖导入→证据 | **通过** |
+| S6 | 文档/配置 | **条件项未执行**：负责人决定不做服务器/证书/TLS；BG-02 留 M5 |
+| 后端全量 | `mvn -B -ntp -f services/domain/pom.xml test` | **BUILD SUCCESS，120 tests** |
+| 前端 | `pnpm --dir apps/web run build`；`pnpm --dir apps/web run test` | build 通过；**25 tests** |
+| 浏览器 E2E | 空数据根 + `pnpm --dir apps/web run test:e2e` | **5 passed（19.4s）**：M1/M2（含通知）/M3/M4 S1/M4 S3 |
+| M3 验收演练 | `node scripts/m3-acceptance-drill.mjs` | **18/18** |
+| ADR-0008 演练 | `node scripts/admin-drill.mjs` | **9/9**（schema 10，35 张导出表；22 rows 导出/导入） |
+| M3 API 演示 | `node scripts/demo-m3.mjs` | **25/25**（需先启动后端 8080） |
+| M4 API 演示 | `node scripts/demo-m4.mjs` | **8/8**：Jira 预览/应用/待映射/映射证据 + 站内通知/已读（需先启动后端 8080） |
+
+**S3 关键验证**：Jira Data Center 8.x 中文 CSV（GBK）可预览/应用；真实 74 行样例仅本地结构核对，不复制进仓库；重复文件复用批次，内容变化追加版本；证据映射需人工操作，冻结需求 409。
+
+**S4 关键验证**：矩阵行包含业务目标、执行记录/变更数、证据引用、偏差目标；偏差可挂到设计项/任务/验收标准。
+
+**S5 关键验证**：站内通知默认启用且操作者不自通知；默认配置下只有 `in_app` delivery、无 `server_job`；企微/邮件默认关闭；启用配置缺失会失败；job 失败指数退避并在第 5 次进入 dead；只读 MCP 不调度。
+
+**S6**：未写服务器/证书代码；本机/Docker 运行建议记录在 `docs/dev-setup.md`。
+
+**限制**：未调用真实 Jira/CSM/SMTP/企微；邮件测试为 Mock `JavaMailSender`，不是 SMTP wire-level sink；真实 Jira API、SMTP、企微、CSM 文件/接口联调留 M4.5。
 
 ## 4. 环境与口径
 
-- Windows PowerShell 5.1；JDK 17.0.15；Maven 3.9.11；Node/npm 按仓库；SQLite(WAL)。
+- Windows PowerShell 5.1；JDK 17.0.15；Maven 3.9.11；Node 20 / pnpm；SQLite(WAL)。
 - 测试使用临时数据根与合成数据；禁止真实客户数据/生产凭据/生产环境。
 - CI 远端仍未验证；本机通过不等于 CI 通过。

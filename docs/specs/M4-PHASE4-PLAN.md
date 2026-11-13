@@ -1,6 +1,6 @@
 # M4 阶段计划：企业集成与协同（S0 草案）
 
-- **状态**：S0 完成；S1/S2 已实施并通过本地验证（2026-11-13）；S3 待开始
+- **状态**：S0–S5 已实施并通过本地验证（2026-11-13）；S6 为条件项，按负责人决定仅文档化并延期；M4 已完成。
 - **日期**：2026-11-13
 - **基线**：`main` @ `3231b43`（以 `git log -1` 为准）
 - **依据**：`docs/04-MVP-STRATEGY.md` Phase 4、`docs/12-ROADMAP.md` M4、`docs/13-OPEN-DECISIONS.md`、`decisions/ADR-0006`（含 2026-11-13 增补）、`ADR-0007`、`ADR-0008`（含增补）、`ADR-0011`、`ADR-0012`、`ADR-0013`
@@ -386,4 +386,37 @@ S0 准入（本文件/ADR/威胁模型/夹具清单）
 - **测试**：`DeliveryWorkflowTest` +2（zip/manifest/hash/审计、秘密拒绝）；`AgentAuditJournalTest` 2；`AgentAuditIngestTest` 1（幂等/损坏行/audit_log）；`McpServerMainTest` +1（journal）；`MigrationTest` V8；`AdminPackageTest` schema 8。
 - **回归（本机）**：后端全量、前端 build + 25 tests、E2E 4 passed（含 ZIP）、M3 演练、ADR-0008 演练、M3 演示；具体数字见 `docs/evidence/M4-VERIFICATION.md` §2。
 - **偏差/限制**：MCP journal 采用“全文件读取 + event_id 去重”，大 journal 需轮转（M4.5/后续）；审计查询暂无专门 UI（走 DB/后续管理页）；交接包不加密（与 ADR-0008 一致）；zip 时间戳固定为 0 以便可复现。
-- **未做**：S3 导入、S4 Jira、S5 通知/任务、S6 团队服务器；ADR-0011/0012/0013 仍 Proposed。
+- **S2 时未做（后续 S3–S5 已完成）**：S3 导入、S4 Jira、S5 通知/任务、S6 团队服务器；ADR-0011/0013 已在 S3/S5 转 Accepted（M4 范围），ADR-0012 仍 Proposed。
+
+## 18. S3–S6 实施记录（2026-11-13）
+
+### 18.1 S3 只读导入（V9）
+
+- **数据**：`V9__external_import.sql` 新增 `external_source`、`import_batch`、`external_record`；`external_record` 保存 `title/description/source_url_sanitized/content_hash/metadata_json/mapped_*`，`(source_id,external_type,external_id,external_version)` 唯一；`MIN_SCHEMA_VERSION=9`（随后 V10 升至 10）。
+- **解析**：引入 Apache Commons CSV `1.14.1`（Apache-2.0）替代自制解析器；自动识别 UTF-8/BOM/GBK；支持引号/逗号/内嵌换行；JSON 支持数组、`{records:[]}`、Jira `{issues:[{key,fields}]}`；上限 50 MB/50k 行。
+- **Jira profile**：按负责人提供的 Jira Data Center 8.x 中文导出表头映射（`关键字/概要/描述/状态/问题类型/优先级/Issue URL/创建日期/已更新/经办人/报告人/系统模块`），其余列进 `metadata_json`；**真实 74 行样例仅用于本地结构核对，未复制进仓库/测试夹具**。
+- **API/行为**：`/external-sources`、`/imports/preview`（零落库）、`/imports`（Artifact+batch+records 事务）、`/imports` 列表、`/external-records`、`map`/`reject`。重复文件按 `source_id+file_sha256` 复用批次；内容版本变化追加；映射生成 `jira`/`external` 需求证据；冻结需求 409。
+- **UI**：`ImportsPage`（来源、预检、应用、批次、待映射/映射/拒绝）；侧栏“外部导入”。
+- **测试**：`ExternalImportTest` 4（GBK/中文表头、预览零写入、幂等/版本、映射/拒绝、坏行）；`MigrationTest` V9/V10；`AdminPackageTest` schema 10。
+
+### 18.2 S4 Jira 文件与 BG-03
+
+- **Jira 文件**：复用 S3 `jira` profile；不调用 Jira HTTP；真实只读 API 留 M4.5。
+- **BG-03**：`MatrixRow` 增加 `goal/designItemId/executionRecordIds/changeCount/evidenceRefs/deviationIds`；`Analysis` 增加 `workItemEvidenceRefs`；`DeliveryPage` 增加业务目标/执行证据/偏差列；偏差表单支持 `design_item/task/criterion` 目标。
+- **测试**：`DeliveryWorkflowTest` 断言矩阵目标、执行记录、变更数、偏差目标；前端构建通过。
+
+### 18.3 S5 通知/任务（V10）
+
+- **数据**：`V10__notifications_jobs.sql` 新增 `notification`、`notification_delivery`、`server_job`；三张为运营表，**不进入管理导出**；`MIN_SCHEMA_VERSION=10`。
+- **站内**：默认启用；事件 `solution.submitted/approved/changes_requested`、`delivery.approved`、`knowledge.review_requested`、`import.failed`、`job.failed`；收件人解析、排除操作者（import.failed 例外）、`dedupe_key` 幂等；API/UI 列表、未读数、已读/全部已读。
+- **邮件/企微**：完整实现，默认关闭；邮件走 `spring.mail.*` + `mammoth.notifications.email.*`；企微 webhook 走 `mammoth.notifications.wecom.*`，含事件白名单、限速、超时/错误码；启用但缺必填参数启动失败；状态/测试发送仅 org_admin 且不回显秘密。
+- **任务**：`NotificationJobWorker` writer-only 定时 claim/发送/退避/死信；`server_job` 幂等键；org_admin 任务列表/重试；`job.failed` 通知 org_admin；MCP 只读不调度。
+- **测试**：`NotificationWorkflowTest` 3（默认站内、去重、外部默认零任务、job.failed）；`NotificationChannelTest` 3（邮件消息构造/Mock、企微本地 HTTP stub/限速、默认关闭）；`NotificationJobWorkerTest` 1（失败→重试→死信）；E2E M2 增加通知收件箱检查。
+
+### 18.4 S6 收口与偏差
+
+- S6 按负责人决定**不实现服务器/证书/TLS**，仅保留本机/Docker 运行建议；BG-02 留 M5。M4 验收以 S1–S5 为准。
+- **偏差**：S3 原计划的 dry-run 持久化改为 `/preview` 零落库 + `/imports` 直接应用；这是对 S0 规格的收紧，不是功能缩减。
+- **ADR**：ADR-0011、ADR-0013 转 Accepted（M4 范围；真实 API/真实外发仍由 M4.5 控制）；ADR-0012 保持 Proposed（团队服务器/M5）；ADR-0008 增补中 `agent_call` 部分视为 Accepted。
+- **回归（本机）**：后端 120 tests；前端 25 tests；E2E 5 passed（19.4s）；M3 验收 18/18；ADR-0008 9/9（schema 10，35 张导出表）；M3 API 演示 25/25；M4 API 演示 8/8；详见 `docs/evidence/M4-VERIFICATION.md`。
+- **限制**：CSM 无 API，未接入；Jira/企微/SMTP 真实端点未调用；邮件测试为 Mock JavaMailSender，不是 SMTP wire-level sink；M4.5 再做真实配置/联调。

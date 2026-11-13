@@ -6,10 +6,12 @@ import BaselinesPage from './pages/BaselinesPage'
 import DeliveryPage from './pages/DeliveryPage'
 import ErrorPage from './pages/ErrorPage'
 import ForcePasswordChangePage from './pages/ForcePasswordChangePage'
+import ImportsPage from './pages/ImportsPage'
 import KnowledgeDetailPage from './pages/KnowledgeDetailPage'
 import KnowledgePage from './pages/KnowledgePage'
 import LoginPage from './pages/LoginPage'
 import MembersPage from './pages/MembersPage'
+import NotificationsPage from './pages/NotificationsPage'
 import ProjectLayout from './pages/ProjectLayout'
 import ProjectsPage from './pages/ProjectsPage'
 import RequirementDetailPage from './pages/RequirementDetailPage'
@@ -43,6 +45,7 @@ export default function App() {
         <Route path="/setup" element={<SetupPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/projects/:projectId" element={<ProjectLayout />}>
             <Route index element={<Navigate to="artifacts" replace />} />
@@ -56,6 +59,7 @@ export default function App() {
               element={<SolutionPage />}
             />
             <Route path="requirements/:workItemId/delivery" element={<DeliveryPage />} />
+            <Route path="imports" element={<ImportsPage />} />
             <Route path="baselines" element={<BaselinesPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="members" element={<MembersPage />} />

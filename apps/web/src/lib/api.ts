@@ -868,11 +868,23 @@ export interface ExecutionDetailView {
 export interface MatrixRowView {
   criterionId: string
   criterionText: string
+  designItemId: string
   designItemTitle: string
+  goal: string
   coverage: string
   totalTasks: number
   doneTasks: number
   partialTasks: number
+  executionRecordIds: string[]
+  changeCount: number
+  evidenceRefs: EvidenceRefView[]
+  deviationIds: string[]
+}
+
+export interface EvidenceRefView {
+  externalRecordId: string
+  externalKey: string | null
+  sourceUrl: string | null
 }
 
 export interface MissingTaskView {
@@ -887,6 +899,7 @@ export interface AcceptanceAnalysis {
   missingTasks: MissingTaskView[]
   deviations: ExecutionDeviationView[]
   records: ExecutionRecordView[]
+  workItemEvidenceRefs: EvidenceRefView[]
   covered: number
   partial: number
   unverified: number
@@ -1110,4 +1123,225 @@ export function rejectKnowledgeProposal(
     `/api/projects/${projectId}/work-items/${workItemId}/knowledge-proposals/${proposalId}/reject`,
     { method: 'POST' },
   )
+}
+
+// M4 S3: read-only external import.
+export interface ExternalSourceView {
+  id: string
+  systemType: string
+  name: string
+  baseUrl: string | null
+  status: string
+  createdBy: string | null
+  createdAt: string
+}
+
+export interface ImportBatchView {
+  id: string
+  projectId: string
+  sourceId: string
+  artifactId: string
+  fileSha256: string
+  mappingProfile: string
+  status: string
+  rowCount: number
+  acceptedCount: number
+  rejectedCount: number
+  errorSummary: string | null
+  createdBy: string | null
+  createdAt: string
+  finishedAt: string | null
+}
+
+export interface ExternalRecordView {
+  id: string
+  batchId: string | null
+  externalType: string
+  externalId: string
+  externalKey: string | null
+  externalVersion: string
+  title: string
+  description: string | null
+  status: string
+  sourceUrl: string | null
+  contentHash: string | null
+  mappedWorkItemId: string | null
+  mappedEvidenceId: string | null
+  mappedCriterionId: string | null
+  note: string | null
+  createdAt: string | null
+}
+
+export interface ImportRowErrorView {
+  row: number
+  message: string
+}
+
+export interface ImportPreviewView {
+  rowCount: number
+  acceptedCount: number
+  rejectedCount: number
+  errors: ImportRowErrorView[]
+  sample: ExternalRecordView[]
+}
+
+export interface ImportResultView {
+  batch: ImportBatchView
+  duplicate: boolean
+  accepted: number
+  rejected: number
+  errors: ImportRowErrorView[]
+}
+
+export function listExternalSources(projectId: string): Promise<ExternalSourceView[]> {
+  return request<ExternalSourceView[]>(`/api/projects/${projectId}/external-sources`)
+}
+
+export function createExternalSource(
+  projectId: string,
+  input: { systemType: string; name: string; baseUrl: string | null },
+): Promise<ExternalSourceView> {
+  return request<ExternalSourceView>(
+    `/api/projects/${projectId}/external-sources`,
+    jsonBody(input),
+  )
+}
+
+function importForm(file: File, sourceId: string, mappingProfile: string): FormData {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('sourceId', sourceId)
+  form.append('mappingProfile', mappingProfile)
+  return form
+}
+
+export function previewImport(
+  projectId: string,
+  file: File,
+  sourceId: string,
+  mappingProfile: string,
+): Promise<ImportPreviewView> {
+  return request<ImportPreviewView>(`/api/projects/${projectId}/imports/preview`, {
+    method: 'POST',
+    body: importForm(file, sourceId, mappingProfile),
+  })
+}
+
+export function applyImport(
+  projectId: string,
+  file: File,
+  sourceId: string,
+  mappingProfile: string,
+): Promise<ImportResultView> {
+  return request<ImportResultView>(`/api/projects/${projectId}/imports`, {
+    method: 'POST',
+    body: importForm(file, sourceId, mappingProfile),
+  })
+}
+
+export function listImportBatches(projectId: string): Promise<ImportBatchView[]> {
+  return request<ImportBatchView[]>(`/api/projects/${projectId}/imports`)
+}
+
+export function listExternalRecords(
+  projectId: string,
+  status?: string,
+): Promise<ExternalRecordView[]> {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : ''
+  return request<ExternalRecordView[]>(
+    `/api/projects/${projectId}/external-records${suffix}`,
+  )
+}
+
+export function mapExternalRecord(
+  projectId: string,
+  recordId: string,
+  input: { workItemId: string; criterionId: string | null },
+): Promise<ExternalRecordView> {
+  return request<ExternalRecordView>(
+    `/api/projects/${projectId}/external-records/${recordId}/map`,
+    jsonBody(input),
+  )
+}
+
+export function rejectExternalRecord(
+  projectId: string,
+  recordId: string,
+  note: string,
+): Promise<ExternalRecordView> {
+  return request<ExternalRecordView>(
+    `/api/projects/${projectId}/external-records/${recordId}/reject`,
+    jsonBody({ note }),
+  )
+}
+
+// M4 S5: in-app notifications, channel status and jobs.
+export interface NotificationView {
+  id: string
+  type: string
+  title: string
+  body: string | null
+  projectId: string | null
+  objectType: string | null
+  objectId: string | null
+  link: string | null
+  severity: string
+  status: string
+  createdAt: string
+  readAt: string | null
+}
+
+export interface ChannelStatusView {
+  enabled: boolean
+  configured?: boolean
+  missing?: string
+}
+
+export interface JobView {
+  id: string
+  type: string
+  status: string
+  attempts: number
+  nextRunAt: string | null
+  lastError: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export function listNotifications(limit = 100): Promise<NotificationView[]> {
+  return request<NotificationView[]>(`/api/notifications?limit=${limit}`)
+}
+
+export function unreadNotificationCount(): Promise<{ unread: number }> {
+  return request<{ unread: number }>('/api/notifications/unread-count')
+}
+
+export function readNotification(notificationId: string): Promise<NotificationView> {
+  return request<NotificationView>(`/api/notifications/${notificationId}/read`, {
+    method: 'POST',
+  })
+}
+
+export function readAllNotifications(): Promise<{ changed: number }> {
+  return request<{ changed: number }>('/api/notifications/read-all', { method: 'POST' })
+}
+
+export function notificationChannels(): Promise<Record<string, ChannelStatusView>> {
+  return request<Record<string, ChannelStatusView>>('/api/admin/notifications/channels')
+}
+
+export function testNotificationChannel(channel: string): Promise<{ status: string; channel: string }> {
+  return request<{ status: string; channel: string }>(
+    `/api/admin/notifications/channels/${channel}/test`,
+    { method: 'POST' },
+  )
+}
+
+export function listJobs(status?: string): Promise<JobView[]> {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : ''
+  return request<JobView[]>(`/api/admin/jobs${suffix}`)
+}
+
+export function retryJob(jobId: string): Promise<JobView> {
+  return request<JobView>(`/api/admin/jobs/${jobId}/retry`, { method: 'POST' })
 }

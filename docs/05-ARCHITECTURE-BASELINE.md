@@ -79,7 +79,7 @@ Domain Service
 
 **S1 已落地（2026-11-13）**：`org_admin`（`role_assignment`）、用户停用/启用/管理员重置/强制改密、Agent 账号、`/api/users/directory`、客户/产品主数据 org_admin 门禁；V7；后端 103 tests、E2E 4 passed。
 
-**S2 已落地（2026-11-13）**：BG-01 交接包 zip（Artifact/`handoff.export`）、MCP 本地 journal + writer 入库 `agent_call`/`audit_log`、`SchedulingConfig` 只读禁用；V8；后端 109 tests、E2E 4 passed。
+**S2 已落地（2026-11-13）**：BG-01 交接包 zip（Artifact/`handoff.export`）、MCP 本地 journal + writer 入库 `agent_call`/`audit_log`、`SchedulingConfig` 只读禁用；V8。**S3–S5 已落地（2026-11-13）**：V9 只读导入（`external_source`/`import_batch`/`external_record`）、V10 通知/投递/任务（`notification`/`notification_delivery`/`server_job`）、Jira 文件/BG-03、站内通知与默认关闭的邮件/企微、writer-only job worker；schema v10（38 表，35 张导出表）；后端 120 tests、E2E 5 passed。
 ```
 
 新增外部依赖（计划）：`spring-boot-starter-mail`（邮件，配置后启用）、CSV 解析（`commons-csv` 或内置，S3 评审）、GreenMail（仅测试，Apache-2.0）。所有依赖需来源/许可证/漏洞检查。

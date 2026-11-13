@@ -12,6 +12,7 @@ import com.mammoth.domain.execution.ExecutionRecord;
 import com.mammoth.domain.execution.ExecutionService;
 import com.mammoth.domain.knowledge.KnowledgeDocument;
 import com.mammoth.domain.knowledge.KnowledgeService;
+import com.mammoth.domain.notification.NotificationService;
 import com.mammoth.domain.persistence.AppUser;
 import com.mammoth.domain.persistence.AppUserRepository;
 import com.mammoth.domain.service.AuditService;
@@ -59,6 +60,7 @@ public class DeliveryService {
   private final AppUserRepository appUserRepository;
   private final AuthorizationService authorizationService;
   private final AuditService auditService;
+  private final NotificationService notificationService;
 
   public DeliveryService(WorkItemService workItemService, SolutionService solutionService,
       ExecutionService executionService, BaselineService baselineService,
@@ -66,7 +68,8 @@ public class DeliveryService {
       DeliverySnapshotRepository snapshotRepository,
       KnowledgeUpdateProposalRepository proposalRepository, KnowledgeService knowledgeService,
       ArtifactService artifactService, AppUserRepository appUserRepository,
-      AuthorizationService authorizationService, AuditService auditService) {
+      AuthorizationService authorizationService, AuditService auditService,
+      NotificationService notificationService) {
     this.workItemService = workItemService;
     this.solutionService = solutionService;
     this.executionService = executionService;
@@ -79,6 +82,7 @@ public class DeliveryService {
     this.appUserRepository = appUserRepository;
     this.authorizationService = authorizationService;
     this.auditService = auditService;
+    this.notificationService = notificationService;
   }
 
   public record Generated(String markdown, String solutionVersionId, int solutionVersion,
@@ -149,6 +153,8 @@ public class DeliveryService {
     snapshotRepository.save(snapshot);
     auditService.record(actor.getId(), "delivery.snapshot_approve", "delivery_snapshot",
         snapshot.getId(), JsonLite.write(JsonLite.object("artifactId", artifact.getId())));
+    notificationService.deliveryApproved(actor, projectId, workItemId, snapshot.getId(),
+        snapshot.getTitle());
     return snapshot;
   }
 
