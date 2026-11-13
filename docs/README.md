@@ -6,6 +6,7 @@
 
 - **M1 / M1.5 / M2 / M3 已完成**（本地验证通过）；下一阶段 **M4（企业集成与协同）**。
 - M3 闭环：Git 基线 → 交接包 → 实施回收 → 偏差/验收矩阵 → As-built → 知识更新（人工审核）。
+- **ADR-0008 补齐**：导出/导入包与备份/恢复 CLI 已实现并通过真实演练（见 `docs/dev-setup.md`）。
 - 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`](handoffs/SESSION-HANDOFF-2026-11-13-M3.md)
 - M3 规格：[`docs/specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`docs/evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`docs/process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`docs/quality/M3-BUGS.md`](quality/M3-BUGS.md)
 - M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md)

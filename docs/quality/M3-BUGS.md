@@ -52,3 +52,9 @@
 - **根因**：测试把临时 Git 仓库建在测试数据根目录下；服务按 ADR-0008 正确拒绝。
 - **修复**：测试改用独立临时仓库根（mammoth-m3-*-repos），与数据根分离。
 - **回归**：基线/交付测试通过。
+## B-M3-009 备份 Artifact 路径双前缀
+
+- **现象**：AdminPackageTest.backupAndRestoreRestoresDatabaseAndArtifacts 断言恢复后的 rtifacts/<sha[0:2]>/<sha[2:4]>/<sha> 不存在。
+- **根因**：rtifact.storage_path 已是相对数据根的 rtifacts/xx/yy/<sha>；备份代码又把它拼到备份目录的 rtifacts/ 下，恢复后变成 rtifacts/artifacts/...。
+- **修复**：备份/恢复按 storage_path 原样落盘（并校验相对路径不越界）；manifest 键改为 sha256.<storage_path>。
+- **回归**：AdminPackageTest 4/4；CLI 演练 9/9（导入/恢复后 Artifact 哈希一致）。

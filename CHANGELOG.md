@@ -1,5 +1,17 @@
 # Changelog
 
+## V0.11.1 — 2026-11-13
+
+- **ADR-0008 补齐（导出/导入与备份/恢复）**：
+  - `--admin-export`：逻辑导出包（每表 SQL + Artifact 字节 + `manifest.properties`），密码哈希替换为锁定值，**不含会话与凭据**。
+  - `--admin-import`：仅空库；校验 schema/逐条目 sha256/行数/Artifact 大小；为指定管理员设置新口令（其余账号锁定）；单事务导入并审计。
+  - `--admin-backup`：`VACUUM INTO` + Artifact 复制 + 哈希/schema manifest（写实例停止后执行）。
+  - `--admin-restore`：纯文件恢复，校验 db sha256 与 `integrity_check`、schema、每个 Artifact sha256；目标必须为空目录。
+  - 新增 `AdminPackageTest`（4 tests）与 `scripts/admin-drill.mjs`（真实 CLI 演练 9/9）。
+- **验证**：后端 `mvn verify` → **83 tests**；演练覆盖 种子→导出→导入→启动校验→备份→恢复→启动校验→非空拒绝。
+- **限制**：导出不加密；导入不合并/不增量；非管理员账号锁定（无密码重置）；实例锁清理脚本仍未自动化。
+- **文档**：ADR-0008 补齐记录、M3 规格 §11、验证证据 §8、时间线 §6、缺陷 B-M3-009、`dev-setup` CLI 说明、`.env.example`、交接更新。
+
 ## V0.11.0 — 2026-11-13
 
 - **M3 完成（实施回收与知识闭环）**：

@@ -98,3 +98,29 @@ ode scripts/demo-m3.mjs http://127.0.0.1:18150 | **25/25** |
 
 - 本机受限沙箱下 Playwright worker 管道受限的问题已通过一次性提权解决（S1 记录）；本批 E2E 在 danger-full-access 会话下运行，CI Linux Runner 不受影响。
 - 演示脚本会创建/删除临时 Git 仓库（os.tmpdir()），不接触真实客户仓库。
+## 8. ADR-0008 补齐验证（2026-11-13）
+
+### 8.1 自动化
+
+| 检查 | 命令 | 结果 |
+|---|---|---|
+| 后端全量 | mvn -B -ntp -f services/domain/pom.xml verify | **BUILD SUCCESS，83 tests**（M3 79 + AdminPackageTest 4） |
+| 导出/导入测试 | AdminPackageTest | 往返保数据、密码锁定、非空拒绝、篡改包 checksum 拒绝 |
+| 备份/恢复测试 | AdminPackageTest | VACUUM INTO 备份、manifest 校验、恢复后 DB/Artifact 可用、篡改备份拒绝、非空目标拒绝 |
+
+### 8.2 CLI 演练（scripts/admin-drill.mjs，9/9）
+
+1. 启动源数据根 → 种子（用户/项目/Artifact/已验证知识）→ 停止；
+2. --admin-export → 20 行导出包；
+3. --admin-import --admin-username=drill-owner → 新数据根，20 行；
+4. 启动导入后的服务 → 项目/已验证知识/Artifact 哈希一致，审计含 dmin.import；
+5. --admin-backup → 备份目录（含 db + artifacts + manifest）；
+6. --admin-restore --restore-to=<空目录> → 恢复；
+7. 启动恢复后的服务 → 数据可用；
+8. 对非空数据根再次导入 → 退出码非 0 且提示 not empty。
+
+### 8.3 限制
+
+- 导出不加密；除指定管理员外账号在导入后锁定（无密码重置功能，需管理员重建）。
+- 备份/恢复要求写实例停止；恢复目标必须为空目录。
+- manifest 为 properties 格式（与 ADR 的 json 字段等价）；实例锁清理脚本未自动化。

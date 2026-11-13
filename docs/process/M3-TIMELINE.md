@@ -44,3 +44,12 @@
 | 回归 | mvn verify 79 tests；E2E 3 passed；demo-m3.mjs 25/25 | 全绿 |
 
 **过程中修正**：测试仓库误建在数据根内被服务正确拒绝（改为独立临时仓库根）；E2E 基线 POST 因立即导航被中止（等待响应 + 唯一文案断言）；实施 commit 文本在表格与下拉框重复导致严格模式冲突（.first()）。详见 docs/quality/M3-BUGS.md。
+## 6. ADR-0008 补齐（2026-11-13）
+
+| 阶段 | 内容 | 结果 |
+|---|---|---|
+| 设计 | 逻辑导出（SQL dump + Artifact + manifest）、空库导入、VACUUM INTO 备份、空目录恢复、CLI --admin-* | 记录于 ADR-0008 与 M3 规格 §11 |
+| 实现 | dmin/ExportService、ImportService、BackupService、RestoreService、AdminRunner；DomainApplication 识别 admin 参数；OrganizationService 支持关闭默认组织 bootstrap（保证导入目标为空） | 编译通过 |
+| 测试 | AdminPackageTest：导出/导入往返、密码锁定、非空拒绝、篡改包拒绝、备份恢复、篡改备份拒绝 | 4/4 通过；全量 83 tests |
+| 真实 CLI 演练 | scripts/admin-drill.mjs：种子→导出→导入→启动校验→备份→恢复→启动校验→非空拒绝 | **9/9 通过** |
+| 修正 | 备份路径曾把 storage_path（已含 rtifacts/ 前缀）再次拼到 rtifacts/ 下，导致恢复后路径错误；测试发现后改为按 storage_path 直接落盘 | 见 docs/quality/M3-BUGS.md B-M3-009 |

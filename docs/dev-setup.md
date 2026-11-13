@@ -158,6 +158,36 @@ npm test           # vitest
 - **交付快照**：`POST .../deliveries` 生成 As-built 草稿；`POST .../deliveries/{id}/approve` 需 owner/reviewer 且非作者（四眼），批准时 Markdown 落 Artifact，批准后不可覆盖。
 - **知识闭环**：`POST .../knowledge-proposals` 基于已批准快照；`accept` 需 owner/reviewer 且非提议者，生成**知识草稿**（仍走既有四眼审核发布）；知识列表/详情/检索返回 `stale`（绑定的代码基线落后于最新基线），仅提示不改状态。
 - **安全**：Git 只读白名单（不含 clone/fetch/push/checkout/commit/reset/clean），10 s 超时、1 MiB 输出上限；演示/测试只用临时合成仓库。
+## 导出/导入与备份恢复（ADR-0008，CLI）
+
+写实例运行时不能执行导出/导入/备份（数据根实例锁），先停止服务；恢复是纯文件操作，不需要启动服务。
+
+```powershell
+$jar = "services/domain/target/mammoth-domain-service.jar"
+
+# 导出（默认写到 <数据根>/exports/；也可显式指定 zip）
+java -jar $jar --admin-export="$env:TEMP\mammoth-export.zip" --mammoth.data-root="$env:LOCALAPPDATA\Mammoth\data"
+
+# 导入（目标必须为空目录；密码优先用环境变量，避免出现在进程列表）
+$env:MAMMOTH_IMPORT_ADMIN_PASSWORD = "<至少 8 位的目标管理员口令>"
+java -jar $jar --admin-import="$env:TEMP\mammoth-export.zip" --admin-username="<导出中的用户名>" `
+  --mammoth.data-root="$env:TEMP\mammoth-imported"
+
+# 备份（在写实例停止后执行；目标目录不能在数据根内）
+java -jar $jar --admin-backup="$env:TEMP\mammoth-backups" --mammoth.data-root="$env:LOCALAPPDATA\Mammoth\data"
+
+# 恢复（目标必须为空目录，不能是当前运行中的数据根）
+java -jar $jar --admin-restore="$env:TEMP\mammoth-backups\mammoth-backup-<时间戳>" --restore-to="$env:TEMP\mammoth-restored"
+```
+
+要点：
+
+- **导出包**：`manifest.properties` + 每表 SQL + Artifact 字节；**不含**密码哈希与会话；导出为业务数据（含客户资料），按 Confidential 保管，**不要**提交到代码仓库或上传公开网盘。
+- **导入**：只接受空库；校验 schema 版本、每个条目 sha256、行数与 Artifact 大小；只为 `--admin-username` 设置新口令，其他账号被锁定（需管理员重建/后续密码重置）。
+- **备份**：`VACUUM INTO` + Artifact 复制 + manifest（db sha256/size、schema、artifact 哈希）；备份目录与数据根分离。
+- **恢复**：校验 db sha256 与 `PRAGMA integrity_check`、schema 版本、每个 Artifact sha256；成功后写 `restore.properties` 与 `backup-manifest.properties`。
+- **审计**：`admin.export` / `admin.import` / `admin.backup` 写入审计；恢复记录写文件（目标库尚未运行）。
+- 演练脚本：`node scripts/admin-drill.mjs`（需要 `MAMMOTH_JAVA` 指向 java；合成数据；9 步全流程校验）。
 ## 已知限制（当前阶段）
 
 - M1 / M1.5 / M2 已完成本地验收（见 [`docs/M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md)、[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md)）；UI 已由 Playwright 真实浏览器流程覆盖（2 场景）；
@@ -166,5 +196,5 @@ npm test           # vitest
 - 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
 - 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充；
 - 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）；
-- 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入包、实例锁清理脚本、备份恢复演练自动化仍未实现**（ADR-0008 后续）；
+- 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入与备份/恢复已实现（ADR-0008 CLI）**；实例锁清理脚本仍未自动化；
 - 在 DSH `workspace-write` 沙箱中 Playwright 会因 worker 管道 `EPERM` 失败；E2E 需普通终端、CI 或一次性提权。

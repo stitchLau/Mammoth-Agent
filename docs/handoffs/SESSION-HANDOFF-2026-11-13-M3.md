@@ -66,3 +66,12 @@ node scripts/demo-m3.mjs http://127.0.0.1:18150      # 25/25
 - 批准后的方案/交付快照不可覆盖，变更只能新建版本。
 - 知识更新提议接受只生成**草稿**，不得直接 verified；仍需四眼审核。
 - 演示/测试使用的仓库必须是合成临时仓库，禁止指向真实客户仓库。
+## 2026-11-13 更新：ADR-0008 导出/导入与备份/恢复已补齐
+
+- **实现**：com.mammoth.domain.admin + java -jar ... --admin-export/--admin-import/--admin-backup/--admin-restore；admin 参数在 Spring 环境构建前过滤，导入口令优先 MAMMOTH_IMPORT_ADMIN_PASSWORD。
+- **导出包**：manifest.properties + 31 张表 SQL（跳过 session/flyway）+ Artifact 字节；密码哈希替换为 !mammoth-import-locked，不含会话/凭据。
+- **导入**：仅空库；校验 schema/逐条目 sha256/行数/Artifact 大小；单事务；为 --admin-username 设置新口令，其余账号锁定；审计 dmin.import。
+- **备份/恢复**：VACUUM INTO + Artifact 复制 + manifest；恢复校验 db sha256、integrity_check、schema、Artifact 哈希，目标必须空目录。
+- **验证**：后端 **83 tests**；scripts/admin-drill.mjs **9/9**（种子→导出→导入→启动校验→备份→恢复→再启动→非空拒绝）；详见 docs/evidence/M3-VERIFICATION.md §8。
+- **仍限制/未做**：导出不加密；导入不合并/不增量；非管理员账号锁定（无密码重置）；实例锁清理脚本未自动化；备份要求写实例停止。
+- **下一步**：若要继续加固，可做导出包加密（需密钥管理 ADR）、账号批量重置、实例锁清理脚本；否则可进入 M4。

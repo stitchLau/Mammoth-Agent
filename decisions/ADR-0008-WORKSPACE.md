@@ -133,3 +133,13 @@ M3 切片 1 已实现本 ADR 的以下部分（证据：`docs/evidence/M3-VERIFI
 **偏差**：holder 元数据从锁文件内改为旁路文件（Windows 强制锁），详见 `docs/quality/M3-BUGS.md` B-M3-001。
 
 **仍未实现**：导出/导入包、实例锁清理脚本、备份/恢复演练、Windows 映射网络盘检测（JVM 限制）。
+## 2026-11-13 补齐：导出/导入与备份/恢复（M3 后）
+
+- **实现位置**：com.mammoth.domain.admin（ExportService/ImportService/BackupService/RestoreService/AdminRunner），通过 java -jar mammoth-domain-service.jar --admin-* 运行；admin 参数在构建 Spring 环境前被过滤，避免口令进入配置属性。
+- **导出**：<dataRoot>/exports/<时间戳>-mammoth-export.zip；内容为 data/<table>.sql（31 张业务表，跳过 session 与 lyway_schema_history）、rtifacts/<sha256> 原始字节、manifest.properties（formatVersion、createdAt、appVersion、schemaVersion、每表行数、每个条目 sha256）。pp_user.password_hash 一律替换为 !mammoth-import-locked。
+- **导入**：仅接受**空库**（逐表计数为 0）；校验 schema 版本一致、每个 zip 条目都在 manifest 中有 sha256 且匹配、每表行数一致、artifact 行与字节大小一致；单事务插入（PRAGMA defer_foreign_keys=ON 处理自引用外键）；--admin-username 对应账号设置新的 BCrypt 口令，其余账号保持锁定（无法登录，需管理员重建/后续密码重置）；不导入会话；写 dmin.import 审计。
+- **备份**：VACUUM INTO（专用连接、无进行中语句）+ 按 rtifact.storage_path 复制 Artifact + 校验哈希；manifest.properties 含 db sha256/size、schema 版本、artifact 哈希。备份需在写实例停止时执行（实例锁保证）。
+- **恢复**：纯文件操作，不启动服务；校验备份 db 的 sha256 与 PRAGMA integrity_check、schema 版本、每个 artifact 的 sha256；目标必须是空目录；写 estore.properties 与 ackup-manifest.properties 供追溯。
+- **偏差**：manifest 使用 **key-value properties** 而非 ADR 原文的 manifest.json（避免引入 JSON 解析依赖，字段等价）；导出不加密（与决策 10 一致）；导入不做合并/增量（决策 7）；映射网络盘仍按 S1 的限制处理。
+- **验证**：AdminPackageTest 4 tests（往返、口令锁定、篡改/非空拒绝、备份恢复、篡改备份拒绝）；scripts/admin-drill.mjs **9/9** 真实 CLI 演练（种子→导出→导入→启动校验→备份→恢复→再启动→非空拒绝）；后端全量 **83 tests**。
+- **未实现（后续）**：导出包加密与密钥管理、账号批量重置流程、增量导出、实例锁清理脚本自动化。

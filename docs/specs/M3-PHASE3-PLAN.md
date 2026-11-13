@@ -180,3 +180,34 @@ ode scripts/demo-m3.mjs → **25/25**（含远程 URL 脱敏、快照/提议四�
 5. 导出/导入包与实例锁清理脚本仍在 ADR-0008 后续范围，不属于本阶段退出条件。
 
 **已知限制**：git 缺失/超时返回可操作错误；Windows 映射网络盘检测依赖路径/类型启发式；代码符号级映射未做（变更映射到文件级）。
+## 11. ADR-0008 补齐：导出/导入与备份/恢复（2026-11-13）
+
+### 11.1 范围
+
+- 导出包 v1（逻辑导出，不含密码哈希/会话），导入到空数据根（指定管理员新口令）。
+- 备份（VACUUM INTO + Artifact 复制 + manifest）与恢复到空目录（校验和 + SQLite integrity_check）。
+- 全部通过 --admin-* CLI 执行；Web 运行时不可备份/导入（实例锁）。
+
+### 11.2 设计要点
+
+| 项 | 说明 |
+|---|---|
+| 导出包 | manifest.properties + data/<table>.sql（31 表，跳过 session/lyway_schema_history）+ rtifacts/<sha256>；每条目 sha256 记录在 manifest |
+| 凭据 | pp_user.password_hash 导出为 !mammoth-import-locked；导入时只为 --admin-username 设置新口令（MAMMOTH_IMPORT_ADMIN_PASSWORD 优先），其余账号锁定 |
+| 导入前置 | 空库、schema 版本一致、zip 无多余条目、checksum/行数/artifact 大小一致；单事务 + defer_foreign_keys |
+| 备份 | VACUUM INTO（专用连接、无进行中语句）+ 按 storage_path 复制 Artifact + 哈希校验；manifest 含 db sha256/size/schema |
+| 恢复 | 纯文件操作；校验 db sha256 + PRAGMA integrity_check + schema + 每个 artifact sha256；目标必须空目录；写 estore.properties |
+| 审计 | dmin.export（可选 actor）、dmin.import、dmin.backup；恢复记录写文件 |
+
+### 11.3 结果
+
+- 后端 mvn verify → **83 tests**（M3 79 + AdminPackageTest 4）。
+- 真实 CLI 演练 scripts/admin-drill.mjs → **9/9**：种子 → 导出（20 行）→ 导入（20 行）→ 导入后启动校验（项目/已验证知识/Artifact 哈希）→ 审计含 dmin.import → 备份 → 恢复 → 恢复后启动校验 → 非空库导入被拒。
+- 证据：docs/evidence/M3-VERIFICATION.md §8；用法：docs/dev-setup.md「导出/导入与备份恢复」。
+
+### 11.4 偏差与限制
+
+1. manifest 采用 key-value properties（ADR-0008 原文写 manifest.json），避免新增 JSON 解析依赖，字段等价。
+2. 导出不加密；导入不做合并/增量；除指定管理员外账号锁定（无密码重置功能）。
+3. 备份/恢复要求写实例停止；恢复目标必须为空目录。
+4. 实例锁清理脚本仍未自动化。
