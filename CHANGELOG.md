@@ -5,8 +5,8 @@
 - **M4.5-0 本机准备**：登记 `E:\Projects\DWMS\code\D-WMS-release`（`AiNi/数智金属-prod`，HEAD `3f17cdee`）；客户“数智金属”、产品“D-WMS”、项目“数智金属D-WMS”（`DWMS`）；干净基线；Docker 29.8.0 可用；原未提交 `application-dev.yml` 经负责人同意 stash。
 - **M4.5-1 Jira 只读连接器（mock）**：Data Center REST v2 `/rest/api/2/search` + Bearer PAT；分页/超时/无重定向/错误脱敏；复用 S3 导入/证据候选；`ImportsPage` Jira 直连卡片；按记录人工映射，记录保留 `jiraProjectKey`。
 - **安全**：token 仅从 `MAMMOTH_JIRA_TOKEN` 读取并只发往 `mammoth.jira.base-url` origin；不写 Jira；不读附件/评论/changelog；未使用聊天中的真实令牌。
-- **测试**：`JiraImportTest` 2/2（本地 HttpServer 两页/Bearer/字段/预览应用/无 token 拒绝）；后端全量基线 120 tests + 2；真实 Jira smoke 待环境变量 PAT。
-- **限制**：无同步游标/V11；真实 Jira/企微/SMTP 未调用；CSM 仍人工粘贴。
+- **测试**：`JiraImportTest` 2/2（本地 HttpServer 两页/Bearer/字段/预览应用/无 token 拒绝）；后端全量 **122 tests**；真实 Jira 只读 smoke **3/3 预览**（`updated >= -30d`，max 3；未 apply/落库、未输出 issue 内容）；企微配置已识别但未发送。
+- **限制**：无同步游标/V11；真实 Jira apply/落库与字段差异待确认；企微测试群待确认；CSM 仍人工粘贴。
 
 ## V0.16.0 — 2026-11-13
 
