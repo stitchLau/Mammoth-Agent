@@ -36,4 +36,27 @@ class DataRootBootstrapTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("not usable");
   }
+
+  @Test
+  void readOnlyModeRejectsAnUninitializedRoot() {
+    DataRootBootstrap bootstrap = new DataRootBootstrap(new DataRootResolver(tempDir.toString()), true);
+
+    assertThatThrownBy(bootstrap::initialize)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("not initialized")
+        .hasMessageContaining("web/management");
+  }
+
+  @Test
+  void readOnlyModeAcceptsAnInitializedRootWithoutWriting() throws Exception {
+    Files.createDirectories(tempDir.resolve("db"));
+    DataRootBootstrap bootstrap = new DataRootBootstrap(new DataRootResolver(tempDir.toString()), true);
+
+    Path root = bootstrap.initialize();
+
+    assertThat(root).isEqualTo(tempDir.toAbsolutePath().normalize());
+    assertThat(bootstrap.isReadOnly()).isTrue();
+    assertThat(Files.exists(root.resolve(".mammoth-write-probe"))).isFalse();
+    assertThat(Files.exists(root.resolve("artifacts"))).isFalse();
+  }
 }

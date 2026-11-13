@@ -23,6 +23,12 @@ mammoth:
   # Empty means "use the OS application-data default" (see DataRootResolver).
   # Set MAMMOTH_DATA_ROOT or this property to choose an explicit data directory.
   data-root: ${MAMMOTH_DATA_ROOT:}
+  # ADR-0008: read-only entrypoints (MCP) must not create data, run Flyway or take the writer lock.
+  # The MCP entrypoint forces this to true; it is exposed for controlled read-only diagnostics.
+  data-root.read-only: ${MAMMOTH_DATA_ROOT_READ_ONLY:false}
+  # ADR-0008: allow network/cloud-synced data roots. Unsafe for SQLite; only for controlled tests
+  # or a documented one-off migration. Production must stay on a local fixed disk.
+  data-root.allow-unsupported: ${MAMMOTH_ALLOW_UNSUPPORTED_ROOT:false}
   default-org-name: ${MAMMOTH_ORG_NAME:Mammoth Demo}
   mcp:
     # Temporary agent identity for the MCP stdio entrypoint (pre-authentication stage).

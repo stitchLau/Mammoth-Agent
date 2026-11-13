@@ -17,8 +17,11 @@ import org.springframework.context.ConfigurableApplicationContext;
  * MCP stdio entrypoint for DSH integration (ADR-0001/0005, T9).
  *
  * <p>Launch: {@code java -jar mammoth-domain-service.jar --mcp}. The same Spring context provides
- * Flyway migrations and the domain services; stdout is reserved for newline-delimited JSON-RPC so
- * all application logging is redirected to stderr.
+ * the domain services, but this entrypoint runs <strong>read-only</strong> (ADR-0008): it does not
+ * acquire the data-root writer lock, does not create data directories, does not run Flyway and
+ * opens SQLite read-only. The data root must have been initialized by the web/management
+ * entrypoint first. stdout is reserved for newline-delimited JSON-RPC so all application logging is
+ * redirected to stderr.
  *
  * <p>Agent identity comes from {@code MAMMOTH_MCP_AGENT_USER_ID} (mapped to
  * {@code mammoth.mcp.agent-user-id}); the agent must be an active project member and only verified
@@ -28,6 +31,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 public final class McpServerMain {
 
   private static final String PROTOCOL_VERSION = "2024-11-05";
+  private static final String READ_ONLY_PROPERTY = "mammoth.data-root.read-only";
 
   private McpServerMain() {
   }
@@ -39,9 +43,28 @@ public final class McpServerMain {
         new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8);
     System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8));
 
+    // The config file may declare the default (false); a Java system property outranks it, so the
+    // agent entrypoint can never accidentally start as a second writer (ADR-0008).
+    System.setProperty(READ_ONLY_PROPERTY, "true");
+    for (String arg : args) {
+      if (arg.startsWith("--" + READ_ONLY_PROPERTY + "=false")) {
+        throw new IllegalStateException(
+            "the MCP entrypoint must run read-only; "
+                + "--" + READ_ONLY_PROPERTY + "=false is not allowed");
+      }
+    }
+
     try (ConfigurableApplicationContext context = new SpringApplicationBuilder(DomainApplication.class)
         .web(WebApplicationType.NONE)
+        .properties(READ_ONLY_PROPERTY + "=true")
         .run(args)) {
+      // Defence in depth: an explicit override must not silently turn the agent entrypoint into a
+      // writer (two writers on one data root are unsupported, ADR-0008).
+      if (!context.getEnvironment().getProperty(READ_ONLY_PROPERTY, Boolean.class, false)) {
+        throw new IllegalStateException(
+            "the MCP entrypoint must run read-only (" + READ_ONLY_PROPERTY + "=true); refusing to"
+                + " start as a second writer of the Mammoth data root");
+      }
       McpToolService tools = context.getBean(McpToolService.class);
       String agentUserId = context.getEnvironment().getProperty("mammoth.mcp.agent-user-id", "");
       serve(new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)),

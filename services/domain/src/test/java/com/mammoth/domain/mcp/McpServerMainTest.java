@@ -1,7 +1,6 @@
 package com.mammoth.domain.mcp;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -13,6 +12,9 @@ import org.junit.jupiter.api.Test;
 /**
  * Protocol framing checks: responses must be newline-delimited JSON, UTF-8 encoded (Chinese payloads
  * must survive), and tool calls without a configured agent identity must fail closed.
+ *
+ * <p>The tool service is not needed for framing/list/refusal paths, so {@code null} is passed
+ * instead of a Mockito mock (the sandbox blocks Byte Buddy self-attachment).
  */
 class McpServerMainTest {
 
@@ -20,7 +22,7 @@ class McpServerMainTest {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(bytes, true, StandardCharsets.UTF_8);
     BufferedReader in = new BufferedReader(new StringReader(input));
-    McpServerMain.serve(in, out, mock(McpToolService.class), agentUserId);
+    McpServerMain.serve(in, out, null, agentUserId);
     return bytes.toString(StandardCharsets.UTF_8);
   }
 

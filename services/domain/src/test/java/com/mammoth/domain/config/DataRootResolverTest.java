@@ -38,4 +38,31 @@ class DataRootResolverTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("source checkout");
   }
+
+  @Test
+  void uncPathIsRejected() {
+    assertThatThrownBy(() -> DataRootResolver.resolve("\\\\server\\share\\mammoth\\data", false))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("UNC");
+  }
+
+  @Test
+  void cloudSyncedDirectoryIsRejected() {
+    String cloud = Path.of(System.getProperty("user.home"), "OneDrive", "Mammoth", "data").toString();
+    assertThatThrownBy(() -> DataRootResolver.resolve(cloud, false))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("cloud-synced");
+  }
+
+  @Test
+  void unsupportedOverrideAllowsNetworkStylePathForControlledTests() {
+    Path root = DataRootResolver.resolve("\\\\server\\share\\mammoth\\data", true);
+    assertThat(root.toString()).contains("mammoth");
+  }
+
+  @Test
+  void localTempDirectoryIsAccepted() {
+    Path temp = Path.of(System.getProperty("java.io.tmpdir"), "mammoth-local-check").toAbsolutePath();
+    assertThat(DataRootResolver.resolve(temp.toString(), false)).isEqualTo(temp.normalize());
+  }
 }
