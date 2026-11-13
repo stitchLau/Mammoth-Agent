@@ -7,7 +7,7 @@
 - **M1 / M1.5 / M2 / M3 / M4 已完成**（本机验证；M4 S6 文档化延期）；下一阶段 **M4.5 生产集成与运营启用**。
 - M4 收敛口径：单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付；生产 Jira/CSM API、真实邮件/企微启用、PostgreSQL 多实例、远程 Agent 网关列入 **M4.5/M5**。
 - **M4 规格/计划**：[`specs/M4-PHASE4-PLAN.md`](specs/M4-PHASE4-PLAN.md)（S1–S5 完成）、[`specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)、[`specs/M5-PHASE5-PLAN.md`](specs/M5-PHASE5-PLAN.md)、[`specs/M4-THREAT-MODEL.md`](specs/M4-THREAT-MODEL.md)、ADR-0011/0013（Accepted，M4 范围）、ADR-0012（Proposed）、ADR-0006 v1.1/ADR-0008 增补。
-- **M4 验收/证据**：[`M4-ACCEPTANCE.md`](M4-ACCEPTANCE.md) · [`evidence/M4-VERIFICATION.md`](evidence/M4-VERIFICATION.md)。
+- **M4 验收/证据**：[`M4-ACCEPTANCE.md`](M4-ACCEPTANCE.md) · [`evidence/M4-VERIFICATION.md`](evidence/M4-VERIFICATION.md)；**M4.5-0 本机准备**：[`evidence/M4.5-VERIFICATION.md`](evidence/M4.5-VERIFICATION.md)。
 - **M3.5 技术债**：[`specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md)（BG-01/BG-03 已关闭；BG-02 留 M5）。
 - 交接入口：[`handoffs/SESSION-HANDOFF-2026-11-13-M4.md`](handoffs/SESSION-HANDOFF-2026-11-13-M4.md) · S2：[`handoffs/SESSION-HANDOFF-2026-11-13-M4-S2.md`](handoffs/SESSION-HANDOFF-2026-11-13-M4-S2.md) · S1：[`handoffs/SESSION-HANDOFF-2026-11-13-M4-S1.md`](handoffs/SESSION-HANDOFF-2026-11-13-M4-S1.md) · S0：[`handoffs/SESSION-HANDOFF-2026-11-13-M4-S0.md`](handoffs/SESSION-HANDOFF-2026-11-13-M4-S0.md)
 - M3 规格：[`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`quality/M3-BUGS.md`](quality/M3-BUGS.md) · 验收：[`M3-ACCEPTANCE.md`](M3-ACCEPTANCE.md)

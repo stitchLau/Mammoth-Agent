@@ -71,7 +71,7 @@
 
 产出：Jira 只读 API（确认版本/TLS/只读账号后）、CSM 适配器（端点确认后）、SMTP/企微渠道启用、可选远程 Agent 网关/团队服务器试点、CI 远端与真实脱敏项目验收。
 
-**状态：规划（2026-11-13）** — 见 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)。仍单节点 SQLite；不接触生产凭据/数据。
+**状态：M4.5-0 本机准备完成（2026-11-13）** — 见 [`docs/evidence/M4.5-VERIFICATION.md`](evidence/M4.5-VERIFICATION.md) 与 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)。本机项目/仓库/Docker 已就绪；Jira 只读、SMTP/企微真实启用待环境变量凭据。仍单节点 SQLite；不接触生产凭据/数据。
 
 ## M5：团队服务端规模化（PostgreSQL/多实例）
 
