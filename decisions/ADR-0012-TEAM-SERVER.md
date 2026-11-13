@@ -35,7 +35,7 @@
 2. **多用户共享**：M4 的“多用户”是同一服务进程内的多个本地账号 + 项目成员 + DB 会话；不承诺多实例、跨机实时协作或共享网络盘数据根。
 3. **TLS 预案**：若 M4 之后部署到内网/团队，必须由反向代理（Caddy/Nginx 等）终止 TLS；应用侧开启 `server.forward-headers-strategy=framework` 并只信任明确配置的代理；Cookie 使用 `Secure`、`HttpOnly`、`SameSite=Lax`；默认绑定 `127.0.0.1`，局域网绑定需显式配置并配合防火墙。
 4. **服务器/证书暂不处理**：M4 不交付生产证书、域名、OS 服务化或公网暴露；S6 作为**团队服务器预案**（配置项、反向代理样例、验收清单），是否实施由负责人后续决定。
-5. **PostgreSQL 多实例 = M5**，不是 M4/M4.5。M4.5 只做生产集成与运营启用（Jira 只读 API、CSM 适配、通知渠道启用、远程 Agent 网关可选），仍为单节点 SQLite。
+5. **PostgreSQL 多实例 = M5**，不是 M4/M4.5。M4.5 只做生产集成与运营启用（Jira 只读 API、CSM 适配、通知渠道启用、远程 Agent 网关可选），仍为单节点 SQLite。M5 的完整切片、迁移/切换、备份/回滚与验收见 `docs/specs/M5-PHASE5-PLAN.md`。
 6. **M5 触发条件**（满足任一即评估）：需要 2 个以上应用实例/HA；单节点写入成为瓶颈；数据量/备份窗口超出 SQLite 可接受范围；需要跨机共享同一权威库；需要独立报表/只读副本。
 7. **M5 前置**：更新 ADR-0003；提供 `db/migration-pg` 与 SQLite/PG 双跑迁移测试；JPA 方言/Hibernate 映射校验；任务领取改为 `SELECT ... FOR UPDATE SKIP LOCKED`（或等效）；登录限速/会话共享存储；`pg_dump/pg_restore` 备份恢复演练；TLS/部署/监控/回滚手册。
 8. **共享会话**：当前 `session` 表已可被同一 DB 的多个进程读取；M4 不引入 Redis。多实例时，会话天然共享，但登录限速仍是进程内状态，必须替换为 DB/共享存储（M5）。

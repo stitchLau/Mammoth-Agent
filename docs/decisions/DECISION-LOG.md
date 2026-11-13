@@ -34,7 +34,7 @@
 | D-028 | M4 总体口径 | M4 收敛为"单节点团队协作 + 只读外部集成 + 站内通知 + 外部 Agent 只读交付"；生产 API/双向同步/真实外发/PG 多实例/远程网关延后并登记 | 负责人 2026-11-13 确认"按建议，但需要 M4.5 计划" | `docs/specs/M4-PHASE4-PLAN.md`；`docs/specs/M4.5-PHASE45-PLAN.md` |
 | D-029 | M4 切片顺序 | S0 准入 → S1 组织/用户 → S2 BG-01/Agent/MCP 审计 → S3 导入框架 → S4 Jira 文件/BG-03 → S5 通知/任务/邮件企微 → S6 团队服务器预案 | 负责人"按你建议" | `docs/specs/M4-PHASE4-PLAN.md` §5 |
 | D-030 | 集成首发 | 只读文件导入优先；Jira 先于 CSM；Jira 目标 `http://119.145.133.146:18009/` 仅记录，M4 不调用；CSM 端点未提供，只留 SPI/规划 | 负责人"按建议"+提供 Jira 地址/CSM 暂缺 | ADR-0011；`M4.5-PHASE45-PLAN.md` |
-| D-031 | 服务端/数据库 | M4 单节点 + SQLite；团队服务器/证书暂不处理；**PG 多实例 = M5**；反向代理 TLS 为后续团队部署路径 | 负责人"按建议；明确 PG 阶段；服务器与证书暂不处理" | ADR-0012；`M4.5-PHASE45-PLAN.md` §6 |
+| D-031 | 服务端/数据库 | M4 单节点 + SQLite；团队服务器/证书暂不处理；**PG 多实例 = M5**；反向代理 TLS 为后续团队部署路径；M5 计划见 `docs/specs/M5-PHASE5-PLAN.md` | 负责人"按建议；明确 PG 阶段；服务器与证书暂不处理" | ADR-0012；`M4.5-PHASE45-PLAN.md` §6；`M5-PHASE5-PLAN.md` |
 | D-032 | 通知渠道 | 站内通知默认启用；邮件/企微**完整实现**但默认关闭；必须有配置参数才能启用；企微先机器人；SMTP 同口径 | 负责人 2026-11-13 明确 | ADR-0013；`M4-PHASE4-PLAN.md` §9 |
 | D-033 | 外部 Agent | 专用只读 Agent 账号 + BG-01 交接包 zip + MCP 审计方案 A（本地 JSONL + writer 入库）；远程网关 M4.5 评估 | 负责人"按建议" | ADR-0006/0008 增补；`M4-PHASE4-PLAN.md` §7 |
 | D-034 | 组织权限 | 新增 `org_admin`、用户停用/启用、管理员重置+强制改密、会话撤销、限制建用户/用户目录；不新增项目角色 | 负责人"按建议" | ADR-0006 增补；`M4-PHASE4-PLAN.md` §6/§11 |
@@ -59,6 +59,7 @@
 | ADR-0008 增补 | 新表分类/Agent 审计/单写者 | **Proposed**；随 S2/S3/S5 实施 |
 | M4 计划 | S1–S6 切片、权限矩阵、数据模型、测试 | Draft；`docs/specs/M4-PHASE4-PLAN.md` |
 | M4.5 计划 | Jira 只读 API/CSM/通知启用/远程 Agent/团队服务器；PG=M5 | Draft；`docs/specs/M4.5-PHASE45-PLAN.md` |
+| M5 计划 | PostgreSQL/多实例/HA、共享 Artifact、共享会话/限速、任务并发、迁移/备份/回滚 | Planning；`docs/specs/M5-PHASE5-PLAN.md` |
 
 ## M2 待决（进入 M3 前）
 

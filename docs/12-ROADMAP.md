@@ -77,7 +77,7 @@
 
 产出：PostgreSQL + 多实例/HA、共享限速/会话、任务并发领取、`pg_dump/pg_restore` 备份恢复、TLS/部署/监控/回滚；多组织/SSO 评估；双向同步/应用内 LLM 另立 ADR。
 
-**状态：未开始** — **PG 多实例明确在 M5 完成，不在 M4/M4.5**；触发条件与前置见 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md) §6 与 ADR-0012。
+**状态：未开始（规划已落盘 2026-11-13）** — 计划：[`docs/specs/M5-PHASE5-PLAN.md`](specs/M5-PHASE5-PLAN.md)。**PG 多实例明确在 M5 完成，不在 M4/M4.5**；触发条件、切片、迁移/备份/回滚与验收见该计划 §2/§5/§7，以及 ADR-0012。
 
 ## 每个里程碑的固定交付
 

@@ -5,7 +5,7 @@
 - **M4 S0（准入决策与规格，未写业务代码）**：
   - **新增 ADR（Proposed）**：ADR-0011 外部系统集成与凭据（只读文件→只读 API→双向；外部记录=证据；SecretProvider/白名单/幂等/审计）；ADR-0012 团队服务端与数据库演进（单节点+反向代理 TLS+SQLite；**PG 多实例=M5**；服务器/证书暂不处理）；ADR-0013 通知与外部发送（站内默认启用；**邮件/企微完整实现、默认关闭、配置后启用**；内部通知边界）。
   - **ADR 增补**：ADR-0006（`org_admin`、用户停用/启用、管理员重置+强制改密、Agent 账号、建用户/目录收紧）；ADR-0008（新表权威/运营分类、MCP 本地审计 journal + `agent_call` 入库、团队服务器仍单写者）。
-  - **规格**：`docs/specs/M4-PHASE4-PLAN.md`（S1–S6、V7–V10、权限矩阵、导入/通知/Agent 设计、测试与 DoD）；`docs/specs/M4.5-PHASE45-PLAN.md`（Jira 只读 API、CSM 延后、渠道启用、远程 Agent、团队服务器试点；PG=M5）；`docs/specs/M4-THREAT-MODEL.md`（T1–T11 + 安全测试清单）。
+  - **规格**：`docs/specs/M4-PHASE4-PLAN.md`（S1–S6、V7–V10、权限矩阵、导入/通知/Agent 设计、测试与 DoD）；`docs/specs/M4.5-PHASE45-PLAN.md`（Jira 只读 API、CSM 延后、渠道启用、远程 Agent、团队服务器试点；PG=M5）；`docs/specs/M5-PHASE5-PLAN.md`（PostgreSQL/多实例/HA、共享 Artifact、共享会话/限速、任务并发、迁移/备份/回滚、验收）；`docs/specs/M4-THREAT-MODEL.md`（T1–T11 + 安全测试清单）。
   - **决策**：D-028–D-036——M4 收敛口径、切片顺序、Jira 先于 CSM、单节点/ PG=M5、通知默认关闭/配置启用、Agent 只读账号+BG-01、组织权限、ADR 编号、M3.5 顺序。
   - **同步**：README/ROADMAP（M4/M4.5/M5）/13-OPEN-DECISIONS/DECISION-LOG/架构/领域/安全/知识/工作项/M3.5/时间线/证据/交接；`dev-setup` 增加 M4 配置预告。
 - **说明**：S0 仅文档；无 Java/TS/SQL/迁移改动，未运行 mvn/npm/E2E（无代码变更）；ADR 仍为 **Proposed**，待负责人评审后转 Accepted 并进入 S1。

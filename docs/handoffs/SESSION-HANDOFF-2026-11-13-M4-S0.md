@@ -1,4 +1,4 @@
-﻿# Session Handoff — 2026-11-13（M4 S0：准入决策与规格）
+# Session Handoff — 2026-11-13（M4 S0：准入决策与规格）
 
 - **时间**：2026-11-13（Asia/Shanghai）
 - **当前分支 / Commit**：`main`，S0 提交（见 `git log -1`；基线 `3231b43`）
@@ -21,7 +21,7 @@
 ## 已做变更（S0，仅文档）
 
 - **ADR（Proposed）**：`decisions/ADR-0011-EXTERNAL-INTEGRATION.md`、`ADR-0012-TEAM-SERVER.md`、`ADR-0013-NOTIFICATIONS.md`；`ADR-0006` 增补（org_admin/用户生命周期/Agent 账号）、`ADR-0008` 增补（新表分类/Agent 审计/单写者）。
-- **规格**：`docs/specs/M4-PHASE4-PLAN.md`（S1–S6、V7–V10、权限矩阵、导入/通知/Agent 设计、测试）、`docs/specs/M4.5-PHASE45-PLAN.md`（Jira 只读/CSM/渠道启用/远程 Agent/团队服务器；PG=M5）、`docs/specs/M4-THREAT-MODEL.md`。
+- **规格**：`docs/specs/M4-PHASE4-PLAN.md`（S1–S6、V7–V10、权限矩阵、导入/通知/Agent 设计、测试）、`docs/specs/M4.5-PHASE45-PLAN.md`（Jira 只读/CSM/渠道启用/远程 Agent/团队服务器；PG=M5）、`docs/specs/M5-PHASE5-PLAN.md`（PostgreSQL/多实例/HA、共享 Artifact、迁移/备份/回滚）、`docs/specs/M4-THREAT-MODEL.md`。
 - **同步**：`docs/README.md`、`12-ROADMAP.md`（M4/M4.5/M5）、`13-OPEN-DECISIONS.md`、`decisions/DECISION-LOG.md`（D-028–D-036）、`05-ARCHITECTURE-BASELINE.md`、`03-DOMAIN-MODEL.md`、`08-SECURITY-AND-TRUST.md`、`06-KNOWLEDGE-AND-RAG.md`、`07-WORK-ITEM-LIFECYCLE.md`、`00-MASTER-GUIDE.md`、`specs/M3.5-BACKLOG.md`、`dev-setup.md`（M4 配置预告）、`process/M4-TIMELINE.md`、`evidence/M4-VERIFICATION.md`。
 - **未改代码**：无 Java/TS/SQL/前端改动；无迁移。
 
@@ -61,7 +61,7 @@ git log --oneline -5      # 基线 3231b43
 ## 新会话必须先阅读
 
 - `AGENTS.md`、`docs/00-MASTER-GUIDE.md`、`docs/README.md`、本交接；
-- `docs/specs/M4-PHASE4-PLAN.md`、`docs/specs/M4.5-PHASE45-PLAN.md`、`docs/specs/M4-THREAT-MODEL.md`；
+- `docs/specs/M4-PHASE4-PLAN.md`、`docs/specs/M4.5-PHASE45-PLAN.md`、`docs/specs/M5-PHASE5-PLAN.md`、`docs/specs/M4-THREAT-MODEL.md`；
 - `decisions/ADR-0011`、`ADR-0012`、`ADR-0013`、`ADR-0006`/`ADR-0008` 增补；
 - 代码：`services/domain/src/main/java/com/mammoth/domain/{service/AuthorizationService,service/UserService,web/UserController,security/*,mcp/*,admin/*,config/*}`。
 

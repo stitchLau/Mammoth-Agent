@@ -1,4 +1,4 @@
-﻿# M4 执行时间线
+# M4 执行时间线
 
 - **日期**：2026-11-13（Asia/Shanghai）；时间为本地粗粒度记录
 
@@ -17,7 +17,7 @@
 | 方案 | M4 准入方案 + 10 项拍板清单 | 负责人逐项确认（D-028–D-036） |
 | 决策 | ADR-0011（外部集成/凭据）、ADR-0012（服务端/PG=M5）、ADR-0013（通知/外发）；ADR-0006/0008 增补 | **Proposed**，待 S0 评审 |
 | 规格 | `docs/specs/M4-PHASE4-PLAN.md`（S1–S6、V7–V10、权限矩阵、导入/通知/Agent 设计、测试） | Draft |
-| 规划 | `docs/specs/M4.5-PHASE45-PLAN.md`（Jira 只读 API/CSM/渠道启用/远程 Agent/团队服务器；PG=M5） | Draft |
+| 规划 | `docs/specs/M4.5-PHASE45-PLAN.md`（Jira 只读 API/CSM/渠道启用/远程 Agent/团队服务器；PG=M5）、`docs/specs/M5-PHASE5-PLAN.md`（PG/多实例/共享 Artifact/迁移/备份/回滚） | Draft |
 | 安全 | `docs/specs/M4-THREAT-MODEL.md`（T1–T11 + 测试清单） | Draft |
 | 文档同步 | README/ROADMAP/13-OPEN-DECISIONS/DECISION-LOG/架构/领域/安全/知识/工作项/M3.5 | 完成 |
 | 代码 | **未写业务代码**（按 S0 门禁） | — |

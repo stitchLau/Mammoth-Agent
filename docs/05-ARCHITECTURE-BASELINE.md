@@ -55,7 +55,7 @@
 - ADR-0008：项目工作区与正式知识空间。**Accepted v1.0（2026-11-13）** → `decisions/ADR-0008-WORKSPACE.md`
 - ADR-0009：文档解析（OPEN）；ADR-0010：需求上下文基线（Accepted v1.0）
 - ADR-0011：外部系统集成与凭据边界（**Proposed**，2026-11-13）→ `decisions/ADR-0011-EXTERNAL-INTEGRATION.md`
-- ADR-0012：团队服务端部署与数据库演进（**Proposed**，PG 多实例=M5）→ `decisions/ADR-0012-TEAM-SERVER.md`
+- ADR-0012：团队服务端部署与数据库演进（**Proposed**，PG 多实例=M5）→ `decisions/ADR-0012-TEAM-SERVER.md`；M5 计划 `docs/specs/M5-PHASE5-PLAN.md`
 - ADR-0013：通知与外部发送（**Proposed**，站内默认/邮件企微配置启用）→ `decisions/ADR-0013-NOTIFICATIONS.md`
 
 ## 6A. M4 逻辑组件（S0 草案）
@@ -79,6 +79,21 @@ Domain Service
 ```
 
 新增外部依赖（计划）：`spring-boot-starter-mail`（邮件，配置后启用）、CSV 解析（`commons-csv` 或内置，S3 评审）、GreenMail（仅测试，Apache-2.0）。所有依赖需来源/许可证/漏洞检查。
+
+## 6B. M5 目标形态（规划，2026-11-13）
+
+```text
+浏览器/客户端 → 反向代理 TLS → 应用实例 ×N（无本地单点状态）
+                                      ├─ PostgreSQL（权威业务数据；Flyway db/migration-pg）
+                                      ├─ 共享 Artifact Store（对象存储优先；内容寻址/sha256）
+                                      ├─ 共享会话/登录限速（DB/共享存储）
+                                      ├─ 多实例任务队列（SKIP LOCKED + 租约/幂等/死信）
+                                      └─ 备份/监控/审计归档
+```
+
+- 目标：消除单节点假设（实例锁、SQLite FTS5、本地 Artifact、进程内限速、单进程 worker）。
+- 不在 M5：双向同步、应用内 LLM/AgentRun、多租户、客户外发；另立 ADR/里程碑。
+- 详见 `docs/specs/M5-PHASE5-PLAN.md` 与 ADR-0012。
 
 ## 7. 可观测性
 

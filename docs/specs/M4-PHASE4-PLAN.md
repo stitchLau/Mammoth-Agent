@@ -44,7 +44,7 @@
 
 - Jira/CSM **生产 API 调用**、写操作、双向同步（→ M4.5/M5+）；
 - 真实邮件/企微**发送启用**（代码在 M4 S5 完整实现，默认关闭；启用由负责人配置，M4 验收不真实外发）；
-- PostgreSQL、多实例、HA、共享网络盘数据根（→ M5）；
+- PostgreSQL、多实例、HA、共享网络盘数据根（→ M5，计划见 [`M5-PHASE5-PLAN.md`](M5-PHASE5-PLAN.md)）；
 - 远程 Agent 网关/服务令牌（→ M4.5 评估）；
 - 应用内 LLM/AgentRun（ADR-0011 占位已改用于外部集成；LLM 另立 ADR）；
 - 多组织/多租户、SSO/OIDC、生产证书/域名/OS 服务化；
