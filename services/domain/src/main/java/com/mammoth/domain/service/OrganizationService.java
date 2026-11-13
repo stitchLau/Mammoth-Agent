@@ -24,15 +24,18 @@ public class OrganizationService {
   private final OrganizationRepository organizationRepository;
   private final String defaultOrgName;
   private final boolean readOnly;
+  private final boolean bootstrapOrganization;
 
   public OrganizationService(
       OrganizationRepository organizationRepository,
       @Value("${mammoth.default-org-name:Mammoth Demo}") String defaultOrgName,
       ObjectProvider<Flyway> flywayProvider,
-      @Value("${mammoth.data-root.read-only:false}") boolean readOnly) {
+      @Value("${mammoth.data-root.read-only:false}") boolean readOnly,
+      @Value("${mammoth.bootstrap.default-organization:true}") boolean bootstrapOrganization) {
     this.organizationRepository = organizationRepository;
     this.defaultOrgName = defaultOrgName;
     this.readOnly = readOnly;
+    this.bootstrapOrganization = bootstrapOrganization;
     // Forces migration before the @PostConstruct bootstrap in writer mode; no-op in read-only mode.
     flywayProvider.getIfAvailable();
   }
@@ -40,6 +43,10 @@ public class OrganizationService {
   @PostConstruct
   @Transactional
   public void ensureDefaultOrganization() {
+    if (!bootstrapOrganization) {
+      // Admin export/import runs with this disabled so an import target stays empty.
+      return;
+    }
     if (readOnly) {
       if (organizationRepository.count() == 0) {
         throw new IllegalStateException(

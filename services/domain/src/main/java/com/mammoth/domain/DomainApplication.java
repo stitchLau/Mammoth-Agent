@@ -1,5 +1,6 @@
 package com.mammoth.domain;
 
+import com.mammoth.domain.admin.AdminRunner;
 import com.mammoth.domain.mcp.McpServerMain;
 import java.util.Arrays;
 import org.springframework.boot.SpringApplication;
@@ -13,12 +14,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * entrypoint that reuses the same domain layer.
  *
  * <p>Launching with {@code --mcp} runs the read-only MCP stdio server for DSH instead of the HTTP
- * server (see {@link McpServerMain}).
+ * server (see {@link McpServerMain}). Admin arguments ({@code --admin-export/--admin-import/
+ * --admin-backup/--admin-restore}) run the headless ADR-0008 operations (see {@link AdminRunner}).
  */
 @SpringBootApplication
 public class DomainApplication {
 
   public static void main(String[] args) throws Exception {
+    if (AdminRunner.isAdminInvocation(args)) {
+      AdminRunner.run(args);
+      return;
+    }
     if (args.length > 0 && "--mcp".equals(args[0])) {
       McpServerMain.main(Arrays.copyOfRange(args, 1, args.length));
       return;
