@@ -75,3 +75,12 @@ node scripts/demo-m3.mjs http://127.0.0.1:18150      # 25/25
 - **验证**：后端 **83 tests**；scripts/admin-drill.mjs **9/9**（种子→导出→导入→启动校验→备份→恢复→再启动→非空拒绝）；详见 docs/evidence/M3-VERIFICATION.md §8。
 - **仍限制/未做**：导出不加密；导入不合并/不增量；非管理员账号锁定（无密码重置）；实例锁清理脚本未自动化；备份要求写实例停止。
 - **下一步**：若要继续加固，可做导出包加密（需密钥管理 ADR）、账号批量重置、实例锁清理脚本；否则可进入 M4。
+## 2026-11-13 更新：M3.5 补强完成（用户确认补 1/2 项 + 锁清理）
+
+- **知识生命周期**：新增 superseded/deprecated（V6：superseded_by、deprecation_note）；POST /knowledge/{id}/supersede 与 /deprecate（owner/reviewer、保留历史、不参与检索）；详情页提供操作与状态筛选。
+- **知识发布后半段**：交付知识 草稿 → 作者提交审核 → 另一人四眼 verify → supersede 旧知识；DeliveryWorkflowTest 覆盖。
+- **脱敏项目验收演练**：scripts/m3-acceptance-drill.mjs **18/18**（批准方案→交接→实施回收→矩阵→偏差→As-built→知识发布→supersede→检索只返回新知识→审计→登出）。
+- **实例锁清理**：--admin-clear-lock --data-root=<root> + scripts/clear-data-root-lock.ps1；运行中拒绝（含 pid/host），停止后清理，无锁幂等；LockCleanupServiceTest 4 tests。
+- **技术债登记**：docs/specs/M3.5-BACKLOG.md（BG-01 交接包文件导出、BG-02 Baseline 部署/DDL 版本、BG-03 矩阵业务目标/证据链接）；ROADMAP 切片状态已修正。
+- **验证**：后端 **89 tests**；前端 build + 25 tests；E2E 3 passed；验收演练 18/18；ADR-0008 演练 9/9。
+- **剩余**：真实客户项目验收需负责人提供授权脱敏项目；BG-01–BG-03 未实现；导出加密/账号重置/增量导出仍为后续。

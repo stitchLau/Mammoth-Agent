@@ -124,3 +124,17 @@ ode scripts/demo-m3.mjs http://127.0.0.1:18150 | **25/25** |
 - 导出不加密；除指定管理员外账号在导入后锁定（无密码重置功能，需管理员重建）。
 - 备份/恢复要求写实例停止；恢复目标必须为空目录。
 - manifest 为 properties 格式（与 ADR 的 json 字段等价）；实例锁清理脚本未自动化。
+## 9. M3.5 补强验证（2026-11-13）
+
+| 检查 | 命令 | 结果 |
+|---|---|---|
+| 后端全量 | mvn -B -ntp -f services/domain/pom.xml verify | **BUILD SUCCESS，89 tests**（+2 knowledge supersede/deprecate、+4 lock cleanup） |
+| 迁移 | MigrationTest | V1–V6 幂等，目标版本 6 |
+| 前端 | cd apps/web; npm run build; npm test | build 通过；25 tests |
+| 脱敏项目验收演练 | 
+ode scripts/m3-acceptance-drill.mjs | **18/18**：批准方案→交接→实施回收→矩阵→As-built→知识发布→supersede→检索只返回新知识→审计→登出 |
+| 实例锁清理 | CLI + PS 脚本（真实进程） | 写实例运行中 **拒绝**（含 pid/host）；停止后删除成功；无锁时幂等 |
+| E2E | 空数据根 + 
+pm run test:e2e | 3 passed（M1/M2/M3，UI 仅增加知识状态操作面板，回归通过） |
+
+**限制**：演练项目为脱敏/合成数据（未接触真实客户数据）；"真实客户项目"验收仍需负责人提供授权脱敏项目。剩余技术债见 docs/specs/M3.5-BACKLOG.md。

@@ -211,3 +211,28 @@ ode scripts/demo-m3.mjs → **25/25**（含远程 URL 脱敏、快照/提议四�
 2. 导出不加密；导入不做合并/增量；除指定管理员外账号锁定（无密码重置功能）。
 3. 备份/恢复要求写实例停止；恢复目标必须为空目录。
 4. 实例锁清理脚本仍未自动化。
+## 12. M3.5 补强（2026-11-13，用户确认）
+
+### 12.1 知识生命周期补全
+
+- 新增 superseded / deprecated 状态（docs/06 §3 要求），V6 迁移增加 superseded_by、deprecation_note。
+- POST /api/projects/{p}/knowledge/{id}/supersede：仅 verified → superseded，替代文档必须也是 verified；保留历史，不再参与检索。
+- POST /api/projects/{p}/knowledge/{id}/deprecate：verified → deprecated，可记录原因；保留历史。
+- 权限：owner/reviewer；审计 knowledge.supersede / knowledge.deprecate；UI 提供替代/废弃操作与状态筛选。
+- 交付闭环补全：知识提议接受 → 草稿 → 作者提交审核 → 另一人四眼 verify → 再用新知识 supersede 旧知识（验收演练覆盖）。
+
+### 12.2 脱敏项目验收演练
+
+- scripts/m3-acceptance-drill.mjs：真实服务 + 真实临时 Git 仓库 + 脱敏项目（ACME-MES）走完"批准方案 → 交接包 → 实施 commit → 回收 → 偏差 → As-built → 知识提议 → 发布 → supersede 旧知识 → 检索只返回新知识"。
+- 结果：**18/18** 步骤通过；证明 M3 退出条件在脱敏项目上闭环（不含真实客户数据）。
+
+### 12.3 实例锁清理
+
+- LockCleanupService + CLI --admin-clear-lock --data-root=<root>：仅当无活动写实例时删除 .mammoth-instance.lock / .mammoth-instance-holder；写实例持锁时拒绝并显示 pid/host/startedAt。
+- scripts/clear-data-root-lock.ps1 为运维封装；手动验证：运行中拒绝、停止后删除成功、无锁时幂等返回。
+- 测试：LockCleanupServiceTest 4 tests。
+
+### 12.4 结果与剩余技术债
+
+- 后端 mvn verify → **89 tests**；前端 build + 25 tests；E2E 3 passed；验收演练 18/18。
+- 登记为 M3.5/技术债（docs/specs/M3.5-BACKLOG.md）：交接包文件导出、Baseline 部署/DDL 版本、验收矩阵业务目标与证据链接（含偏差目标 UI）。

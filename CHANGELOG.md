@@ -1,5 +1,16 @@
 # Changelog
 
+## V0.12.0 — 2026-11-13
+
+- **M3.5 补强（用户确认）**：
+  - **知识生命周期**：新增 `superseded`/`deprecated` 状态（`V6`：`superseded_by`、`deprecation_note`）；`POST /knowledge/{id}/supersede`（新替旧）与 `/deprecate`（废弃），仅 owner/reviewer，保留历史且不再参与检索；知识详情增加状态操作，列表增加筛选。
+  - **知识发布后半段**：交付知识提议接受 → 草稿 → 作者提交审核 → 另一人四眼 verify → supersede 旧知识；交付闭环测试覆盖。
+  - **脱敏项目验收演练**：`scripts/m3-acceptance-drill.mjs` 真实服务 + 临时 Git 仓库走完批准方案→交接→实施回收→矩阵→As-built→知识发布→supersede→检索只返回新知识，**18/18**。
+  - **实例锁清理**：`--admin-clear-lock --data-root=<root>` + `scripts/clear-data-root-lock.ps1`；无活动写实例时清理，运行中拒绝并显示持有者；`LockCleanupServiceTest` 4 tests。
+  - **技术债登记**：`docs/specs/M3.5-BACKLOG.md`（交接包文件导出、Baseline 部署/DDL 版本、验收矩阵业务目标/证据链接）；ROADMAP 切片状态修正。
+- **验证**：后端 `mvn verify` **89 tests**；前端 build + 25 tests；E2E 3 passed；验收演练 18/18；ADR-0008 演练 9/9。
+- **剩余限制**：真实客户项目验收仍需授权脱敏项目；交接包文件导出/Baseline 部署与 DDL 版本/矩阵证据链接登记为 M3.5 技术债。
+
 ## V0.11.1 — 2026-11-13
 
 - **ADR-0008 补齐（导出/导入与备份/恢复）**：

@@ -4,9 +4,10 @@
 
 ## 当前状态（2026-11-13）
 
-- **M1 / M1.5 / M2 / M3 已完成**（本地验证通过）；下一阶段 **M4（企业集成与协同）**。
+- **M1 / M1.5 / M2 / M3 已完成**（本地验证通过，含 M3.5 补强）；下一阶段 **M4（企业集成与协同）**。
 - M3 闭环：Git 基线 → 交接包 → 实施回收 → 偏差/验收矩阵 → As-built → 知识更新（人工审核）。
-- **ADR-0008 补齐**：导出/导入包与备份/恢复 CLI 已实现并通过真实演练（见 `docs/dev-setup.md`）。
+- **ADR-0008 补齐**：导出/导入包、备份/恢复、实例锁清理 CLI 已实现并通过真实演练。
+- **M3.5 技术债**：[`docs/specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md)（交接包文件导出、Baseline 部署/DDL 版本、验收矩阵证据链接）。
 - 交接入口：[`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`](handoffs/SESSION-HANDOFF-2026-11-13-M3.md)
 - M3 规格：[`docs/specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) · 证据：[`docs/evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) · 过程：[`docs/process/M3-TIMELINE.md`](process/M3-TIMELINE.md) · 缺陷：[`docs/quality/M3-BUGS.md`](quality/M3-BUGS.md)
 - M2 规格：[`docs/specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) · 证据：[`docs/evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) · 过程：[`docs/process/M2-TIMELINE.md`](process/M2-TIMELINE.md) · 缺陷：[`docs/quality/M2-BUGS.md`](quality/M2-BUGS.md)
@@ -34,7 +35,8 @@
 |---|---|
 | [`specs/M1-PHASE1-PLAN.md`](specs/M1-PHASE1-PLAN.md) | M1 计划与 DoD |
 | [`specs/M2-PHASE2-PLAN.md`](specs/M2-PHASE2-PLAN.md) | M2 计划、状态机、就绪规则、一致性规则与实施记录 |
-| [`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) | M3 计划、切片顺序与 S1 实施记录 |
+| [`specs/M3-PHASE3-PLAN.md`](specs/M3-PHASE3-PLAN.md) | M3 计划、切片顺序与 S1–S6/M3.5 实施记录 |
+| [`specs/M3.5-BACKLOG.md`](specs/M3.5-BACKLOG.md) | M3.5 技术债与延期清单（BG-01–BG-03） |
 | [`M1-ACCEPTANCE.md`](M1-ACCEPTANCE.md) | M1 验收记录 |
 | [`specs/UI-SPEC.md`](specs/UI-SPEC.md) | UI 规格（路线 A）与 M1.5 实施记录 |
 | [`decisions/DECISION-LOG.md`](decisions/DECISION-LOG.md) | M1/M1.5/M2 决策补充日志 |

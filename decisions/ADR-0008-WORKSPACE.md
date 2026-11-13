@@ -142,4 +142,5 @@ M3 切片 1 已实现本 ADR 的以下部分（证据：`docs/evidence/M3-VERIFI
 - **恢复**：纯文件操作，不启动服务；校验备份 db 的 sha256 与 PRAGMA integrity_check、schema 版本、每个 artifact 的 sha256；目标必须是空目录；写 estore.properties 与 ackup-manifest.properties 供追溯。
 - **偏差**：manifest 使用 **key-value properties** 而非 ADR 原文的 manifest.json（避免引入 JSON 解析依赖，字段等价）；导出不加密（与决策 10 一致）；导入不做合并/增量（决策 7）；映射网络盘仍按 S1 的限制处理。
 - **验证**：AdminPackageTest 4 tests（往返、口令锁定、篡改/非空拒绝、备份恢复、篡改备份拒绝）；scripts/admin-drill.mjs **9/9** 真实 CLI 演练（种子→导出→导入→启动校验→备份→恢复→再启动→非空拒绝）；后端全量 **83 tests**。
-- **未实现（后续）**：导出包加密与密钥管理、账号批量重置流程、增量导出、实例锁清理脚本自动化。
+- **实例锁清理（2026-11-13 补齐）**：`--admin-clear-lock --data-root=<root>` + `RestoreService` 同风格纯文件操作；仅在无活动写实例时删除锁与 holder，运行中拒绝并显示持有者；`scripts/clear-data-root-lock.ps1` 为运维封装；`LockCleanupServiceTest` 4 tests。
+- **未实现（后续）**：导出包加密与密钥管理、账号批量重置流程、增量导出。

@@ -44,15 +44,15 @@
 **前置（2026-11-13 已解除）**：ADR-0007（本地只读 Git + 人工不可变基线）与 ADR-0008（单机单写者 + 导出/导入、MCP 只读连接）已 Accepted。M3 首个切片建议顺序：
 
 1. **S1（已完成 2026-11-13）**：数据根实例锁 + 网络盘/云同步拒绝 + MCP 只读连接（ADR-0008）；71 tests、手动 5 项、E2E 2 passed，见 `docs/evidence/M3-VERIFICATION.md`；
-2. 仓库注册 + 基线捕获 + 只读 `GitAdapter`（ADR-0007，`V5` 迁移）；
-3. 开发交接包（Approved Design 快照 + 任务 + 验收 + 基线）；
-4. `ExecutionRecord`（from/to commit、变更清单、diverged）与偏差分析；
-5. 验收矩阵与 As-built/交付快照；
-6. 知识更新提议 + 人工发布 + 过期提示。
+2. **已完成（2026-11-13）**：仓库注册 + 基线捕获 + 只读 `GitAdapter`（ADR-0007，`V5` 迁移）；
+3. **已完成（2026-11-13）**：开发交接包（Approved Design 快照 + 任务 + 验收 + 基线）；
+4. **已完成（2026-11-13）**：`ExecutionRecord`（from/to commit、变更清单、diverged）与偏差分析；
+5. **已完成（2026-11-13）**：验收矩阵与 As-built/交付快照；
+6. **已完成（2026-11-13）**：知识更新提议 + 人工发布（四眼）+ 过期提示 + supersede/deprecated。
 
 约束：Git 只读、不 clone/fetch/push；代码内容不进知识库；Jira/CI 集成不在 M3。
 
-**状态：已完成（2026-11-13）** — 证据：`docs/specs/M3-PHASE3-PLAN.md` §10、`docs/evidence/M3-VERIFICATION.md` §7、`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`；后端 79 tests、前端 25 tests、E2E 3 passed、演示 25/25。ADR-0008 补齐（2026-11-13）：导出/导入包、备份/恢复与 CLI 演练已完成（83 tests、演练 9/9）；实例锁清理脚本仍未自动化。
+**状态：已完成（2026-11-13）** — 证据：`docs/specs/M3-PHASE3-PLAN.md` §10–§12、`docs/evidence/M3-VERIFICATION.md` §7–§9、`docs/handoffs/SESSION-HANDOFF-2026-11-13-M3.md`；后端 **89 tests**、前端 25 tests、E2E 3 passed、M3 演示 25/25、验收演练 18/18、ADR-0008 演练 9/9。M3.5 补强：知识发布后半段 + supersede/deprecated、脱敏项目验收演练、实例锁清理 CLI/脚本。剩余技术债见 `docs/specs/M3.5-BACKLOG.md`（交接包文件导出、Baseline 部署/DDL 版本、矩阵证据链接）。
 
 ## M4：企业集成和协同
 

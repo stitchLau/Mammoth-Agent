@@ -53,3 +53,14 @@
 | 测试 | AdminPackageTest：导出/导入往返、密码锁定、非空拒绝、篡改包拒绝、备份恢复、篡改备份拒绝 | 4/4 通过；全量 83 tests |
 | 真实 CLI 演练 | scripts/admin-drill.mjs：种子→导出→导入→启动校验→备份→恢复→启动校验→非空拒绝 | **9/9 通过** |
 | 修正 | 备份路径曾把 storage_path（已含 rtifacts/ 前缀）再次拼到 rtifacts/ 下，导致恢复后路径错误；测试发现后改为按 storage_path 直接落盘 | 见 docs/quality/M3-BUGS.md B-M3-009 |
+## 7. M3.5 补强（2026-11-13）
+
+| 阶段 | 内容 | 结果 |
+|---|---|---|
+| 知识生命周期 | V6 增加 superseded_by/deprecation_note；supersede/deprecate 服务、REST、UI、审计 | KnowledgeWorkflowTest +2；交付闭环测试补上"草稿→提交→四眼 verify→supersede" |
+| 验收演练 | scripts/m3-acceptance-drill.mjs：脱敏项目全链路（含知识发布与 supersede） | **18/18** 通过 |
+| 实例锁清理 | LockCleanupService + --admin-clear-lock + clear-data-root-lock.ps1 | LockCleanupServiceTest 4/4；运行中拒绝、停止后清理、无锁幂等 |
+| 技术债登记 | docs/specs/M3.5-BACKLOG.md（交接包文件导出、Baseline 部署/DDL 版本、矩阵证据链接） | ROADMAP 切片状态修正 |
+| 回归 | mvn verify 89 tests；前端 build+25；E2E 3 passed | 全绿 |
+
+**修正**：V6 后 AdminPackageTest 的 schema 断言仍为 5，导致全量 verify 失败；已改为 6 并重跑（见 docs/quality/M3-BUGS.md B-M3-010）。

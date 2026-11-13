@@ -58,3 +58,9 @@
 - **根因**：rtifact.storage_path 已是相对数据根的 rtifacts/xx/yy/<sha>；备份代码又把它拼到备份目录的 rtifacts/ 下，恢复后变成 rtifacts/artifacts/...。
 - **修复**：备份/恢复按 storage_path 原样落盘（并校验相对路径不越界）；manifest 键改为 sha256.<storage_path>。
 - **回归**：AdminPackageTest 4/4；CLI 演练 9/9（导入/恢复后 Artifact 哈希一致）。
+## B-M3-010 V6 迁移后 admin 测试断言未同步
+
+- **现象**：mvn verify 中 AdminPackageTest 2 个断言失败——期望 schemaVersion 5，实际 6。
+- **根因**：新增 V6__knowledge_supersede.sql 后，导出/备份 manifest 的 schema 版本变为 6，测试硬编码 5 未同步。
+- **修复**：断言改为 6；后续新增迁移时同步检查 AdminPackageTest、ReadOnlyModeTest、MigrationTest 与 DataSourceConfig.MIN_SCHEMA_VERSION。
+- **回归**：89 tests 全通过。

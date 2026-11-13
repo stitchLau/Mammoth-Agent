@@ -53,7 +53,8 @@ npm test           # vitest
 
 ## 数据根与运行模式（ADR-0008，2026-11-13）
 
-- **单写者**：Web/管理入口启动时对 `<数据根>/.mammoth-instance.lock` 取独占 OS 锁；第二个写实例**启动失败**，错误信息包含持有者（来自 `.mammoth-instance-holder`：pid/host/startedAt）与锁路径。进程崩溃时 OS 自动释放锁；残留文件不影响下次启动（可手动删除）。
+- **单写者**：Web/管理入口启动时对 `<数据根>/.mammoth-instance.lock` 取独占 OS 锁；第二个写实例**启动失败**，错误信息包含持有者（来自 `.mammoth-instance-holder`：pid/host/startedAt）与锁路径。进程崩溃时 OS 自动释放锁；残留文件不影响下次启动。
+- **清理陈旧锁**：`java -jar mammoth-domain-service.jar --admin-clear-lock --data-root=<root>`（或 `scripts/clear-data-root-lock.ps1`）；仅在**没有活动写实例**时删除锁文件，运行中会拒绝并显示持有者。
 - **只读入口（MCP）**：`java -jar ... --mcp` 强制 `mammoth.data-root.read-only=true`（System property，配置文件的默认值不能覆盖；拒绝 `--mammoth.data-root.read-only=false`）。只读入口不取写锁、不创建目录、不执行 Flyway、以只读连接 + `PRAGMA query_only=ON` 打开数据库。
 - **前置**：只读入口要求数据根已由 Web/管理入口初始化（至少一次迁移且存在默认组织）；否则启动失败并提示先启动 Web 入口。迁移只能由写入口执行。
 - **路径校验**：拒绝 UNC（`\\server\share`）、已知云同步目录（OneDrive/Dropbox/Google Drive/iCloud 等路径片段）、已知远端文件系统类型（SMB/CIFS/NFS/AFPFS/WebDAV/FUSE-SSHFS）。Windows 映射网络盘可能报告为 NTFS，JVM 无法可靠识别——按运维规范使用本地固定盘。
@@ -156,7 +157,7 @@ npm test           # vitest
 - **交接包**：`GET /api/projects/{p}/work-items/{w}/handoff`（需批准方案）返回 Markdown（业务/技术渲染 + 任务 + 验收 + 基线）。
 - **实施回收**：`POST .../executions`（owner/editor）以 `baselineId + repositoryId + toCommit` 回收文件级变更；`POST .../executions/{id}/deviations` 人工分类偏差；`GET .../acceptance-matrix` 返回覆盖状态与未完成任务候选。
 - **交付快照**：`POST .../deliveries` 生成 As-built 草稿；`POST .../deliveries/{id}/approve` 需 owner/reviewer 且非作者（四眼），批准时 Markdown 落 Artifact，批准后不可覆盖。
-- **知识闭环**：`POST .../knowledge-proposals` 基于已批准快照；`accept` 需 owner/reviewer 且非提议者，生成**知识草稿**（仍走既有四眼审核发布）；知识列表/详情/检索返回 `stale`（绑定的代码基线落后于最新基线），仅提示不改状态。
+- **知识闭环**：`POST .../knowledge-proposals` 基于已批准快照；`accept` 需 owner/reviewer 且非提议者，生成**知识草稿**（仍走既有四眼审核发布）；发布后可 `POST /knowledge/{id}/supersede`（新替旧）或 `/deprecate`（废弃），历史保留但不再检索；知识列表/详情/检索返回 `stale`（绑定的代码基线落后于最新基线），仅提示不改状态。
 - **安全**：Git 只读白名单（不含 clone/fetch/push/checkout/commit/reset/clean），10 s 超时、1 MiB 输出上限；演示/测试只用临时合成仓库。
 ## 导出/导入与备份恢复（ADR-0008，CLI）
 
@@ -196,5 +197,5 @@ java -jar $jar --admin-restore="$env:TEMP\mammoth-backups\mammoth-backup-<时间
 - 登录限速与 MCP agent 身份为单进程/环境变量实现；多实例需共享存储与专用只读账号；
 - 仅 SQLite 迁移；PostgreSQL 方言迁移脚本按 ADR-0003 在服务端阶段补充；
 - 需求/方案列表仍为客户端分页；证据不支持 PDF/Office 解析（ADR-0009 OPEN）；
-- 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入与备份/恢复已实现（ADR-0008 CLI）**；实例锁清理脚本仍未自动化；
+- 数据根单写者锁、网络盘/云同步拒绝、MCP 只读连接、Git 基线/实施回收/交付快照/知识闭环已实现（M3）；**导出/导入与备份/恢复已实现（ADR-0008 CLI）**；实例锁清理已提供 CLI/脚本；
 - 在 DSH `workspace-write` 沙箱中 Playwright 会因 worker 管道 `EPERM` 失败；E2E 需普通终端、CI 或一次性提权。
