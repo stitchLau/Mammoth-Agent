@@ -283,3 +283,33 @@ mammoth.jira.page-size=50
 - 未配置 token 时 Jira 拉取返回 409，不会发起外部调用；真实 smoke 需要轮换后的只读 PAT。
 - HTTP 已被负责人接受；仍建议仅受控内网/网络隔离，后续优先 HTTPS。
 - 测试：`JiraImportTest` 用本地 JDK `HttpServer` 覆盖分页/Bearer/标准字段；**未调用真实 Jira**。
+
+## M4.5 Agent Hook 通知（2026-11-13）
+
+- 当前没有 AgentTask 持久表；先提供通用 hook ingress，供后续 Agent 运行时调用：
+  `POST /api/projects/{projectId}/agent-hooks`
+  body：`{"eventType":"agent.task.completed|agent.task.confirmation_required","taskId":"...","title":"...","summary":"...","link":"/projects/..."}`
+- 权限：项目 owner/editor（未来 Agent 运行时通过内部服务调用；MCP 只读进程不能调用）。
+- 收件人：`completed` → owner/editor/reviewer；`confirmation_required` → owner/reviewer；操作者不通知自己。
+- 站内默认；企微是否外发由 `mammoth.notifications.wecom.events` 白名单决定，默认包含这两个事件与 `job.failed`。
+- `link` 只能是 `/` 开头的应用内路径；外部 URL 拒绝，避免开放重定向。
+- 审计：`agent.hook`（eventType/taskId/created；不含标题/正文）。
+- 测试：`AgentHookTest` 2/2；Maven Surefire 强制测试环境关闭真实邮件/企微，避免继承开发机凭据。
+
+## M4.5 本机 Docker Compose（2026-11-13）
+
+- 仓库根新增 `Dockerfile`/`.dockerignore`；JRE 17 镜像，jar + `apps/web/dist` 打进镜像，数据根 `/data`。
+- 本机 compose（不打进仓库）：`D:\DockerCompose\mammoth-agent.yml`。
+- 项目名 `mammoth-agent`（独立 compose 项目，避免影响 `docker-compose.yml` 的 mysql/pg/redis/rabbitmq/protoforge）。
+- 端口：`18080:8080`；数据卷：`D:\DockerCompose\data\mammoth-agent-data:/data`。
+- 启动/更新：
+
+```powershell
+cd D:\DockerCompose
+docker compose -f mammoth-agent.yml up -d --build
+docker compose -f mammoth-agent.yml logs -f
+```
+
+- 环境变量由 compose 从当前 shell/`.env` 插值；**不要把 Jira token/企微 webhook 写进 compose 文件**。容器默认 `MAMMOTH_NOTIFICATIONS_WECOM_ENABLED=false`、Jira token 为空。
+- 已验证：镜像构建、容器启动、`/api/health`、项目数据（`DWMS`）与 3 条 HSG 外部记录在卷内可见。
+- 停止：`docker compose -f mammoth-agent.yml down`（保留卷）；不要 `down -v`，除非确认删除本地数据。

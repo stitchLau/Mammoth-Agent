@@ -71,7 +71,7 @@
 
 产出：Jira 只读 API（确认版本/TLS/只读账号后）、CSM 适配器（端点确认后）、SMTP/企微渠道启用、可选远程 Agent 网关/团队服务器试点、CI 远端与真实脱敏项目验收。
 
-**状态：M4.5-0 本机准备完成；M4.5-1 Jira 只读 mock + 真实只读 smoke（3/3 预览）完成；M4.5-3 企微测试发送 1 条成功（2026-11-13）** — 见 [`docs/evidence/M4.5-VERIFICATION.md`](evidence/M4.5-VERIFICATION.md) 与 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)。本机项目/仓库/Docker 已就绪；Jira 预览未落库；企微仅测试群一条；SMTP 未提供。仍单节点 SQLite；不接触生产凭据/数据。
+**状态：M4.5-0 本机准备完成；M4.5-1 Jira 只读 mock + 真实 smoke + HSG 3 条落库；M4.5-3 企微测试 1 条；Agent Hook 与 Docker Compose 完成（2026-11-13）** — 见 [`docs/evidence/M4.5-VERIFICATION.md`](evidence/M4.5-VERIFICATION.md) 与 [`docs/specs/M4.5-PHASE45-PLAN.md`](specs/M4.5-PHASE45-PLAN.md)。本机项目/仓库/Docker 就绪；Jira HSG 3 条仅本地；企微仅测试群一条；SMTP/CSM 未做。仍单节点 SQLite。
 
 ## M5：团队服务端规模化（PostgreSQL/多实例）
 

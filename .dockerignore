@@ -1,0 +1,14 @@
+.git
+.gitignore
+.idea
+.vscode
+docs
+scripts
+apps/web/node_modules
+apps/web/src
+apps/web/e2e
+apps/web/test-results
+apps/web/playwright-report
+services/domain/src
+services/domain/target/*
+!services/domain/target/mammoth-domain-service.jar

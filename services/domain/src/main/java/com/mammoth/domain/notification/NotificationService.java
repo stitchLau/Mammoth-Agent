@@ -109,6 +109,27 @@ public class NotificationService {
   }
 
   @Transactional
+  public int agentTaskCompleted(AppUser actor, String projectId, String taskId, String title,
+      String summary, String link) {
+    return create("agent.task.completed", projectId, "agent_task", taskId, "completed",
+        "Agent 任务完成：" + title, summary,
+        link == null || link.isBlank() ? "/projects/" + projectId : link,
+        Notification.SEVERITY_INFO, projectMembers(projectId, Set.of(
+            AuthorizationService.OWNER, AuthorizationService.EDITOR,
+            AuthorizationService.REVIEWER)), actor);
+  }
+
+  @Transactional
+  public int agentTaskConfirmationRequired(AppUser actor, String projectId, String taskId,
+      String title, String summary, String link) {
+    return create("agent.task.confirmation_required", projectId, "agent_task", taskId,
+        "confirmation", "Agent 任务待确认：" + title, summary,
+        link == null || link.isBlank() ? "/projects/" + projectId : link,
+        Notification.SEVERITY_WARNING, projectMembers(projectId, Set.of(
+            AuthorizationService.OWNER, AuthorizationService.REVIEWER)), actor);
+  }
+
+  @Transactional
   public int importFailed(AppUser actor, String projectId, String sourceId, String message) {
     return create("import.failed", projectId, "external_source", sourceId, "failure",
         "外部导入失败", message,

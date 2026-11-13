@@ -1,5 +1,14 @@
 # Changelog
 
+## V0.18.0 — 2026-11-13
+
+- **M4.5 Agent Hook**：`POST /api/projects/{p}/agent-hooks`；`agent.task.completed`、`agent.task.confirmation_required`；站内/企微事件，`link` 仅应用内相对路径；审计 `agent.hook`；`AgentHookTest` 2/2。当前无 AgentTask 表，先落 Hook 契约。
+- **企微**：经负责人确认测试群发送 1 条测试通知（`status=sent`）；默认事件白名单改为 Agent 两个事件 + `job.failed`；正式事件/监控待确认。
+- **Jira HSG**：`project = HSG ORDER BY updated DESC` 预览 3/3，apply 3 条（accepted=3/rejected=0），仅存本地 SQLite。
+- **Docker**：仓库新增 `Dockerfile`/`.dockerignore`；本机 `D:\DockerCompose\mammoth-agent.yml`（project `mammoth-agent`，端口 18080，卷 `D:\DockerCompose\data\mammoth-agent-data`）；容器健康/项目/HSG 记录验证。
+- **测试**：后端全量 **124 tests**；前端 build + 25；M4 E2E 5 passed（本轮未重跑）。
+- **安全**：测试 POM 强制关闭真实邮件/企微；token/正文不写仓库/日志/文档；Jira 真实数据只在本地 SQLite/卷。
+
 ## V0.17.0 — 2026-11-13
 
 - **M4.5-0 本机准备**：登记 `E:\Projects\DWMS\code\D-WMS-release`（`AiNi/数智金属-prod`，HEAD `3f17cdee`）；客户“数智金属”、产品“D-WMS”、项目“数智金属D-WMS”（`DWMS`）；干净基线；Docker 29.8.0 可用；原未提交 `application-dev.yml` 经负责人同意 stash。

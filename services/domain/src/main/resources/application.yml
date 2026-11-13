@@ -49,7 +49,7 @@ mammoth:
       enabled: ${MAMMOTH_NOTIFICATIONS_WECOM_ENABLED:false}
       webhook-url: ${MAMMOTH_NOTIFICATIONS_WECOM_WEBHOOK_URL:}
       msg-type: ${MAMMOTH_NOTIFICATIONS_WECOM_MSG_TYPE:markdown}
-      events: ${MAMMOTH_NOTIFICATIONS_WECOM_EVENTS:solution.submitted,job.failed}
+      events: ${MAMMOTH_NOTIFICATIONS_WECOM_EVENTS:agent.task.completed,agent.task.confirmation_required,job.failed}
       rate-limit-per-minute: ${MAMMOTH_NOTIFICATIONS_WECOM_RATE_LIMIT:20}
       test-webhook-url: ${MAMMOTH_NOTIFICATIONS_WECOM_TEST_WEBHOOK_URL:}
   jobs:

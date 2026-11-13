@@ -103,3 +103,9 @@
 
 - M4 S5 落地 V10（notification/notification_delivery/server_job）、站内默认启用、邮件/企微完整实现但默认关闭、writer-only worker、重试/死信、org_admin 状态/测试发送。
 - 真实 SMTP/企微未启用；测试使用 Mock JavaMailSender + 本地 HTTP stub；启用配置/真实联调留 M4.5。
+
+## M4.5 增补（2026-11-13）
+
+- Agent Hook 事件：`agent.task.completed`、`agent.task.confirmation_required`；当前无 AgentTask 表，先提供 `POST /api/projects/{p}/agent-hooks` 契约。
+- 企微默认事件白名单调整为两个 Agent 事件 + `job.failed`；测试群发送 1 条成功。
+- 测试环境强制关闭真实邮件/企微，避免继承开发机凭据。
