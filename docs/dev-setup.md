@@ -310,6 +310,6 @@ docker compose -f mammoth-agent.yml up -d --build
 docker compose -f mammoth-agent.yml logs -f
 ```
 
-- 环境变量由 compose 从当前 shell/`.env` 插值；**不要把 Jira token/企微 webhook 写进 compose 文件**。容器默认 `MAMMOTH_NOTIFICATIONS_WECOM_ENABLED=false`、Jira token 为空。
-- 已验证：镜像构建、容器启动、`/api/health`、项目数据（`DWMS`）与 3 条 HSG 外部记录在卷内可见。
+- 环境变量由 compose 从当前 shell/`.env` 插值；**不要把 Jira token/企微 webhook 写进 compose 文件**。默认示例为 WeCom 关闭、Jira token 为空。
+- 已用真实环境变量重建验证：WeCom `enabled/configured`、Jira token 注入、项目 `DWMS` 与 3 条 HSG 记录可见；未发送额外企微消息。
 - 停止：`docker compose -f mammoth-agent.yml down`（保留卷）；不要 `down -v`，除非确认删除本地数据。
