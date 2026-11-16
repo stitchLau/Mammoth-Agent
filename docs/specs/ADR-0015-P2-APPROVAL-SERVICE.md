@@ -81,11 +81,28 @@ Start-ScheduledTask -TaskName 'MammothApprovalApply'
 
 ## 5. 边界与残留风险
 
+- **实测结果（2026-11-16）**：双 token 隔离、apply token 文件 ACL、Agent 用户读 token 被拒、人类批准后由独立进程自动 apply、审计三段、`createdBy`=人类均已实测通过。见 §7。
 - **仍未用 DPAPI**：P2 采用"服务账号专属 ACL 文件"（ADR-0015 允许 OS 凭据存储/DPAPI；文件 ACL 是 P2 的等价隔离手段，写入 runbook）。P2.1 可改为 DPAPI 加密文件（由服务账号 DPAPI 保护），进一步降低管理员误拷贝风险。
-- **Domain writer 运行在交互用户下（开发模式）**：Domain 进程环境中的 apply token 只用于验证，不授予写权限之外的资产访问；生产部署应让 Domain writer 也运行在独立服务账号（P2.1/P5）。
-- **计划任务密码**：`LogonType Password` 需要服务账号密码用于"无论用户是否登录"运行；Windows 将其保存在 LSA 秘密中，但仍建议仅在受控机器使用，并纳入凭据轮换。
+- **任务身份偏差（待 P2.1 收紧）**：计划任务最终以 **SYSTEM** 身份通过任务 XML 注册（action 直接 `java.exe`），因为专用 `MammothApproval` 账号的 Task Scheduler `LogonUserEx` 反复失败（0x8007052E）。SYSTEM 仍不是 Agent 交互用户，但权限大于专用账号；P2.1 应改回专用账号（S4U 或修复任务凭据）。复现脚本：`scripts/windows/approval-service-task-system.ps1`。
+- **Domain writer 运行在交互用户下（开发模式）**：Domain 进程环境中的 apply token 只用于验证；生产部署应让 Domain writer 也运行在独立服务账号（P2.1/P5）。
 - **管理员=超级用户**：任何本地管理员都可以重置 ACL/读取 token；这是 OS 边界而非产品边界，P2 不解决"管理员恶意"。
-- **本会话不是管理员**：因此 V2/V4–V8 的最终执行与截图证据待负责人执行后补录（P2 验收记录）。
+- **本会话不是管理员**：V2/V4–V8 的最终执行与截图证据待负责人执行后补录（P2 验收记录）。
+
+## 7. 实测记录（2026-11-16，合成环境）
+
+| # | 检查 | 结果 |
+|---|---|---|
+| V1 | Agent 用户（`Lau`）读取 `apply-token.txt` / 列目录 | **Access denied**（边界成立） |
+| V2 | `icacls` apply-token.txt | 仅 Administrators/SYSTEM 全权 + MammothApproval 读取 |
+| V3 | CLI 无 token 文件 | exit 2，fail-closed（单元测试 + 手工） |
+| V4 | 用 propose token 调 `POST /api/agent/proposals/{id}/apply` | **401** `invalid approval service token` + deny 审计 |
+| V5 | apply token 调 propose | 单元测试 401（Domain 双 token 分离）；未在生产环境手工复测 |
+| V6 | 人类会话批准 → 审批服务自动 apply | **通过**：提案 `applied`，Domain 生成 `REQ-0004`（手工 CLI）与 `REQ-0005`（watch 自动），`created_by`=人类 `spike_admin` |
+| V7 | 高风险缺第二人 | 单元测试 403/不可 apply；未在真实环境跑高风险类型（P1 仅开放 `work_item.create`） |
+| V8 | 重复 apply 幂等 | 单元测试通过；未手工复测 |
+| V9 | 审批服务常驻任务 | SYSTEM + XML 任务运行中（java `--approval-service --watch`），批准后 ≤5s 自动 apply |
+
+**审计样例（REQ-0005）**：`propose(agent)` → `approve(human)` → `apply(service)`，`seq=1/2/3`，`domain_object_id` 一致；deny 审计记录了无效 apply token 尝试。
 
 ## 6. 回滚
 
