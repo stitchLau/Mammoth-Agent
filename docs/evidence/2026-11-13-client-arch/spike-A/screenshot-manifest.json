@@ -91,6 +91,16 @@
       "file": "17-after-reinstall.png",
       "sha256": "788142bd14a2042b6a423b98a4bbf975f8526d8096e65515b5d3fc14dcb1a3b6",
       "bytes": 49467
+    },
+    {
+      "file": "18-proposal-approved-raw-json-before-fix.png",
+      "sha256": "8ba7f37fa22596a017f658b1efeb9f9e2281d109352cf32f53cd9dac7c3b7a8f",
+      "bytes": 144309
+    },
+    {
+      "file": "19-proposals-human-readable-after-fix.png",
+      "sha256": "b5477af5cb99fb7b66314a3124f35456986bc5073e6348bb61600f0b4e7850df",
+      "bytes": 126210
     }
   ]
 }

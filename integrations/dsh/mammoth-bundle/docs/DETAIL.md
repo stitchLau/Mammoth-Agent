@@ -26,6 +26,8 @@
 ## 已知限制
 
 - 本 Spike 不做正式写 API（需独立 ADR）、不做多用户/RBAC UI、不做全部业务模块迁移。
+- 工作台是**最小验证界面**：提案页主视图为业务字段，提案 ID/DSH 审批/Domain 原始响应在「技术信息」折叠区；
+  正式迁移按 `docs/specs/UI-SPEC.md` 重新设计，不复用该临时布局。
 - 右栏通过官方 `sidebarRightTabs` 扩展席位实现，未替换官方 `rightbar`/`rightbar.session` 单槽。
 - 会话↔项目映射保存在 Host 插件本地 JSON（过渡实现，非权威、非 Session 事件）。
 - DSH 处于 `0.2.2-rc.2` 预发布期，Slot/Client API 可能随版本破坏性变更；升级需按升级 SOP 回归。

@@ -300,6 +300,8 @@ window.__ModuleLoader__.load({
 .mammoth-tab { padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--dsw-alias-label-secondary, #57606a); font: inherit; cursor: pointer; }
 .mammoth-tab[data-active="true"] { background: var(--dsw-alias-bg-layer-2, rgba(0,0,0,.05)); color: var(--dsw-alias-label-primary, #1f2328); font-weight: 600; }
 .mammoth-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mammoth-tech summary { cursor: pointer; font-size: 12px; color: var(--dsw-alias-label-tertiary, #6e7781); margin: 4px 0; }
+.mammoth-tech[open] summary { margin-bottom: 8px; }
 .mammoth-divider { height: 1px; background: var(--dsw-alias-border-l1, rgba(0,0,0,.06)); margin: 14px 0; }
 `
 
@@ -521,7 +523,14 @@ window.__ModuleLoader__.load({
       })
       else if (view.name === 'requirements') content = renderProjectScoped({ t, snap, detail, kind: 'requirements', onPickProject: projectId => setView({ ...view, projectId }), onOpenProject: projectId => setView({ name: 'project', projectId, tab: 'requirements' }) })
       else if (view.name === 'knowledge') content = renderProjectScoped({ t, snap, detail, kind: 'knowledge', onPickProject: projectId => setView({ ...view, projectId }), onOpenProject: projectId => setView({ name: 'project', projectId, tab: 'knowledge' }) })
-      else if (view.name === 'proposals') content = renderProposals({ t, proposals, message, onDecide: decideProposal, onRefresh: loadProposals })
+      else if (view.name === 'proposals') content = renderProposals({
+        t,
+        proposals,
+        message,
+        onDecide: decideProposal,
+        onRefresh: loadProposals,
+        onOpenRequirements: projectId => setView({ name: 'requirements', projectId }),
+      })
       else if (view.name === 'customers') content = renderCatalog({ t, title: t('customers'), items: catalog.customers, error: catalog.error })
       else if (view.name === 'products') content = renderCatalog({ t, title: t('products'), items: catalog.products, error: catalog.error })
       else content = renderSettings({ t, health, snap, audit, location: typeof location === 'undefined' ? '' : location.href })
@@ -715,34 +724,69 @@ window.__ModuleLoader__.load({
               : renderKnowledgeTable({ t, items: project.knowledge?.items ?? [] }))
     }
 
-    function renderProposals({ t, proposals, message, onDecide, onRefresh }) {
+    function renderProposals({ t, proposals, message, onDecide, onRefresh, onOpenRequirements }) {
       const items = proposals.items
+      const formatTime = value => {
+        if (value === null || value === undefined || value === '') return null
+        try {
+          return new Date(value).toLocaleString('zh-CN', { hour12: false })
+        } catch {
+          return String(value)
+        }
+      }
+      const statusLabel = status => status === 'pending' ? '待审核'
+        : status === 'approved' ? '已批准'
+          : status === 'rejected' ? '已拒绝' : (status ?? 'unknown')
       return h('div', null,
         h(Section, { title: t('proposals'), actions: [h('button', { key: 'r', className: 'mammoth-btn', onClick: () => { void onRefresh() } }, t('refresh'))] },
           h('div', { className: 'mammoth-note', style: { marginBottom: '10px' } }, t('proposalsNote')),
           proposals.error === null ? null : h(ErrorNote, { error: proposals.error }),
           items.length === 0 ? h('div', { className: 'mammoth-note' }, t('noProposal'))
-            : items.map(proposal => h('div', { key: proposal.id, className: 'mammoth-card', style: { marginBottom: '10px' } },
-              h('div', { className: 'mammoth-card-title' },
-                h('span', null, proposal.title ?? '(untitled)'),
-                h(Chip, { tone: proposal.status === 'pending' ? 'warn' : proposal.status === 'approved' ? 'ok' : proposal.status === 'rejected' ? 'error' : 'plain' }, proposal.status ?? 'unknown')),
-              h(Kv, { rows: [
-                ['proposalId', proposal.id],
-                ['projectId', proposal.projectId],
-                ['priority', proposal.priority],
-                ['createdAt', proposal.createdAt],
-                ['summary', proposal.summary],
-                ['rationale', proposal.rationale],
-                ['approver', proposal.approver],
-                ['domainObject', proposal.domainObject === null || proposal.domainObject === undefined ? null : JSON.stringify(proposal.domainObject)],
-                ['domainError', proposal.domainError],
-              ] }),
-              proposal.status === 'pending'
-                ? h('div', { className: 'mammoth-actions', style: { marginTop: '10px' } },
-                  h('button', { className: 'mammoth-btn mammoth-btn-primary', disabled: proposals.busy === proposal.id, onClick: () => { void onDecide(proposal.id, 'approve') } }, t('approve')),
-                  h('button', { className: 'mammoth-btn', disabled: proposals.busy === proposal.id, onClick: () => { void onDecide(proposal.id, 'reject') } }, t('reject')),
-                  h('span', { className: 'mammoth-note' }, t('approveNote')))
-                : null))),
+            : items.map(proposal => {
+              const domain = proposal.domainObject !== null && typeof proposal.domainObject === 'object'
+                ? proposal.domainObject
+                : null
+              const technical = {
+                proposalId: proposal.id,
+                projectId: proposal.projectId,
+                status: proposal.status ?? null,
+                dshApproval: proposal.dshApproval ?? null,
+                approver: proposal.approver ?? null,
+                decidedAt: proposal.decidedAt ?? null,
+                domainObject: proposal.domainObject ?? null,
+                domainError: proposal.domainError ?? null,
+              }
+              return h('div', { key: proposal.id, className: 'mammoth-card', style: { marginBottom: '10px' } },
+                h('div', { className: 'mammoth-card-title' },
+                  h('span', null, proposal.title ?? '(untitled)'),
+                  h(Chip, { tone: proposal.status === 'pending' ? 'warn' : proposal.status === 'approved' ? 'ok' : proposal.status === 'rejected' ? 'error' : 'plain' }, statusLabel(proposal.status))),
+                // Human-readable business fields only. Raw IDs and the Domain
+                // JSON response live in the collapsed technical section below.
+                h(Kv, { rows: [
+                  ['优先级', proposal.priority],
+                  ['创建时间', formatTime(proposal.createdAt)],
+                  ['摘要', proposal.summary],
+                  ['依据/说明', proposal.rationale],
+                  ['审批人', proposal.approver],
+                  domain === null ? null : ['Domain 需求', `${domain.itemNo ?? ''} ${domain.title ?? ''}`.trim()],
+                  domain === null ? null : ['Domain 状态', domain.status],
+                  proposal.domainError === null || proposal.domainError === undefined ? null : ['写入失败', proposal.domainError],
+                ].filter(row => row !== null) }),
+                proposal.status === 'approved' && domain !== null
+                  ? h('div', { className: 'mammoth-actions', style: { marginTop: '10px' } },
+                    h('button', { className: 'mammoth-btn', onClick: () => { onOpenRequirements?.(proposal.projectId) } }, `在需求池查看 ${domain.itemNo ?? ''}`.trim()),
+                    h('span', { className: 'mammoth-note' }, 'Domain Service 已按人工批准写入；本页仅展示提案记录。'))
+                  : null,
+                proposal.status === 'pending'
+                  ? h('div', { className: 'mammoth-actions', style: { marginTop: '10px' } },
+                    h('button', { className: 'mammoth-btn mammoth-btn-primary', disabled: proposals.busy === proposal.id, onClick: () => { void onDecide(proposal.id, 'approve') } }, t('approve')),
+                    h('button', { className: 'mammoth-btn', disabled: proposals.busy === proposal.id, onClick: () => { void onDecide(proposal.id, 'reject') } }, t('reject')),
+                    h('span', { className: 'mammoth-note' }, t('approveNote')))
+                  : null,
+                h('details', { className: 'mammoth-tech', style: { marginTop: '8px' } },
+                  h('summary', null, '技术信息（提案 ID / DSH 审批 / Domain 原始响应）'),
+                  h('div', { className: 'mammoth-pre' }, JSON.stringify(technical, null, 2))))
+            })),
         message === null ? null : h('div', { className: 'mammoth-note' }, message.text))
     }
 

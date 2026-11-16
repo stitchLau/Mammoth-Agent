@@ -198,7 +198,26 @@ Host 审计：`proposal.blocked`（`approval: "rejected"`）。结论：DSH 审�
 卸载 → 入口消失 / profile 恢复 → 重装 → 入口恢复；`engines.dsh: ">=9.0.0"` 负向安装被 `incompatible-version` 拒绝。
 详见 `plugin-lifecycle-evidence.md` 与截图 16/17。
 
-## 5. 客户端运行时诊断（截图 13）
+### 6.6 负责人真人批准（2026-11-16 11:13，Asia/Shanghai）
+
+负责人在 Mammoth 工作台「待审核提案」亲自点击 **批准并写入**（非 Agent 自动化），批准提案
+`db238b78-7834-4dcb-a86b-092f8451980d`（"急料维护列表新增'供应商名称'列"）：
+
+- 提案状态：`approved`；`approver: local-desktop-human`；`dshApproval: allowed-once`；
+- Domain 返回：`REQ-0003`（`8052479a-2bc3-4e2b-9114-a14b8a1ff7cf`，draft）；
+- Domain `work_items=3`；`REQ-0003.createdBy = 3b3e0c00-…`（`spike_admin` 人类账号）；
+- Domain 审计：新增一条 `work_item.create`，`actorUserId=spike_admin`；
+- 证据截图：`18-proposal-approved-raw-json-before-fix.png`（修复前原始 JSON）、
+  `19-proposals-human-readable-after-fix.png`（修复后可读页面）。
+
+> 结论：**真人批准链路已由负责人本人完成**；此前 `REQ-0002` 仅为 Lead Agent UI 自动化的机械链路证据。
+
+### 6.7 期间修复的阻断缺陷
+
+- 工作台批准返回 `MAMMOTH_STUB_HTTP_ERROR … HTTP 400 {"error":"confirm-required"}`：Host 校验 `confirm` 后
+  未把它转发给适配器，已修复（`10efdea`）并由负责人在修复后成功批准（`REQ-0003`）。
+- 提案页把 `domainObject` 等后端字段以原始 JSON 直出：已改为业务字段主视图 + 技术信息折叠
+  （client-only，HMR 生效；截图 18→19）。
 
 ```json
 {

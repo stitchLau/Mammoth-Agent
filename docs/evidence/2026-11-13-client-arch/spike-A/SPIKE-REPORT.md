@@ -47,7 +47,7 @@
 | S-A4 | 会话与项目关联可见 | **部分通过**。会话头部项目徽章 + 右栏项目上下文页（绑定状态、客户、成员、知识、工作项）；未实现"从工作台一键新建并进入会话" | 截图 05、06 |
 | S-A5 | Agent 使用 Mammoth 项目知识工具 | **通过**。现有 Domain MCP 的 3 个只读工具全部可用（3/3）；Agent 在真实会话中读取 verified 知识/来源计数/需求 11 维就绪；**本轮补做负向**：非成员项目返回 `ApiException: no access to project`（MCP 侧拒绝） | `tool-call-records.md` §2；截图 14 |
 | S-A6 | 渲染 Mammoth 业务结果卡片 | **部分通过**。知识卡片（成功态）与 MCP 错误卡片（失败态，不 blank slot）在真实会话渲染；提案工具卡片为结构化结果（截图 09/10 的提案数据）；卡片内"跳转工作台"动作未实现 | 截图 11、14 |
-| S-A7 | 受控写与审批边界 | **条件通过**。机械链路已端到端执行：DSH 工具审批（策略 `ask` 时 `allowed-once`；策略 `never` 时 fail-closed 拒绝）→ 工作台批准 → 隔离适配器以人类 Domain 账号写入 `REQ-0002`；Domain `audit_log.actorUserId=spike_admin`；agent 账号登录 401。**但工作台"人工批准"点击由 Lead Agent 的 UI 自动化执行，不是独立人类动作**；且适配器与 Agent 同 OS 用户，不能构成对"能执行任意 shell 的 Agent"的安全边界（详见 §10/§15，已加固：fail-closed、token、去 CORS、confirm 回显） | 截图 09、10、13、14；`domain-after-approval.json`；`proposal-stub-*`；`proposal-stub-auth-negative.json` |
+| S-A7 | 受控写与审批边界 | **条件通过（真人批准已补齐）**。机械链路：DSH 工具审批（策略 `ask` 时 `allowed-once`；`never` 时 fail-closed）→ 工作台批准 → 适配器以人类 Domain 账号写入。**2026-11-16 11:13 负责人亲自在工作台批准提案 `db238b78` → Domain 写入 `REQ-0003`**（`audit_log.actorUserId=spike_admin`；agent 账号 401、不能自批）；此前 `REQ-0002` 为 Lead Agent UI 自动化的机械链路证据。**剩余条件**：适配器与 Agent 同 OS 用户，不构成安全边界（需独立写路径 ADR）；负责人签署 ADR。 | 截图 09、10、13、14、18、19；`domain-after-approval.json`；`proposal-stub-*`；`proposal-stub-auth-negative.json` |
 | S-A8 | 桌面文件/目录/artifact 上传 | **未执行**（任务书 §四 未列；记为后续项，不影响路线 A 结论） | — |
 | S-A9 | DSH 升级回归 SOP | **未执行**（可延后；建议作为首个升级窗口的前置任务） | — |
 | S-A10 | 启动性能与包体测量 | **未执行**（记为后续项；当前 Client 为单文件 ~65KB，仅 `require('react')`，未观察到可感知首帧影响，但未测量） | — |
@@ -164,9 +164,9 @@ Agent 工具 mammoth_propose_work_item
 | Agent 不能自批/不能直写 | Agent 账号 `account_type=agent` 被 Domain 登录层硬拒（401）；bundle 无 approve 工具；Agent 无 Domain 写凭据 |
 | 四眼 | proposer=agent 身份（`fb228729...`），approver=human（`local-desktop-human` → Domain `spike_admin`），适配器拒绝 approver==proposer |
 
-### 8.3 边界声明（独立评审后修订）
+### 8.3 边界声明（独立评审 + 真人批准后修订）
 
-- 本 Spike 的"人工批准"点击由 Lead Agent 通过 Windows UI 自动化在真实 DSH Desktop 窗口完成（为可重复取证）。**这不是独立人类的治理动作**：它只证明了"按钮 → Host → 适配器 → Domain 人类账号写入"的机械链路与审计链，不能证明"人类亲自作出了批准决定"。生产上必须由授权人亲自点击，并保留可核验的人类身份/签署记录。
+- **真人批准已发生**：2026-11-16 11:13 由项目负责人本人在工作台点击「批准并写入」，提案 `db238b78` → Domain `REQ-0003`（`createdBy=spike_admin`）。此前 `REQ-0002` 的批准点击由 Lead Agent UI 自动化完成，只证明机械链路；**真人治理以 `REQ-0003` 为准**。正式产品仍需人类身份/签署/职责记录的显式设计。
 - 适配器与 Agent Runtime 运行在**同一 OS 用户**下：token 与人类 Domain 凭据可被具有任意 shell 的 Agent 读取，因此**适配器不是安全边界**。本 Spike 已做加固（DSH 审批 fail-closed 只接受 `allowed-once`、适配器 token 鉴权、移除 CORS `*`、审批必须回显提案 id、无鉴权列表接口关闭），但真正的边界必须来自：隔离服务身份/独立进程与权限、Domain 侧授权与审计、以及人类独占的审批通道（正式写路径 ADR）。
 - DSH 工具审批与 Domain 审批的组合行为需在正式实现中继续保留"缺一不可"；DSH 的 `never` 策略不能被视为业务审批的替代。
 
@@ -196,8 +196,10 @@ Agent 工具 mammoth_propose_work_item
 9. **`/api/meta` 公开暴露本机路径**（Domain 既有行为）；Host 未把其暴露给模型，但建议在正式版评估收敛。
 10. **客户端激活错误不可见**是 DSH 0.2.2-rc.2 的 UX 空档（仅 console/boot audit）；本 bundle 内置诊断可缓解，长期需上游改进或统一插件健康页。
 11. **审批适配器不是安全边界（Spike 级）**：与 Agent 同 OS 用户，token/人类凭据对任意 shell 可读；本轮已加固（fail-closed、token、去 CORS、confirm 回显、关列表接口），但正式版必须由"受控写操作与服务身份"ADR 用隔离身份/Domain 授权/人类独占审批解决。
-12. **"人工批准"未由独立人类验证**：Spike 的批准点击由 Lead Agent UI 自动化完成；需在正式版由负责人亲自复验并留痕。
-13. **证据历史性缺口**：早期提案记录 `dshApproval` 为 null（当时 Host 尚未把该字段传给适配器，已在加固提交中修复；Host 审计同一提案有 `allowed-once`）；截图 14–17 为整改阶段补采。
+12. **"人工批准"治理**：`REQ-0003` 已由项目负责人**亲自**在工作台批准（2026-11-16 11:13），补齐了"真人点击"证据；`REQ-0002` 为 Lead Agent UI 自动化的机械链路证据。正式产品仍需显式的真人身份/签署/职责记录设计（人事治理）。
+13. **证据历史性缺口**：早期提案记录 `dshApproval` 为 null（当时 Host 尚未把该字段传给适配器，已在加固提交中修复；Host 审计同一提案有 `allowed-once`）；截图 14–20 为整改/真人批准阶段补采。
+14. **提案页可读性缺陷（已修复）**：修复前提案卡片把 `domainObject` 等后端字段以原始 JSON 直接展示（截图 18）；现已改为业务字段主视图 + 技术信息折叠 + 需求跳转（截图 19）。该问题属 Spike 演示页简化缺陷，正式迁移按 `UI-SPEC` 设计，不复用此临时布局。
+15. **审批确认转发 bug（已修复，`10efdea`）**：Host 校验 `confirm` 后未转发给适配器，导致工作台批准返回 `confirm-required`；修复后负责人批准成功。
 
 ---
 
@@ -207,7 +209,7 @@ Agent 工具 mammoth_propose_work_item
 
 | 评审发现 | 级别 | 整改 | 残留 |
 |---|---|---|---|
-| "人工批准"由 Lead Agent UI 自动化完成，却被其他文档写成已证实的人类批准 | BLOCKER | 报告/ADR/README 统一改为"机械链路演示；人工闸门未验证"，S-A7 降为条件通过 | 需负责人真人复验（后续项） |
+| "人工批准"由 Lead Agent UI 自动化完成，却被其他文档写成已证实的人类批准 | BLOCKER | 报告/ADR/README 统一改为"机械链路演示；人工闸门未验证"，S-A7 降为条件通过 | **已补齐**：2026-11-16 11:13 负责人本人在工作台批准 `db238b78` → `REQ-0003`（截图 18/19） |
 | 适配器 `approve` 无鉴权、CORS `*`、任意 `approver` 字符串、Host 接受任意 approver | BLOCKER | 适配器 token 鉴权（`/health` 外全部 401）、移除 CORS、approve/reject 必须回显提案 id、approver 固定为 `local-desktop-human`、Host 拒绝非 confirm 请求；负向测试见 `proposal-stub-auth-negative.json` | 同 OS 用户仍可读 token/凭据 → 正式 ADR 解决 |
 | DSH 审批闸门对 `unavailable`/未知结果 fail-open | MAJOR | 改为仅 `allowed-once` 才创建提案，否则 fail-closed | — |
 | S-A0 卸载未执行、`engines.dsh` 负向未测 | MAJOR | 补做卸载→验证→重装往返与 `engines.dsh >=9.0.0` 拒绝测试（`plugin-lifecycle-evidence.md`、截图 16/17） | — |
@@ -218,8 +220,10 @@ Agent 工具 mammoth_propose_work_item
 | 适配器未记录 `dshApproval` | MINOR | Host 已把该字段传给适配器；历史记录保留 null 并在 `proposal-stub-state.json` 说明 | 历史记录 |
 | ADR 自相矛盾（Accepted vs "待负责人批准/保持 Proposed"）、Lead Agent 签署、四眼表述不准确、凭据例外未记录、peerDependencies 缺失 | MAJOR | ADR 已改为"定稿待负责人签署 + S-A7 条件"；删除矛盾表述；四眼改为"提案者身份=agent、批准侧=人类账号；Domain 双人审批待独立 ADR"；记录 Spike 明文凭据例外；说明 bundle 零 DSH 依赖故不声明 peerDependencies | 负责人签署 |
 | raw schema 本地 guard 对 object/array 上的 enum/const 存在防御缺口；自检脚本有激活副作用 | MINOR | 已记录为后续加固项（当前 3 个 schema 合法且 gate 有效） | 后续加固 |
+| 提案页把 `domainObject` 等后端字段以原始 JSON 直接渲染（本轮用户发现） | MINOR（UI 缺陷） | 已修复：业务字段主视图 + 技术信息折叠 + 「在需求池查看 REQ-xxxx」入口（截图 18→19） | 正式迁移按 UI-SPEC 重新设计 |
+| 工作台批准报 `confirm-required`（Host 未转发 confirm） | MAJOR（阻断操作） | 已修复 `10efdea`；负责人随后成功批准（`REQ-0003`） | — |
 
-**整改后结论**：路线 A 技术可行性可接受；S-A7 为条件通过；ADR-0014 以"定稿待负责人签署 + 条件"交付。
+**整改后结论（2026-11-16 更新）**：路线 A 技术可行性可接受；S-A7 的真人批准已由负责人亲自完成，剩余条件为①负责人签署 ADR；②"Agent 受控写操作与服务身份"独立 ADR 关闭适配器同 OS 用户边界。ADR-0014 以"定稿待签署 + 上述条件"交付。
 
 ---
 

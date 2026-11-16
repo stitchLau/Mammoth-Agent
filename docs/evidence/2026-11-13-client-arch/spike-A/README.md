@@ -19,7 +19,7 @@
 | 会话 ↔ 项目上下文 | **能**。Host 插件按 DSH Session 记录当前项目；`systemPrompt.section` 注入项目卡；会话头部项目徽章 + 右栏项目上下文页 | 高；`host-plugin-state.json`、本会话系统提示注入、截图 05/06 |
 | Agent 经现有 MCP 读取项目知识 | **能**。`mcp__mammoth_domain__search_project_knowledge / get_knowledge_document / get_requirement_context` 全部可用（3/3） | 高；`tool-call-records.md`、截图 11/12 |
 | Agent 输出自定义结构化业务结果卡片 | **能**。`tool.call.toolview` 按工具 wire name 注册；Mammoth 知识/需求/提案卡片渲染成功 | 高；截图 11；提案卡片见 09/10 页面侧 |
-| Agent 创建待审核提案 + 人工批准后正式写入 | **条件通过（机械链路 + 审计已证；人工闸门未由独立人类验证）**。DSH 工具审批闸门返回 `allowed-once`；工作台批准后由隔离适配器以**人类** Domain 会话写入 `REQ-0002`；`audit_log.actorUserId = spike_admin`，不是 agent。但批准点击由 Lead Agent UI 自动化执行，且适配器与 Agent 同 OS 用户 → 不构成安全边界（详见报告 §8.3/§10/§15） | 高（链路）/ 中（治理）；`domain-after-approval.json`、`proposal-stub-*`、截图 09/10/13 |
+| Agent 创建待审核提案 + 人工批准后正式写入 | **条件通过（真人批准已由负责人亲自完成；剩余适配器安全边界）**。负责人本人于 2026-11-16 亲自批准提案 `db238b78` → Domain 写入 `REQ-0003`（`audit_log.actorUserId=spike_admin`）；DSH 审批闸门 `allowed-once`；agent 账号 401、不能自批。**仍未闭合**：适配器与 Agent 同 OS 用户，不构成安全边界（需独立 ADR） | 高（链路+真人操作）；`domain-after-approval.json`、`proposal-stub-*`、截图 09/10/13/18/19 |
 | 安装/卸载/重装与 `engines.dsh` 负向门禁 | **通过**。卸载后 profile 清单恢复、左栏入口消失；重装后恢复；`engines.dsh: >=9.0.0` 安装被 `incompatible-version` 拒绝 | 高；`plugin-lifecycle-evidence.md`、截图 16/17 |
 | 升级回归（S-A9）/ 启动性能（S-A10）/ 桌面文件目录（S-A8） | 未执行（不在本轮任务书 §四 范围；记为已知限制与后续项） | — |
 
@@ -47,6 +47,13 @@
 | `15-new-session-bound.png` | 新建会话页面（会话自动绑定当前项目，见 `host-plugin-state.json` 的 `session-created` 记录） | S-A3 |
 | `16-after-remove-bundle.png` | `remove_bundle` 后：左栏 Mammoth 入口消失、工作台不可达 | S-A0 |
 | `17-after-reinstall.png` | 重装后：入口恢复、bundle 行重新 active | S-A0 |
+| `18-proposal-approved-raw-json-before-fix.png` | 负责人在工作台亲自批准后，提案页把 `domainObject` 原始 JSON 直接铺开（缺陷复现） | S-A7 / UI 缺陷 |
+| `19-proposals-human-readable-after-fix.png` | 修复后：主视图为业务字段（需求编号/状态/优先级/审批人/摘要/依据），技术信息折叠 | S-A6 / UI 修复 |
+
+> **真人批准记录（2026-11-16 11:13，Asia/Shanghai）**：负责人在 `desktop` profile 中亲自点击「批准并写入」，批准提案
+> `db238b78-7834-4dcb-a86b-092f8451980d`（标题"急料维护列表新增供应商名称列"）→ Domain Service 生成 `REQ-0003`
+> （`createdBy=spike_admin` 人类账号，`audit_log.actorUserId=spike_admin`）。第三方 API 复核：提案 `status=approved`、
+> `dshApproval=allowed-once`、`domainObject.itemNo=REQ-0003`；项目工作项 3 条。**这补齐了独立评审指出的"人工批准未由独立人类验证"缺口**。
 
 ### 2.2 机器可读证据
 
@@ -116,11 +123,15 @@ spike/dsh-desktop-integration/proposal-stub.mjs   # Spike-only 隔离适配器�
 
 ## 4.1 独立评审后的修正（2026-11-16）
 
-- **S-A7 改为条件通过**：机械链路与审计已验证，但"人工批准"点击由 Lead Agent UI 自动化完成（非独立人类），
-  且适配器与 Agent 同 OS 用户、不构成安全边界。已加固：DSH 审批只接受 `allowed-once`（fail-closed）、
-  适配器 token 鉴权、移除 CORS `*`、审批必须回显提案 id；负向测试见 `proposal-stub-auth-negative.json`。
-  正式版必须由"受控写操作与服务身份"ADR + 负责人真人复验闭合。
-- **补齐证据**：卸载/重装与 `engines.dsh` 负向门禁（`plugin-lifecycle-evidence.md`、截图 16/17）；
+- **S-A7 人工批准已由负责人亲自完成**：2026-11-16 11:13 负责人亲自点击「批准并写入」，提案 `db238b78` → `REQ-0003`
+  （Domain 审计 actor=spike_admin）。此前"由 Lead Agent UI 自动化批准"的 `REQ-0002` 仍保留为机械链路证据，但**真人治理
+  以 `REQ-0003` 为准**。
+- **已知 UI 缺陷已修复（提案页技术字段可读性）**：原提案页把 `domainObject` 等后端字段以原始 JSON 直接铺开；已改为
+  业务字段主视图 + 「技术信息」折叠 + 「在需求池查看 REQ-xxxx」入口（截图 18 为修复前、19 为修复后）。
+  该问题属 Spike 演示页的简化缺陷，不是产品交互设计，已记录为 UI 债务（正式迁移按 `docs/specs/UI-SPEC.md` 设计）。
+- **审批链加固**（DSH 审批只接受 `allowed-once`、适配器 token 鉴权、去 CORS、审批回显提案 id、修复 Host→适配器
+  `confirm` 转发 bug `10efdea`）；负向测试见 `proposal-stub-auth-negative.json`。
+- **证据补齐**：卸载/重装与 `engines.dsh` 负向门禁（`plugin-lifecycle-evidence.md`、截图 16/17）；
   会话自动绑定（2 条 `session-created`）；MCP 非成员拒绝（截图 14）；工具卡片失败态（截图 14）；
   截图 sidecar 统一移入 `screenshots-metadata/`，并新增 `screenshot-manifest.json`（SHA-256）。
 - **更正**：此前版本把 11/12/13 的截图 sidecar 误当作运行时 JSON、把中文乱码归因于数据（实为 PowerShell 5.1

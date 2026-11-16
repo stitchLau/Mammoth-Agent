@@ -182,7 +182,7 @@ ADR-0001 §6.3 将 **MCP 定为 Domain API↔DSH 的推荐边界**（配置型 b
 | S-A4 | 部分通过 | 会话头部项目徽章（截图 06）+ 右栏项目上下文页（截图 05）；"一键新建并进入会话"未实现 |
 | S-A5 | 通过 | 3 个只读 MCP 工具端到端；本轮补负向：非成员项目 `ApiException: no access to project`（截图 14） |
 | S-A6 | 部分通过 | 知识成功卡片（截图 11）+ MCP 失败态卡片（截图 14，不 blank slot）；提案结构化结果见 09/10；卡片跳转未实现 |
-| S-A7 | **条件通过** | 机械链路：DSH 审批（`allowed-once`；`never` 时 fail-closed）→ 工作台批准 → 适配器以人类 Domain 账号写入 `REQ-0002`（`audit_log.actorUserId=spike_admin`，agent 401）。**限制**：批准点击由 Lead Agent UI 自动化执行，非独立人类；适配器与 Agent 同 OS 用户，不构成安全边界（已加固 token/CORS/confirm/fail-closed）。见 `SPIKE-REPORT.md` §8.3/§15 |
+| S-A7 | **条件通过（真人批准已补齐）** | 机械链路：DSH 审批（`allowed-once`；`never` 时 fail-closed）→ 工作台批准 → 适配器以人类 Domain 账号写入。**2026-11-16 11:13 项目负责人本人在工作台批准提案 `db238b78` → Domain `REQ-0003`**（`audit_log.actorUserId=spike_admin`，agent 401、不能自批；截图 18/19）。剩余条件：适配器与 Agent 同 OS 用户的边界（独立写路径 ADR）+ 负责人签署 |
 | S-A8 | 未执行（后续项） | 任务书 §四 未列；不影响路线 A 技术结论 |
 | S-A9 | 未执行（可延后） | 后续首个 DSH 升级窗口前置任务 |
 | S-A10 | 未执行（后续项） | 当前 Client 单文件 ~65KB、仅 `require('react')`；未测量首帧增量 |
@@ -192,12 +192,12 @@ ADR-0001 §6.3 将 **MCP 定为 Domain API↔DSH 的推荐边界**（配置型 b
 1. **右栏扩展点修订**：0.2.2-rc.2 的 `rightbar` / `rightbar.session` 是已被 ui-sidebar-right 占用的 single slot，第三方**不得替换**；项目上下文右栏改用官方扩展席位 `ctx.sidebarRightTabs.register()` + keyed body `sidebar.right.pane.tab`（Spike 截图 05 验证）。原文 §3 中"rightbar / rightbar.session"的表述按此修订。
 2. **数据通道定稿**：采用 **C2 Host 桥**，具体实现为 Host 插件 `ctx.webServer.register()` 注册受 `ctx.connection.requestRejection` 鉴权的同源路由，Client 在 `dsh-app://app/` 页面内用相对 `fetch` 访问；不使用 C1（浏览器直连 Domain，CORS/凭据不可接受），C3（工具/卡片）保留为降级路径。自定义 Typert Remote 不作为第三方通道（安装版无 codegen/装配工具链）。
 3. **会话上下文定稿**：Host 按 DSH Session 绑定项目（`session/created` + 首条 `user/message`），以 `ctx.systemPrompt.section` 注入项目卡；映射先以非权威本地状态过渡，正式数据模型等待 V11。
-4. **写路径定稿（边界不变；链路为机械演示 + 条件通过）**：Agent 只能 `propose`（待审核提案）；目标形态是正式写经 DSH 工具审批 + 工作台人工确认 + Domain 权限/审计（以及独立 ADR 定义的 Domain 双人审批）；Agent 不能自批、不能直写。**Spike 未证明**：真人批准与 Domain 双人四眼；且隔离适配器与 Agent 同 OS 用户，不构成安全边界——这些必须由"Agent 受控写操作与服务身份"独立 ADR 闭合，"人工闸门已验证"不得作为产品承诺。正式 propose 写 API 与服务身份由该 ADR 决定。
+4. **写路径定稿（边界不变；机械链路 + 真人批准均已验证）**：Agent 只能 `propose`（待审核提案）；目标形态是正式写经 DSH 工具审批 + 工作台人工确认 + Domain 权限/审计（以及独立 ADR 定义的 Domain 双人审批）；Agent 不能自批、不能直写。**Spike 已验证**：负责人本人于 2026-11-16 在工作台完成一次真人批准并产生 Domain `REQ-0003`；DSH 审批 `allowed-once`、fail-closed。**仍未证明/未闭合**：Domain 双人四眼；且隔离适配器与 Agent 同 OS 用户，不构成安全边界——后者必须由"Agent 受控写操作与服务身份"独立 ADR 闭合，"人工闸门已验证"不得替代该 ADR。正式 propose 写 API 与服务身份由该 ADR 决定。
 5. **版本策略**：bundle 锁定 `engines.dsh`（零 DSH 运行时依赖，故不声明 peerDependencies）；每次升级按升级 SOP 回归；所有 Slot/Client API 使用收敛到 `dsh-adapter` 层。
 6. **安全补充**：工具 `parameters` 必须走注册前本地 schema 校验（raw JSON Schema 子集；`required` 只能是根级数组），并保留 `scripts/check-tool-schemas.mjs` 作为安装/重载门禁（2026-11-13 P0 事故防再发）。
 7. **已接受的产品/工程代价**：会话↔项目映射为过渡实现；`conversation.chat.node`、`composer.dock`、卡片跳转、S-A8/S-A9/S-A10 为后续项；DSH rc 期升级风险由版本锁定与 SOP 管理。
 
-**签署**：本版本为 2026-11-16 定稿，**待项目负责人签署后生效**。定稿依据：Spike A 证据（技术可行性 + S-A2 Go + S-A7 条件结论）与独立评审整改记录（`SPIKE-REPORT.md` §15）。生效条件：①负责人签署；②"S-A7 条件"由独立写路径 ADR 与真人复验闭合；③"S-A8–A10/后续项"不阻塞本 ADR 的架构方向。若负责人变更任一决策项，本 ADR 回到 Proposed 修订流程。
+**签署**：本版本为 2026-11-16 定稿，**待项目负责人签署后生效**。定稿依据：Spike A 证据（技术可行性 + S-A2 Go + S-A7 机械链路与**负责人本人真人批准** `REQ-0003`）与独立评审整改记录（`SPIKE-REPORT.md` §15）。生效条件：①负责人签署；②"Agent 受控写操作与服务身份"独立 ADR 关闭适配器同 OS 用户边界（真人批准已由负责人于 2026-11-16 完成，见"Spike A 执行结果"S-A7）；③"S-A8–A10/后续项"不阻塞本 ADR 的架构方向。若负责人变更任一决策项，本 ADR 回到 Proposed 修订流程。
 
 ## 回滚或替代路径
 
@@ -219,4 +219,4 @@ ADR-0001 §6.3 将 **MCP 定为 Domain API↔DSH 的推荐边界**（配置型 b
 7. 按评估报告 §4 IA 与 §7 复用计划分阶段迁移；保留 SPA 为管理台/后备 Web；在 `docs/12-ROADMAP.md` 新增客户端架构阶段（编号待负责人确认）。
 8. 每次 DSH 升级执行升级 SOP 并记录；维护 `engines.dsh`/peer 版本矩阵与升级回归证据。
 9. 环境治理：开发中的 `link:` bundle 优先使用**专用 dev profile**；共享日常 profile 时必须按生产变更处理（备份 → 自检 → 重载 → 最小请求验证）。
-10. **生效条件（阻塞项）**：①项目负责人签署本 Accepted v1.1；②由负责人亲自完成一次"提案 → 工作台人工批准 → Domain 写入"的真人复验并留痕（Spike 由 Agent UI 自动化执行，不能替代）；③"Agent 受控写操作与服务身份"ADR 定义隔离身份/Domain 授权/人类独占通道，关闭"适配器与 Agent 同 OS 用户"的边界缺口。
+10. **生效条件（阻塞项）**：①项目负责人签署本 Accepted v1.1；②~~由负责人亲自完成一次"提案 → 工作台人工批准 → Domain 写入"的真人复验并留痕~~（**已完成**：2026-11-16 11:13 负责人本人批准提案 `db238b78` → Domain `REQ-0003`，截图 18/19、`domain-after-approval.json`）；③"Agent 受控写操作与服务身份"ADR 定义隔离身份/Domain 授权/人类独占通道，关闭"适配器与 Agent 同 OS 用户"的边界缺口。

@@ -109,7 +109,9 @@ node <repo>/spike/dsh-desktop-integration/proposal-stub.mjs
 3. 新建 DSH 会话：会话头部出现项目徽章；右栏可打开「Mammoth 项目上下文」。
 4. 在会话中让 Agent 调用 `mcp__mammoth_domain__search_project_knowledge` 读取项目知识（projectId 由系统提示注入）。
 5. 让 Agent 调用 `mammoth_propose_work_item` 创建提案（DSH 审批闸门 → Pending）。
-6. 在工作台「待审核提案」人工批准 → 适配器以人类账号调用 Domain `POST /api/projects/{p}/work-items` → 返回 `REQ-xxxx`。
+6. 在工作台「待审核提案」人工批准 → 适配器以人类账号调用 Domain `POST /api/projects/{p}/work-items` → 返回 `REQ-xxxx`；
+   页面主视图只显示业务字段（需求编号/状态/优先级/审批人/摘要/依据），提案 ID、DSH 审批结果与 Domain 原始响应收在
+   「技术信息」折叠区，并提供「在需求池查看 REQ-xxxx」入口。
 7. 诊断页确认：Domain 读取身份、MCP 工具注册状态、提案审批记录。
 
 ## 5. 回滚
