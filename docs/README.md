@@ -53,6 +53,7 @@
 |---|---|
 | [`process/M1-TIMELINE.md`](process/M1-TIMELINE.md) / [`process/M2-TIMELINE.md`](process/M2-TIMELINE.md) / [`process/M3-TIMELINE.md`](process/M3-TIMELINE.md) / [`process/M4-TIMELINE.md`](process/M4-TIMELINE.md) | 提交级执行时间线（M4 S0–S2 已记录） |
 | [`quality/M1-BUGS.md`](quality/M1-BUGS.md) / [`quality/M2-BUGS.md`](quality/M2-BUGS.md) / [`quality/M3-BUGS.md`](quality/M3-BUGS.md) / [`quality/M4-BUGS.md`](quality/M4-BUGS.md) | 缺陷台账（根因/修复/回归） |
+| [`quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md`](quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md) | **P0 事故复盘**：DSH 工具 `required: true` 导致全部会话请求失败；根因链、修复、深层防护与全局规则 |
 | [`evidence/M1-VERIFICATION.md`](evidence/M1-VERIFICATION.md) / [`evidence/M2-VERIFICATION.md`](evidence/M2-VERIFICATION.md) / [`evidence/M3-VERIFICATION.md`](evidence/M3-VERIFICATION.md) / [`evidence/M4-VERIFICATION.md`](evidence/M4-VERIFICATION.md) | 验证命令、结果、E2E 覆盖、截图（M4 S0–S5） |
 | [`handoffs/`](handoffs/) | 会话交接（M0/M1.5/M2/M3-S1 历史快照 + M3/M3.5 + M4 S0/S1/S2 + M4 完成） |
 

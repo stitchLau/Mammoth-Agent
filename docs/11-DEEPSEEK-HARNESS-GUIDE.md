@@ -110,6 +110,25 @@ AgentTeam 在 SubAgent 树上增加持久化共享任务板与任务依赖协调
 
 DSH 的 Profile、Bundle 和 Plugin 是不同概念。按当前上游文档操作，不要手工篡改 DSH Home 中由 CLI/桌面端管理的 Profile 文件。
 
+### 9.1 工具 Schema 是全局运行面（2026-11-13 事故后强制）
+
+DSH 的工具定义有两套 schema 形式，不能混用：
+
+- `defineTool()` 的 author DSL：属性上可写 `required: true`，由 `@deepseek-ai/dsh-tools` 编译成根级数组；
+- 直接传给 `ctx.tools.register()` 的 raw JSON Schema：`required` 必须是对象根级的字符串数组。
+
+已核对的 DSH `0.2.2-rc.2` 行为：`ToolRegistry.register()` 只校验 `output.schema`，**不校验 `parameters`**。非法 `parameters` 不会让插件加载失败，却会被模型 Provider 在**每一次请求**中拒绝（`Invalid schema for function ...`），并且因为工具是全局注册的，会同时击穿所有会话、所有工作区和子 Agent。
+
+因此，任何已通过 `link:` 接入 profile 的 bundle，其源码就是运行时，必须按生产变更处理：
+
+1. 修改 `index.js` / 工具 `parameters` 前先备份并确认回滚路径；
+2. 运行 `node --check` 与 bundle 自带 schema 自检（`node scripts/check-tool-schemas.mjs`），两者通过后再重载 profile；
+3. 重载后发一条最小请求，确认工具目录能被 Provider 接受；
+4. 一旦出现 `Invalid schema for function`，立即回滚/卸载该 bundle 或恢复最近可用 schema，不要重试、不要当成模型或网络故障；
+5. 开发中的 `link:` bundle 不要装进唯一/日常使用的 profile，优先专用 dev profile。
+
+完整复盘见 [`quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md`](quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md)。
+
 ## 10. 安全限制
 
 DSH 属于快速演进的开发工具。不要仅依赖 Harness 工具权限作为企业安全边界：

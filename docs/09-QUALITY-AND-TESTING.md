@@ -11,6 +11,7 @@
 - 错误、空状态、加载状态和边界条件有处理；
 - 权限与审计按风险要求实现；
 - 数据迁移可重复、可验证，必要时可回滚；
+- 涉及 DSH 工具 schema 或全局插件时，`node --check` 与 schema 自检通过，并记录回滚路径；
 - 用户可见文档和 Agent 指令已更新；
 - 完整 diff 已人工/Agent review；
 - 未完成事项和已知风险已明确记录。
@@ -19,7 +20,7 @@
 
 - Unit：领域规则、状态机、权限判断、解析和映射。
 - Integration：数据库、存储、检索、Git、Runtime Adapter。
-- Contract：Agent Tool Schema、Domain API、外部集成接口。
+- Contract：Agent Tool Schema（含 DSH raw `parameters` 的 Provider 兼容性）、Domain API、外部集成接口。
 - E2E：项目创建、资料导入、检索、需求收集、方案审核、结项。
 - Security：跨项目检索隔离、未授权文件访问、Prompt Injection、工具审批。
 - Regression：固定样例项目和需求案例的输出结构/关键事实回归。
@@ -50,3 +51,5 @@ AI 测试应允许合理表述差异，但关键事实和引用必须可验证�
 ## 6. 发布前检查
 
 运行格式化、lint、typecheck、测试、构建、依赖漏洞/许可证审查、迁移演练、备份恢复演练、发布说明、回滚方案和配置检查。
+
+若发布涉及 DSH 全局插件或工具 schema，额外运行 `node --check` 与该 bundle 的 schema 自检脚本，并确认回滚方式；详见 [`quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md`](quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md)。
