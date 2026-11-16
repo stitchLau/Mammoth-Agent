@@ -89,8 +89,8 @@ Start-ScheduledTask -TaskName 'MammothApprovalApply'
 
 ## 6. 回滚
 
-1. `Stop-ScheduledTask`/`Unregister-ScheduledTask`（或 `Disable-ScheduledTask`）；
+1. 停止并删除计划任务：`schtasks /End /TN MammothApprovalApply`、`schtasks /Delete /TN MammothApprovalApply /F`（或 `Unregister-ScheduledTask`）；
 2. 删除 `C:\ProgramData\Mammoth\approval-service\`（token/配置/日志）；
-3. `Remove-LocalUser MammothApproval`；
+3. 删除本地账号：`net user MammothApproval /delete`；
 4. 清除 Domain 的 `MAMMOTH_AGENT_WRITE_APPLY_TOKEN` 并重启 Domain（apply 端点回到 503 fail-closed）；
 5. 提案/审批/审计数据保留；未 apply 的提案保持 `approved`，可人工决定重试或拒绝。

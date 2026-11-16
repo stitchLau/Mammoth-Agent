@@ -81,17 +81,16 @@ if (-not (Get-Command $JavaExe -ErrorAction SilentlyContinue) -and -not (Test-Pa
   Fail "java executable not found: $JavaExe"
 }
 
-# 1. Dedicated local account (ADSI; avoids the optional LocalAccounts module).
+# 1. Dedicated local account (net.exe; works in Windows PowerShell 5.1 and PowerShell 7,
+#    and does not depend on the optional LocalAccounts/ADSI providers).
 $plainPassword = $null
 if ($null -ne $ServiceAccountPassword) {
   $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ServiceAccountPassword))
 }
-$computer = [ADSI]"WinNT://$env:COMPUTERNAME,computer"
-$existing = $computer.Children | Where-Object {
-  $_.SchemaClassName -eq 'User' -and $_.Name -eq $ServiceAccountName
-}
-if (-not $existing) {
+& net.exe user $ServiceAccountName 2>$null | Out-Null
+$accountExists = ($LASTEXITCODE -eq 0)
+if (-not $accountExists) {
   if ($null -eq $plainPassword) {
     $bytes = New-Object byte[] 24
     [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
@@ -99,13 +98,12 @@ if (-not $existing) {
     Write-Host "[action] generated a random password for $account; store it in your password manager now:" -ForegroundColor Yellow
     Write-Host "         $plainPassword"
   }
-  $user = $computer.Create('User', $ServiceAccountName)
-  $user.SetPassword($plainPassword)
-  $user.Put('Description', 'ADR-0015 isolated approval service account')
-  # UF_SCRIPT (0x1) + UF_DONT_EXPIRE_PASSWD (0x10000)
-  $flags = [int]$user.Get('UserFlags')
-  $user.Put('UserFlags', ($flags -bor 0x1 -bor 0x10000))
-  $user.SetInfo()
+  & net.exe user $ServiceAccountName $plainPassword /add /expires:never /passwordchg:no `
+    /comment:"ADR-0015 isolated approval service account" | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Fail "net user /add failed (exit $LASTEXITCODE); check the local password policy and permissions"
+  }
+  & net.exe user $ServiceAccountName /fullname:"Mammoth Approval Service" | Out-Null
   Write-Host "[action] created local user $account"
 } else {
   Write-Host "[skip] local user already exists: $account"
@@ -124,7 +122,8 @@ if ((Test-Path -LiteralPath $tokenFile) -and -not $Force) {
 }
 $tokenBytes = New-Object byte[] 32
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($tokenBytes)
-$applyToken = [Convert]::ToHexString($tokenBytes).ToLowerInvariant()
+# Convert.ToHexString is .NET 5+ only; build the hex manually so Windows PowerShell 5.1 works too.
+$applyToken = ($tokenBytes | ForEach-Object { $_.ToString('x2') }) -join ''
 [IO.File]::WriteAllText($tokenFile, $applyToken, (New-Object Text.UTF8Encoding($false)))
 $config = [ordered]@{
   serviceAccount = $account
@@ -153,17 +152,17 @@ Write-Host "[action] wrote token/config/wrapper (token value is only in $tokenFi
 Write-Host '[action] applied strict ACLs (admins/SYSTEM full; service account read)'
 
 # 4. Optional scheduled task running the watch loop as the service account.
+#    schtasks.exe is used because the ScheduledTasks PowerShell module is not available in
+#    PowerShell 7 (and its parameter sets differ across versions).
 if ($RegisterScheduledTask) {
   if ($null -eq $plainPassword) { Fail '-RegisterScheduledTask needs -ServiceAccountPassword' }
-  $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument "/c `"$wrapperFile`""
-  $trigger = New-ScheduledTaskTrigger -AtStartup
-  $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 3 `
-    -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit (New-TimeSpan -Hours 0)
-  Register-ScheduledTask -TaskName $taskName -TaskPath '\Mammoth\' -Action $action `
-    -Trigger $trigger -Settings $settings -User $account -Password $plainPassword `
-    -RunLevel Highest `
-    -Description 'ADR-0015 approval service: apply human-approved proposals' -Force | Out-Null
-  Write-Host "[action] registered scheduled task \Mammoth\$taskName"
+  $taskCommand = 'cmd.exe /c "' + $wrapperFile + '"'
+  & schtasks.exe /Create /F /TN $taskName /TR $taskCommand /SC ONSTART /RU $account `
+    /RP $plainPassword /RL HIGHEST | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Fail "schtasks /Create failed (exit $LASTEXITCODE)"
+  }
+  Write-Host "[action] registered scheduled task $taskName (schtasks, runs at startup as $account)"
 }
 
 Write-Host ''
