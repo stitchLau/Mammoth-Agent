@@ -1,0 +1,198 @@
+﻿{
+    "verifiedAt":  "2026-11-16T02:07:55.0289325Z",
+    "projectId":  "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+    "workItems":  {
+                      "value":  [
+                                    {
+                                        "id":  "fa17c5d2-345d-4ea7-860d-14879e6b89c8",
+                                        "projectId":  "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+                                        "itemType":  "requirement",
+                                        "itemNo":  "REQ-0001",
+                                        "title":  "Spike synthetic requirement",
+                                        "summary":  "Synthetic requirement for Domain Service recon",
+                                        "status":  "draft",
+                                        "priority":  "high",
+                                        "sourceNote":  "synthetic",
+                                        "ownerUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                        "createdBy":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                        "priorStatus":  null,
+                                        "readyConfirmedBy":  null,
+                                        "readyConfirmedAt":  null,
+                                        "contextSnapshotId":  null,
+                                        "approvedSolutionVersionId":  null,
+                                        "createdAt":  "2026-11-13T09:25:11Z",
+                                        "updatedAt":  "2026-11-13T09:25:11Z"
+                                    },
+                                    {
+                                        "id":  "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+                                        "projectId":  "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+                                        "itemType":  "requirement",
+                                        "itemNo":  "REQ-0002",
+                                        "title":  "Spike éªæ¶ï¼æ°å¢éæ±åçï¼äººå·¥å®¡æ¹é¾è·¯ï¼",
+                                        "summary":  "å¨ Spike éç¦»ç¯å¢ä¸­éªè¯ãAgent åå»ºå¾\u0085å®¡æ ¸ææ¡ â äººå·¥å¨å·¥ä½å°æ¹å â Domain Service ä»¥äººç±»è´¦å·æ­£å¼åå\u0085¥éæ±ãçç«¯å°ç«¯é¾è·¯ã",
+                                        "status":  "draft",
+                                        "priority":  "high",
+                                        "sourceNote":  "mammoth-dsh-proposal:50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+                                        "ownerUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                        "createdBy":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                        "priorStatus":  null,
+                                        "readyConfirmedBy":  null,
+                                        "readyConfirmedAt":  null,
+                                        "contextSnapshotId":  null,
+                                        "approvedSolutionVersionId":  null,
+                                        "createdAt":  "2026-11-16T02:07:18Z",
+                                        "updatedAt":  "2026-11-16T02:07:18Z"
+                                    }
+                                ],
+                      "Count":  2
+                  },
+    "adminAudit":  {
+                       "value":  [
+                                     {
+                                         "id":  "eaf7751b-1c91-42f9-b8f1-3d26bfa255d2",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "work_item.create",
+                                         "objectType":  "work_item",
+                                         "objectId":  "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+                                         "at":  "2026-11-16T02:07:18Z",
+                                         "detailJson":  "{\"itemNo\":\"REQ-0002\",\"priority\":\"high\"}"
+                                     },
+                                     {
+                                         "id":  "26fb23ab-7cf4-4edc-8cbf-41c30281870d",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "knowledge.create",
+                                         "objectType":  "knowledge_document",
+                                         "objectId":  "95db8c1b-9db7-4356-9022-135035dfed26",
+                                         "at":  "2026-11-13T09:27:02Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "bc6c6b91-fa82-466c-9819-3bd9b6fda5ba",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "job.running",
+                                         "objectType":  "server_job",
+                                         "objectId":  "005e68cb-880d-421f-84f8-6818aaa5aa1a",
+                                         "at":  "2026-11-13T09:25:26Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "00a55667-95fd-4733-9da5-40d97df2cfe6",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "knowledge.create",
+                                         "objectType":  "knowledge_document",
+                                         "objectId":  "8800bafc-a7a0-4d53-b2e0-ad657e06ad30",
+                                         "at":  "2026-11-13T09:25:23Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "00e5a17f-5795-413e-895e-7075eef04fc9",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "knowledge.submit_review",
+                                         "objectType":  "knowledge_document",
+                                         "objectId":  "8800bafc-a7a0-4d53-b2e0-ad657e06ad30",
+                                         "at":  "2026-11-13T09:25:23Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "6c1fd232-27fe-4c17-a495-33bf6696cc4b",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "notification.create",
+                                         "objectType":  "notification",
+                                         "objectId":  "1ec1f2a1-8e0a-45e5-8d0c-01ead2923125",
+                                         "at":  "2026-11-13T09:25:23Z",
+                                         "detailJson":  "{\"type\":\"knowledge.review_requested\"}"
+                                     },
+                                     {
+                                         "id":  "e0863055-b74c-46ad-b41e-121e3cc167fb",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "work_item.create",
+                                         "objectType":  "work_item",
+                                         "objectId":  "fa17c5d2-345d-4ea7-860d-14879e6b89c8",
+                                         "at":  "2026-11-13T09:25:11Z",
+                                         "detailJson":  "{\"itemNo\":\"REQ-0001\",\"priority\":\"high\"}"
+                                     },
+                                     {
+                                         "id":  "f92c8139-49b2-4feb-b506-388a7c06237f",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "artifact.add",
+                                         "objectType":  "artifact",
+                                         "objectId":  "dc905d38-e578-4fca-83ae-7074c8f23b37",
+                                         "at":  "2026-11-13T09:25:11Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "90ca659f-1358-42db-828e-58697913677a",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "project.member.add",
+                                         "objectType":  "project",
+                                         "objectId":  "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+                                         "at":  "2026-11-13T09:25:00Z",
+                                         "detailJson":  "{\"userId\":\"98d2cc12-4bab-4225-b179-bca36853837f\",\"role\":\"reviewer\"}"
+                                     },
+                                     {
+                                         "id":  "3f1f362e-77af-4a23-a83a-f4244efa9275",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "user.create",
+                                         "objectType":  "app_user",
+                                         "objectId":  "98d2cc12-4bab-4225-b179-bca36853837f",
+                                         "at":  "2026-11-13T09:24:59Z",
+                                         "detailJson":  "{\"accountType\":\"human\"}"
+                                     },
+                                     {
+                                         "id":  "95e3a40e-65e2-45ac-bc71-769ec5c27969",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "project.create",
+                                         "objectType":  "project",
+                                         "objectId":  "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+                                         "at":  "2026-11-13T09:24:59Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "58982b19-ae88-4ee6-af9c-acda14db3ee1",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "project.member.add",
+                                         "objectType":  "project",
+                                         "objectId":  "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+                                         "at":  "2026-11-13T09:24:59Z",
+                                         "detailJson":  "{\"userId\":\"fb228729-d64c-46ec-9345-d69e966069f3\",\"role\":\"viewer\"}"
+                                     },
+                                     {
+                                         "id":  "cd0888c6-968d-45e3-95e2-f80735e51c4b",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "product.create",
+                                         "objectType":  "product",
+                                         "objectId":  "8b347e4a-c10b-48b3-9909-7e996c292e63",
+                                         "at":  "2026-11-13T09:24:50Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "f885a34c-ded0-4dec-a8ce-771fcce233e2",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "user.create",
+                                         "objectType":  "app_user",
+                                         "objectId":  "fb228729-d64c-46ec-9345-d69e966069f3",
+                                         "at":  "2026-11-13T09:24:49Z",
+                                         "detailJson":  "{\"accountType\":\"agent\"}"
+                                     },
+                                     {
+                                         "id":  "f00a6f61-4863-45a0-991f-838c99ed69d4",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "customer.create",
+                                         "objectType":  "customer",
+                                         "objectId":  "bb4ffbdf-b51f-4106-a03c-931fb965e3a7",
+                                         "at":  "2026-11-13T09:24:49Z",
+                                         "detailJson":  null
+                                     },
+                                     {
+                                         "id":  "8a48f8d4-d1e9-491c-a830-7841e59b6230",
+                                         "actorUserId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "action":  "user.create",
+                                         "objectType":  "app_user",
+                                         "objectId":  "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+                                         "at":  "2026-11-13T09:24:42Z",
+                                         "detailJson":  "{\"accountType\":\"human\"}"
+                                     }
+                                 ],
+                       "Count":  16
+                   }
+}

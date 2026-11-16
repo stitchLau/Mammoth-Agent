@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "activeProjectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+  "sessions": {
+    "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82": {
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "boundAt": "2026-11-16T01:49:28.629Z",
+      "reason": "tool"
+    }
+  },
+  "proposals": {
+    "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a": {
+      "id": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+      "type": "work-item.create",
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "sessionId": "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82",
+      "proposer": {
+        "kind": "agent",
+        "dshSessionId": "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82",
+        "agentUserId": "fb228729-d64c-46ec-9345-d69e966069f3",
+        "tool": "mammoth_propose_work_item"
+      },
+      "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+      "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+      "priority": "high",
+      "rationale": "端到端验证 ADR-0014 S-A7：DSH 工具审批闸门 + 人工在工作台批准后由 Domain Service 以人类账号正式写入。仅合成数据。",
+      "payload": {
+        "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+        "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+        "priority": "high"
+      },
+      "status": "approved",
+      "createdAt": "2026-11-16T02:05:30.845Z",
+      "decidedAt": "2026-11-16T02:07:18.021Z",
+      "approver": "local-desktop-human",
+      "domainObject": {
+        "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+        "itemNo": "REQ-0002",
+        "status": "draft",
+        "raw": {
+          "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+          "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+          "itemType": "requirement",
+          "itemNo": "REQ-0002",
+          "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+          "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+          "status": "draft",
+          "priority": "high",
+          "sourceNote": "mammoth-dsh-proposal:50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+          "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+          "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+          "priorStatus": null,
+          "readyConfirmedBy": null,
+          "readyConfirmedAt": null,
+          "contextSnapshotId": null,
+          "approvedSolutionVersionId": null,
+          "createdAt": "2026-11-16T02:07:18Z",
+          "updatedAt": "2026-11-16T02:07:18Z"
+        }
+      },
+      "domainError": null,
+      "dshApproval": "allowed-once"
+    }
+  },
+  "audit": [
+    {
+      "at": "2026-11-13T09:36:45.599Z",
+      "action": "plugin.activated",
+      "detail": {
+        "bundle": "@mammoth/dsh-bundle",
+        "configError": null
+      }
+    },
+    {
+      "at": "2026-11-16T01:07:26.795Z",
+      "action": "plugin.activated",
+      "detail": {
+        "bundle": "@mammoth/dsh-bundle",
+        "configError": null
+      }
+    },
+    {
+      "at": "2026-11-16T01:32:46.029Z",
+      "action": "plugin.activated",
+      "detail": {
+        "bundle": "@mammoth/dsh-bundle",
+        "configError": null
+      }
+    },
+    {
+      "at": "2026-11-16T01:49:41.072Z",
+      "action": "proposal.blocked",
+      "detail": {
+        "sessionId": "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82",
+        "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+        "title": "Spike 验收：新增需求冒烟",
+        "approval": "rejected"
+      }
+    },
+    {
+      "at": "2026-11-16T01:58:31.200Z",
+      "action": "context.selected",
+      "detail": {
+        "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11"
+      }
+    },
+    {
+      "at": "2026-11-16T02:05:30.845Z",
+      "action": "proposal.created",
+      "detail": {
+        "proposalId": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+        "sessionId": "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82",
+        "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+        "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+        "dshApproval": "allowed-once"
+      }
+    },
+    {
+      "at": "2026-11-16T02:07:18.021Z",
+      "action": "proposal.approve",
+      "detail": {
+        "proposalId": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+        "approver": "local-desktop-human",
+        "result": "approved"
+      }
+    }
+  ]
+}
