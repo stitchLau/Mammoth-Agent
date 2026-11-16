@@ -48,7 +48,8 @@
 4. **ADR 修正**：删除"Accepted vs 待批准"矛盾；四眼/凭据/peerDependencies 表述改为与事实一致；签署改为
    待负责人签署；生效条件加入"真人审批复验 + 写路径 ADR"。
 
-**仍未闭合（阻塞 ADR 生效）**：①负责人签署 ADR；②"Agent 受控写操作与服务身份"ADR 关闭同 OS 用户边界缺口；
+**仍未闭合（阻塞 ADR 生效）**：①~~负责人签署 ADR~~（**已完成**：2026-11-16 负责人签署 ADR-0014 Accepted v1.1）；
+②~~"Agent 受控写操作与服务身份"ADR~~（**已另立**：ADR-0015 Proposed，待负责人批准决策项与实施：独立 Approval 服务身份 + Domain 提案/审批/写入 API + 人类独占审批/四眼 + 审计三元组）；
 ③S-A8/S-A9/S-A10、卡片跳转、`conversation.chat.node`、`composer.dock`、preset UI 验证为后续项。
 （原"负责人真人复验"条件**已闭合**：2026-11-16 11:13 负责人本人在工作台批准 `db238b78` → Domain `REQ-0003`，
 截图 18（修复前）/19（修复后）、`domain-after-approval.json`、`proposal-stub-state.json`。）

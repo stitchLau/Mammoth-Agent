@@ -69,6 +69,13 @@
 | `screenshot-manifest.json` | 全部截图的 SHA-256 与采集方式（可校验完整性） |
 | `screenshots-metadata/` | `capture-dsh.ps1` 的采集 sidecar（窗口/DPI/方法元数据，非运行时数据） |
 | `tool-call-records.md` | 本轮 Agent/MCP/Domain 真实调用记录摘要 |
+
+## 4.2 决策落定（2026-11-16，Spike 后）
+
+- **ADR-0014 已由项目负责人签署**：状态 **Accepted v1.1（2026-11-16）**；S-A7 真人批准条件已由负责人本人完成（`REQ-0003`）。
+- **ADR-0015 已获负责人批准另立并起草**：`decisions/ADR-0015-AGENT-CONTROLLED-WRITE-AND-SERVICE-IDENTITY.md`（**Proposed**，决策项待负责人批准）——以独立 Approval 服务身份 + Domain 提案/审批/写入 API + 人类独占审批/四眼 + 审计三元组，关闭"适配器与 Agent 同 OS 用户"的边界缺口。
+- **文档同步**：ADR-0002（UI 宿主修订补充说明）、`docs/00`、`docs/05`、`docs/12`、`docs/13`、`docs/specs/UI-SPEC.md` 已按 ADR-0014/0015 更新。
+- **未完成**：ADR-0015 决策批准与实施（V11 迁移、Approval 服务、负向安全验收）、客户端正式迁移阶段编号、S-A8/S-A9/S-A10。
 | `README.md`（本文件） | 索引、环境、组合结构、复现与回滚 |
 
 ## 3. 四合一组合结构（实际安装形态）

@@ -1,8 +1,8 @@
 # ADR-0014: 产品形态与客户端宿主（DSH Desktop 宿主 + Mammoth Bundle，保留 B/S 演进）
 
-- 状态：**Accepted（v1.1 定稿，2026-11-16；Spike A 技术可行性通过，S-A7 条件通过；待项目负责人签署）**
-- 日期：2026-11-13（草案）/ 2026-11-16（定稿）
-- 决策人：项目负责人（待签署）；Lead Agent 依据 Spike 证据与独立评审整改定稿
+- 状态：**Accepted v1.1（2026-11-16 项目负责人签署生效；Spike A 技术可行性通过、S-A7 已由负责人真人批准补齐；写路径/服务身份边界由 ADR-0015 承接）**
+- 日期：2026-11-13（草案）/ 2026-11-16（签署）
+- 决策人：项目负责人（2026-11-16 签署）；Lead Agent 依据 Spike 证据与独立评审整改起草
 - 相关需求/功能：客户端架构重估（阶段编号待定）、Desktop 优先、Agent 主要工作入口；关联 M5/B-S 演进
 - 相关文档：`docs/reports/2026-11-13-CLIENT-ARCHITECTURE-REEVALUATION.md`（完整评估）、`docs/evidence/2026-11-13-client-arch/01|02|03`（证据附件）、`docs/evidence/2026-11-13-client-arch/spike-A/SPIKE-REPORT.md`（Spike A 验证报告，含独立评审整改记录）、`decisions/ADR-0001-DSH-INTEGRATION.md`、`decisions/ADR-0002-TECH-STACK.md`、`docs/00-MASTER-GUIDE.md`、`docs/01-PRODUCT-CHARTER.md`、`docs/02-PRODUCT-BOUNDARIES.md`、`docs/05-ARCHITECTURE-BASELINE.md`、`docs/12-ROADMAP.md`、`docs/13-OPEN-DECISIONS.md`
 
@@ -197,7 +197,7 @@ ADR-0001 §6.3 将 **MCP 定为 Domain API↔DSH 的推荐边界**（配置型 b
 6. **安全补充**：工具 `parameters` 必须走注册前本地 schema 校验（raw JSON Schema 子集；`required` 只能是根级数组），并保留 `scripts/check-tool-schemas.mjs` 作为安装/重载门禁（2026-11-13 P0 事故防再发）。
 7. **已接受的产品/工程代价**：会话↔项目映射为过渡实现；`conversation.chat.node`、`composer.dock`、卡片跳转、S-A8/S-A9/S-A10 为后续项；DSH rc 期升级风险由版本锁定与 SOP 管理。
 
-**签署**：本版本为 2026-11-16 定稿，**待项目负责人签署后生效**。定稿依据：Spike A 证据（技术可行性 + S-A2 Go + S-A7 机械链路与**负责人本人真人批准** `REQ-0003`）与独立评审整改记录（`SPIKE-REPORT.md` §15）。生效条件：①负责人签署；②"Agent 受控写操作与服务身份"独立 ADR 关闭适配器同 OS 用户边界（真人批准已由负责人于 2026-11-16 完成，见"Spike A 执行结果"S-A7）；③"S-A8–A10/后续项"不阻塞本 ADR 的架构方向。若负责人变更任一决策项，本 ADR 回到 Proposed 修订流程。
+**签署**：2026-11-16 **项目负责人确认签署本 Accepted v1.1**，同日批准另立 **ADR-0015（Agent 受控写操作与服务身份，Proposed）** 承接写路径服务身份边界。签署依据：Spike A 证据（技术可行性 + S-A2 Go + 负责人本人真人批准 `REQ-0003`）与独立评审整改记录（`SPIKE-REPORT.md` §15）。生效状态：**即时生效**；② 写路径/服务身份边界由 ADR-0015 跟踪至批准与实施；③ S-A8–A10 等后续项不阻塞本 ADR 的架构方向。若负责人变更任一决策项，本 ADR 回到 Proposed 修订流程。
 
 ## 回滚或替代路径
 
@@ -215,8 +215,8 @@ ADR-0001 §6.3 将 **MCP 定为 Domain API↔DSH 的推荐边界**（配置型 b
 3. **后续项**：S-A8（桌面文件/目录/artifact 上传）、S-A9（升级 SOP 演练）、S-A10（启动性能/包体测量）；`conversation.chat.node` 自定义节点、`conversation.composer.dock` 上下文引用、从工作台一键新建并进入会话。
 4. 同步修订 `docs/05`、`docs/13`、`docs/12`、`docs/specs/UI-SPEC.md`；更新 ADR-0002 状态/补充说明（UI 宿主变更，后端不变）。
 5. 建立 `integrations/dsh/mammoth-bundle/` 正式工程（Spike 分支 `spike/dsh-desktop-integration` 已提供骨架）；CI 增加 Client 预构建、`check-tool-schemas`、契约冒烟回归。
-6. 另立 ADR：Agent 受控写操作/审批/服务身份、AgentRun/agent_session_link（V11 迁移）、MCP 写工具或 Host 工具边界（含是否修订 ADR-0001 §6.3）。
+6. **已另立 ADR-0015（Proposed）**：Agent 受控写操作/审批/服务身份、AgentRun/session_link（V11 迁移）、MCP 写工具或 Host 工具边界（含是否修订 ADR-0001 §6.3）。2026-11-16 负责人批准另立并起草。
 7. 按评估报告 §4 IA 与 §7 复用计划分阶段迁移；保留 SPA 为管理台/后备 Web；在 `docs/12-ROADMAP.md` 新增客户端架构阶段（编号待负责人确认）。
 8. 每次 DSH 升级执行升级 SOP 并记录；维护 `engines.dsh`/peer 版本矩阵与升级回归证据。
 9. 环境治理：开发中的 `link:` bundle 优先使用**专用 dev profile**；共享日常 profile 时必须按生产变更处理（备份 → 自检 → 重载 → 最小请求验证）。
-10. **生效条件（阻塞项）**：①项目负责人签署本 Accepted v1.1；②~~由负责人亲自完成一次"提案 → 工作台人工批准 → Domain 写入"的真人复验并留痕~~（**已完成**：2026-11-16 11:13 负责人本人批准提案 `db238b78` → Domain `REQ-0003`，截图 18/19、`domain-after-approval.json`）；③"Agent 受控写操作与服务身份"ADR 定义隔离身份/Domain 授权/人类独占通道，关闭"适配器与 Agent 同 OS 用户"的边界缺口。
+10. **生效条件**：①~~项目负责人签署~~（**已完成**：2026-11-16 负责人签署本 Accepted v1.1）；②~~负责人真人复验~~（**已完成**：2026-11-16 11:13 负责人本人批准提案 `db238b78` → Domain `REQ-0003`，截图 18/19、`domain-after-approval.json`）；③写路径与服务身份边界**已另立 ADR-0015（Proposed）**：隔离身份/Domain 授权/人类独占审批，待该 ADR 决策批准与实施后关闭。
