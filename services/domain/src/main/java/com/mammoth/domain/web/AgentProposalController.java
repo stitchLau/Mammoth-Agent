@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AgentProposalController {
 
   public static final String AGENT_TOKEN_HEADER = "X-Mammoth-Agent-Token";
+  /** ADR-0015 P2: the apply token is held only by the isolated approval service account. */
+  public static final String APPLY_TOKEN_HEADER = "X-Mammoth-Apply-Token";
 
   private final AgentProposalService proposalService;
   private final AgentWriteProperties properties;
@@ -101,6 +103,17 @@ public class AgentProposalController {
         .toList();
   }
 
+  /** Approval-service work queue (apply token only): approved proposals waiting for apply. */
+  @GetMapping("/approved")
+  public List<ProposalResponse> approved(
+      @RequestHeader(value = APPLY_TOKEN_HEADER, required = false) String applyToken,
+      @RequestParam String projectId) {
+    requireApplyToken(applyToken);
+    return proposalService.listApproved(projectId).stream()
+        .map(ProposalResponse::from)
+        .toList();
+  }
+
   @PostMapping("/{proposalId}/approve")
   public ProposalResponse approve(@PathVariable String proposalId,
       @RequestBody(required = false) DecisionRequest request) {
@@ -117,25 +130,40 @@ public class AgentProposalController {
         request == null ? null : request.reason()));
   }
 
-  /** Apply an approved proposal; executed by the approval service identity. */
+  /** Apply an approved proposal; executed by the isolated approval service identity. */
   @PostMapping("/{proposalId}/apply")
   public ApplyResponse apply(
-      @RequestHeader(value = AGENT_TOKEN_HEADER, required = false) String serviceToken,
+      @RequestHeader(value = APPLY_TOKEN_HEADER, required = false) String applyToken,
       @PathVariable String proposalId) {
-    requireServiceToken(serviceToken);
+    requireApplyToken(applyToken);
     return ApplyResponse.from(proposalService.apply(proposalId, "approval-service"));
   }
 
   private void requireServiceToken(String provided) {
-    if (!properties.configured()) {
+    if (!properties.configuredForPropose()) {
       throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
           "agent write endpoint is not configured");
     }
-    byte[] expected = properties.getAgentToken().getBytes(StandardCharsets.UTF_8);
-    byte[] actual = provided == null ? new byte[0] : provided.getBytes(StandardCharsets.UTF_8);
-    if (!MessageDigest.isEqual(expected, actual)) {
+    if (!tokenMatches(properties.getAgentToken(), provided)) {
       proposalService.recordDenied(properties.getAgentUserId(), null, "invalid-agent-token");
       throw ApiException.unauthorized("invalid agent service token");
     }
+  }
+
+  private void requireApplyToken(String provided) {
+    if (!properties.configuredForApply()) {
+      throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
+          "approval apply endpoint is not configured");
+    }
+    if (!tokenMatches(properties.getApplyToken(), provided)) {
+      proposalService.recordDenied(null, null, "invalid-apply-token");
+      throw ApiException.unauthorized("invalid approval service token");
+    }
+  }
+
+  private static boolean tokenMatches(String expected, String provided) {
+    byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
+    byte[] actualBytes = provided == null ? new byte[0] : provided.getBytes(StandardCharsets.UTF_8);
+    return MessageDigest.isEqual(expectedBytes, actualBytes);
   }
 }

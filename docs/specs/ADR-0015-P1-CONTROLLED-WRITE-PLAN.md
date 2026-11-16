@@ -172,3 +172,5 @@ approved --apply fail-------> failed (可重试回 approved? v1: 仅记录失败
 6. 测试：域服务全量 **160 tests** 通过（含新增 agentwrite 39 例：状态机/哈希/隔离/幂等/payload/成员/角色/四眼/失败态/审计链/接口鉴权）。
 
 **后续（P2–P4 + P3 集成）**：P2 OS 身份与凭据隔离；P3 DSH Bundle/工作台接入新 API 并删除 Spike 适配器写路径；P4 负向安全验收（含真实进程/OS 权限验证）；`work_item.update` 等类型、分页/限流、审计查询 API、迁移回滚演练。
+
+> **P2 进展（2026-11-16）**：Domain 双 token 分离（propose/apply）+ 审批服务队列端点 + Approval 服务 CLI（单提案/watch）+ 管理员 provisioning/verify 脚本 + 测试已完成（域服务 168 tests 通过）。OS 账号/ACL/计划任务的实际创建需负责人以管理员执行，详见 `docs/specs/ADR-0015-P2-APPROVAL-SERVICE.md` §3/§4。

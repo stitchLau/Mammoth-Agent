@@ -56,10 +56,11 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/me", "/api/auth/password", "/api/auth/logout")
                 .hasAnyAuthority(SessionAuthenticationFilter.ROLE_USER,
                     SessionAuthenticationFilter.ROLE_PASSWORD_RESET_REQUIRED)
-            // ADR-0015 P1: the agent proposal endpoint authenticates the machine-local service
-            // token itself (fail-closed when unconfigured); the human endpoints stay protected.
+            // ADR-0015 P1/P2: agent/approval-service endpoints authenticate their own service
+            // tokens (fail-closed when unconfigured); human endpoints stay protected.
             .requestMatchers(HttpMethod.POST, "/api/agent/proposals",
                 "/api/agent/proposals/*/apply").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/agent/proposals/approved").permitAll()
             .requestMatchers("/api/**").hasAuthority(SessionAuthenticationFilter.ROLE_USER)
             .anyRequest().authenticated())
         .exceptionHandling(handling -> handling.authenticationEntryPoint(

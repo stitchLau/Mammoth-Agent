@@ -45,6 +45,7 @@ class AgentProposalWorkflowTest {
 
   private static final Path DATA_ROOT = createDataRoot();
   private static final String TEST_TOKEN = "test-agent-write-token";
+  private static final String TEST_APPLY_TOKEN = "test-approval-apply-token";
 
   private static Path createDataRoot() {
     try {
@@ -335,6 +336,7 @@ class AgentProposalWorkflowTest {
   void controllerFailsClosedWhenServiceIdentityIsUnconfigured() throws Exception {
     properties.setAgentToken("");
     properties.setAgentUserId("");
+    properties.setApplyToken("");
     AgentProposalController controller =
         new AgentProposalController(proposalService, properties,
             org.mockito.Mockito.mock(AuthorizationService.class), objectMapper);
@@ -508,6 +510,7 @@ class AgentProposalWorkflowTest {
   void controllerHumanEndpointsRequireASessionAndApplyRequiresTheServiceToken()
       throws Exception {
     properties.setAgentToken(TEST_TOKEN);
+    properties.setApplyToken(TEST_APPLY_TOKEN);
     properties.setAgentUserId(agentId);
     AgentProposal proposal = propose("{\"title\":\"接口鉴权\"}", "idem-endpoints-1");
     AgentProposalController controller =
@@ -522,5 +525,40 @@ class AgentProposalWorkflowTest {
         .andExpect(status().isUnauthorized());
     mockMvc.perform(post("/api/agent/proposals/{id}/apply", proposal.getId()))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void agentTokenCannotApplyAndApplyTokenCannotPropose() throws Exception {
+    properties.setAgentToken(TEST_TOKEN);
+    properties.setApplyToken(TEST_APPLY_TOKEN);
+    properties.setAgentUserId(agentId);
+    AgentProposal proposal = propose("{\"title\":\"令牌隔离\"}", "idem-token-1");
+    proposalService.approve(owner, proposal.getId(), "ok");
+    AgentProposalController controller =
+        new AgentProposalController(proposalService, properties,
+            org.mockito.Mockito.mock(AuthorizationService.class), objectMapper);
+    MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        .setControllerAdvice(new ApiExceptionHandler())
+        .build();
+
+    // The agent (Host) token must not be accepted by the apply endpoint.
+    mockMvc.perform(post("/api/agent/proposals/{id}/apply", proposal.getId())
+            .header(AgentProposalController.AGENT_TOKEN_HEADER, TEST_TOKEN))
+        .andExpect(status().isUnauthorized());
+    // The approval-service token must not be accepted by the propose endpoint.
+    String body = objectMapper.writeValueAsString(java.util.Map.of(
+        "projectId", project.getId(),
+        "proposalType", AgentProposalService.TYPE_WORK_ITEM_CREATE,
+        "payload", java.util.Map.of("title", "apply-token-propose"),
+        "idempotencyKey", "idem-token-2"));
+    mockMvc.perform(post("/api/agent/proposals").contentType(MediaType.APPLICATION_JSON)
+            .header(AgentProposalController.APPLY_TOKEN_HEADER, TEST_APPLY_TOKEN).content(body))
+        .andExpect(status().isUnauthorized());
+
+    // Only the approval-service token applies the approved proposal.
+    mockMvc.perform(post("/api/agent/proposals/{id}/apply", proposal.getId())
+            .header(AgentProposalController.APPLY_TOKEN_HEADER, TEST_APPLY_TOKEN))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value(AgentProposal.STATUS_APPLIED));
   }
 }

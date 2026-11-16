@@ -148,6 +148,13 @@ public class AgentProposalService {
     return proposalRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
   }
 
+  /** Approval-service work queue: approved proposals waiting for apply. */
+  @Transactional(readOnly = true)
+  public List<AgentProposal> listApproved(String projectId) {
+    return proposalRepository.findByProjectIdAndStatusOrderByCreatedAtAsc(projectId,
+        AgentProposal.STATUS_APPROVED);
+  }
+
   /** Record a human approval; a high-risk proposal needs a second, different human. */
   @Transactional
   public AgentProposal approve(AppUser human, String proposalId, String reason) {

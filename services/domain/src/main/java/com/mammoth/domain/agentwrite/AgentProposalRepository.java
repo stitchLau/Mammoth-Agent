@@ -11,4 +11,6 @@ public interface AgentProposalRepository extends JpaRepository<AgentProposal, St
   Optional<AgentProposal> findByIdempotencyKey(String idempotencyKey);
 
   List<AgentProposal> findByProjectIdOrderByCreatedAtAsc(String projectId);
+
+  List<AgentProposal> findByProjectIdAndStatusOrderByCreatedAtAsc(String projectId, String status);
 }
