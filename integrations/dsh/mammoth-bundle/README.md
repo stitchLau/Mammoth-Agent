@@ -14,6 +14,25 @@ Host 插件 + Client 插件 + MCP 配置 + Agent Preset 四合一）。本目录
    `127.0.0.1:18090`（示例），MCP 只读进程使用同一 data root 与 agent 用户 ID。
 4. Bundle 的四个部分全部就绪：Host 源码、Client 源码、MCP 配置行、Preset 行。
 
+## 0. 实测结论（2026-11-16，DSH 0.2.2-rc.2 Desktop）
+
+本 bundle 已在真实安装的 DSH Desktop 中完成 Spike A 验证（四合一安装、左栏入口、整页工作台、真实
+Domain 数据、会话项目上下文、右栏项目上下文、MCP 知识读取、业务卡片、提案人工审批 + Domain 写入）。
+完整证据：`docs/evidence/2026-11-13-client-arch/spike-A/`（14 张真实窗口截图 + JSON/JSONL 记录）。
+
+**Desktop 数据通道（重要）**：Desktop 渲染页面的 origin 是 `dsh-app://app/`（不是 loopback HTTP）。
+本 bundle 的 Client 半使用**同源相对 `fetch('mammoth/api/...')`**，由 Desktop shell 的 fetch 桥转发到
+Host 注册的 `ctx.webServer` 前缀路由，并以浏览器 Peer 通过 `ctx.connection.requestRejection` 鉴权。
+因此：Client 不直连 Domain、不需要 CORS、不持有 Domain 凭据；不要改成绝对 `http://127.0.0.1:...` 地址。
+
+**Client 注册纪律**：Client 插件在 `apply` 中抛错时，Desktop UI 没有可见错误（仅 console/boot audit），
+表现为"入口消失"。本 bundle 因此先注册 `sidebar.panellist` + `main`，其余 surface 逐个 try/catch，并把
+`clientDiagnostics` 显示在工作台「设置与诊断」页。新增 surface 时保持这个顺序。
+
+**官方 Slot 约束**：`rightbar` / `rightbar.session` 是已被 ui-sidebar-right 占用的 single slot，不可替换；
+第三方右栏使用 `ctx.sidebarRightTabs.register()` + keyed body `sidebar.right.pane.tab`。`sidebarRightTabs`
+的 `guide` 字段是**数组**（元素含 `id/order/title()`）。
+
 ## 1. 渲染机器本地配置
 
 Bundle 的 `cordis.patch.yml` 含机器路径，由脚本生成（git-ignore）：
@@ -102,4 +121,9 @@ node <repo>/spike/dsh-desktop-integration/proposal-stub.mjs
   lazy-CJS 模块（`window.__ModuleLoader__.load`），只 `require('react')`。
 - 不导入官方 Client 组件库、不替换 app root、不使用 iframe、不新增 Session 事件类型。
 - 样式只使用 `--dsw-alias-*` 主题 token；文本走 `ctx.locale`。
-- 已知限制与安全边界见 `docs/DETAIL.md` 与 Spike 报告。
+- 已知限制与安全边界见 `docs/DETAIL.md` 与 Spike 报告（`docs/evidence/2026-11-13-client-arch/spike-A/SPIKE-REPORT.md`）。
+- **环境纪律**：开发中的 `link:` bundle 应优先安装到**专用 dev profile**；若必须共享日常 `desktop` profile，
+  按生产变更处理（备份 → `node --check` → `check-tool-schemas.mjs` → 重载 → 最小请求验证），并保留可追溯的
+  Git 提交（本 bundle 的源码必须提交，不接受长期未跟踪的全局运行时）。
+- 版本耦合：`0.2.2-rc.2` 为预发布版，Slot/Client API 可能破坏性变化；升级前先读 DSH upgrade guide 与
+  slot catalog，重建 Client 产物并跑契约回归，保留回滚版本。

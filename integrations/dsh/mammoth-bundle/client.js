@@ -943,6 +943,7 @@ window.__ModuleLoader__.load({
 
     function ToolCardFrame({ title, chips, children }) {
       return h('div', { className: 'mammoth-toolcard' },
+        h(Styles),
         h('div', { className: 'mammoth-toolcard-head' },
           h('span', null, '◆ Mammoth'),
           h('span', null, title),
