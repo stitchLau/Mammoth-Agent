@@ -46,6 +46,15 @@ $ErrorActionPreference = 'Stop'
 function Write-Step([string]$text) { Write-Host "[plan] $text" }
 function Fail([string]$text) { throw "approval-service-provision: $text" }
 
+# Native calls run through Start-Process so a non-zero exit code (or stderr text) never turns into
+# a terminating NativeCommandError under $ErrorActionPreference = 'Stop'. Returns the exit code.
+function Invoke-Native([string]$FilePath, [string[]]$ArgumentList) {
+  $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -Wait -PassThru `
+    -WindowStyle Hidden
+  return $process.ExitCode
+}
+function Quote([string]$value) { return '"' + $value + '"' }
+
 if ($DomainBase -notmatch '^https?://') { Fail '-DomainBase must be an http(s) URL' }
 $account = "$env:COMPUTERNAME\$ServiceAccountName"
 $tokenFile = Join-Path $InstallDir 'apply-token.txt'
@@ -88,8 +97,7 @@ if ($null -ne $ServiceAccountPassword) {
   $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ServiceAccountPassword))
 }
-& net.exe user $ServiceAccountName 2>$null | Out-Null
-$accountExists = ($LASTEXITCODE -eq 0)
+$accountExists = (Invoke-Native 'net.exe' @('user', $ServiceAccountName)) -eq 0
 if (-not $accountExists) {
   if ($null -eq $plainPassword) {
     $bytes = New-Object byte[] 24
@@ -98,12 +106,17 @@ if (-not $accountExists) {
     Write-Host "[action] generated a random password for $account; store it in your password manager now:" -ForegroundColor Yellow
     Write-Host "         $plainPassword"
   }
-  & net.exe user $ServiceAccountName $plainPassword /add /expires:never /passwordchg:no `
-    /comment:"ADR-0015 isolated approval service account" | Out-Null
-  if ($LASTEXITCODE -ne 0) {
-    Fail "net user /add failed (exit $LASTEXITCODE); check the local password policy and permissions"
+  if ($plainPassword -match '[\s"]') {
+    Fail 'password must not contain spaces or double quotes (provisioning uses net.exe)'
   }
-  & net.exe user $ServiceAccountName /fullname:"Mammoth Approval Service" | Out-Null
+  $createExit = Invoke-Native 'net.exe' @('user', $ServiceAccountName, $plainPassword, '/add',
+    '/expires:never', '/passwordchg:no',
+    '/comment:"ADR-0015 isolated approval service account"')
+  if ($createExit -ne 0) {
+    Fail "net user /add failed (exit $createExit); check the local password policy and permissions"
+  }
+  Invoke-Native 'net.exe' @('user', $ServiceAccountName,
+    '/fullname:"Mammoth Approval Service"') | Out-Null
   Write-Host "[action] created local user $account"
 } else {
   Write-Host "[skip] local user already exists: $account"
@@ -141,14 +154,23 @@ $wrapper = "@echo off`r`n`"$JavaExe`" -jar `"$JarPath`" --approval-service --wat
 Write-Host "[action] wrote token/config/wrapper (token value is only in $tokenFile)"
 
 # 3. Strict ACLs: inherited users are removed; only admins/SYSTEM/service account remain.
-& icacls.exe $InstallDir /inheritance:r | Out-Null
-& icacls.exe $InstallDir /grant:r '*S-1-5-32-544:(OI)(CI)F' 'NT AUTHORITY\SYSTEM:(OI)(CI)F' "${account}:(OI)(CI)RX" | Out-Null
-& icacls.exe $tokenFile /inheritance:r | Out-Null
-& icacls.exe $tokenFile /grant:r '*S-1-5-32-544:F' 'NT AUTHORITY\SYSTEM:F' "${account}:R" | Out-Null
-& icacls.exe $configFile /inheritance:r | Out-Null
-& icacls.exe $configFile /grant:r '*S-1-5-32-544:F' 'NT AUTHORITY\SYSTEM:F' "${account}:R" | Out-Null
-& icacls.exe $wrapperFile /inheritance:r | Out-Null
-& icacls.exe $wrapperFile /grant:r '*S-1-5-32-544:RX' 'NT AUTHORITY\SYSTEM:RX' "${account}:RX" | Out-Null
+$aclExit = Invoke-Native 'icacls.exe' @((Quote $InstallDir), '/inheritance:r')
+if ($aclExit -ne 0) { Fail "icacls inheritance failed for $InstallDir (exit $aclExit)" }
+$aclExit = Invoke-Native 'icacls.exe' @((Quote $InstallDir), '/grant:r',
+  '*S-1-5-32-544:(OI)(CI)F', 'NT AUTHORITY\SYSTEM:(OI)(CI)F', "${account}:(OI)(CI)RX")
+if ($aclExit -ne 0) { Fail "icacls grant failed for $InstallDir (exit $aclExit)" }
+foreach ($file in @($tokenFile, $configFile)) {
+  $aclExit = Invoke-Native 'icacls.exe' @((Quote $file), '/inheritance:r')
+  if ($aclExit -ne 0) { Fail "icacls inheritance failed for $file (exit $aclExit)" }
+  $aclExit = Invoke-Native 'icacls.exe' @((Quote $file), '/grant:r',
+    '*S-1-5-32-544:F', 'NT AUTHORITY\SYSTEM:F', "${account}:R")
+  if ($aclExit -ne 0) { Fail "icacls grant failed for $file (exit $aclExit)" }
+}
+$aclExit = Invoke-Native 'icacls.exe' @((Quote $wrapperFile), '/inheritance:r')
+if ($aclExit -ne 0) { Fail "icacls inheritance failed for $wrapperFile (exit $aclExit)" }
+$aclExit = Invoke-Native 'icacls.exe' @((Quote $wrapperFile), '/grant:r',
+  '*S-1-5-32-544:RX', 'NT AUTHORITY\SYSTEM:RX', "${account}:RX")
+if ($aclExit -ne 0) { Fail "icacls grant failed for $wrapperFile (exit $aclExit)" }
 Write-Host '[action] applied strict ACLs (admins/SYSTEM full; service account read)'
 
 # 4. Optional scheduled task running the watch loop as the service account.
@@ -156,11 +178,11 @@ Write-Host '[action] applied strict ACLs (admins/SYSTEM full; service account re
 #    PowerShell 7 (and its parameter sets differ across versions).
 if ($RegisterScheduledTask) {
   if ($null -eq $plainPassword) { Fail '-RegisterScheduledTask needs -ServiceAccountPassword' }
-  $taskCommand = 'cmd.exe /c "' + $wrapperFile + '"'
-  & schtasks.exe /Create /F /TN $taskName /TR $taskCommand /SC ONSTART /RU $account `
-    /RP $plainPassword /RL HIGHEST | Out-Null
-  if ($LASTEXITCODE -ne 0) {
-    Fail "schtasks /Create failed (exit $LASTEXITCODE)"
+  $taskExit = Invoke-Native 'schtasks.exe' @('/Create', '/F', '/TN', $taskName, '/TR',
+    (Quote $wrapperFile), '/SC', 'ONSTART', '/RU', $account, '/RP', $plainPassword,
+    '/RL', 'HIGHEST')
+  if ($taskExit -ne 0) {
+    Fail "schtasks /Create failed (exit $taskExit)"
   }
   Write-Host "[action] registered scheduled task $taskName (schtasks, runs at startup as $account)"
 }
