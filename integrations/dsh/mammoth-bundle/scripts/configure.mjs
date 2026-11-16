@@ -59,12 +59,13 @@ if (!password) {
 }
 
 const stateDir = resolve(args['state-dir'])
-const stubUrl = typeof args['stub-url'] === 'string' ? args['stub-url'] : 'http://127.0.0.1:18091'
-// Per-run shared secret between the Host bundle and the isolated proposal
-// adapter. It raises the bar over an unauthenticated loopback service but is NOT
-// a boundary against an agent with arbitrary shell access on the same machine;
-// the production write path needs the separate controlled-write ADR.
-const stubToken = process.env.MAMMOTH_STUB_TOKEN ?? randomUUID()
+// ADR-0015 P2/P3: the Host only receives the *propose* token. The apply token belongs to the
+// isolated approval service (see scripts/windows/approval-service-provision.ps1) and must never
+// be written into this bundle config.
+const agentWriteToken = process.env.MAMMOTH_AGENT_WRITE_TOKEN ?? ''
+if (agentWriteToken === '') {
+  console.warn('MAMMOTH_AGENT_WRITE_TOKEN is empty: the workbench can list proposals but the propose tool will fail closed')
+}
 mkdirSync(stateDir, { recursive: true })
 mkdirSync(join(bundleDir, 'local'), { recursive: true })
 
@@ -85,7 +86,13 @@ const config = {
     credentialsFile: join(stateDir, 'credentials.json'),
     timeoutMs: 8000,
   },
-  proposalStub: { baseUrl: stubUrl, token: stubToken },
+  // P3: Domain controlled-write API (propose + own read model only).
+  agentWrite: {
+    baseUrl: args['domain-base'],
+    token: agentWriteToken,
+    agentUserId: args['agent-user-id'],
+    timeoutMs: 15000,
+  },
   statePath: join(stateDir, 'state.json'),
   mcp: {
     serverName: 'mammoth_domain',
@@ -114,5 +121,6 @@ console.log(`  ${join(bundleDir, 'local', 'config.json')}`)
 console.log(`  ${config.domain.credentialsFile}`)
 console.log(`  ${config.statePath}`)
 console.log('')
-console.log('Start the isolated proposal adapter with the same token, e.g. in PowerShell:')
-console.log(`  $env:MAMMOTH_STUB_TOKEN='${stubToken}'`)
+console.log('Note: the Host holds only the propose token. Approval happens in a human Domain browser')
+console.log('session; the isolated approval service (scripts/windows/approval-service-provision.ps1)')
+console.log('holds the apply token and applies approved proposals. No stub/adapter is required.')
