@@ -36,3 +36,6 @@ spike/**/classes/
 spike/**/target/
 spike/**/out/
 spike/.tmp-*/
+
+# Machine-local sandbox ACL repair backups (DSH diagnose-windows-sandbox-acl)
+.acl-recovery/
