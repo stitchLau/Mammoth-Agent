@@ -21,3 +21,10 @@
 - 测试脚手架用 Windows PowerShell 发中文 JSON 造成 `REQ-0007` 标题乱码（非产品缺陷；UTF-8 客户端正常）。
 - P2.1：SYSTEM 任务身份需收紧回专用 MammothApproval；Domain writer 建议独立服务账号。
 - 本轮为机械验证，`/approval` 页为最小实现，正式 IA/UX 归客户���迁移。
+
+## P2.1 完成（2026-11-16，专用账号收紧）
+
+- 审批服务任务已从 SYSTEM 收紧为 **`DESKTOP-9OP303T\MammothApproval`**（S4U，登录类型 S4U，不保存密码）；通过 `secedit` 授予 `SeBatchLogonRight` 后才可启动。
+- 任务运行中：`java.exe -jar ...mammoth-domain-service.jar --approval-service --watch --project-id a899ed37… --domain-base http://127.0.0.1:18090 --token-file ...`（账号 MammothApproval）。
+- 实测：新建提案 `27ce2db1…` → 人类会话批准 → 该专用账号 watch ≤2s 自动 apply → **REQ-0009**（`createdBy=spike_admin`，`sourceNote=mammoth-proposal:27ce2db1…`）；`/api/agent/proposals` 返回标题 `P2.1 dedicated account approval service`（title 字段生效）。
+- 残留小项：任务 wrapper 仍引用 P1 分支 jar 路径（P2 功能等价，仅缺少 P3 的 `/mine`/`/approval`；watch 只用 `/approved`+apply），后续可把 wrapper 指向 main 合并后的 P3 jar 并重建任务（需管理员覆盖 wrapper 的 ACL）。
