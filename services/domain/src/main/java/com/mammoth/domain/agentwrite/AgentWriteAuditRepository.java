@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AgentWriteAuditRepository extends JpaRepository<AgentWriteAudit, String> {
 
-  List<AgentWriteAudit> findByProposalIdOrderByAtAscIdAsc(String proposalId);
+  List<AgentWriteAudit> findByProposalIdOrderBySeqAsc(String proposalId);
 
-  Optional<AgentWriteAudit> findFirstByProposalIdOrderByAtDescIdDesc(String proposalId);
+  Optional<AgentWriteAudit> findFirstByProposalIdOrderBySeqDesc(String proposalId);
 }

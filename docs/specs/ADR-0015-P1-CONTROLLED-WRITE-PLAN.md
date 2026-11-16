@@ -152,3 +152,23 @@ approved --apply fail-------> failed (可重试回 approved? v1: 仅记录失败
 1. 是否按 4 个切片提交（推荐）？
 2. 高风险 v0 类别是否需要调整（方案定版、交付结项、批量/删除、需求状态重大流转、真实客户数据导出/外发）？
 3. P1 是否允许在独立分支/Worktree 实施（推荐 `feature/adr-0015-p1-controlled-write`），不直接改 main？
+
+## 12. 实施状态（2026-11-16，切片 1–4 完成）
+
+| 切片 | 状态 | 内容 |
+|---|---|---|
+| 1 schema+迁移 | **完成** | V11 三表（proposal/approval/write-audit，含 `seq`、`domain_object_id`）、JPA 实体/仓储、状态机、审计哈希链、迁移/备份断言、`MIN_SCHEMA_VERSION=11`、交接包表清单 |
+| 2 propose/list | **完成** | `POST /api/agent/proposals`（服务 token + 配置 agent 身份、项目成员、类型白名单、payload 校验/规范化、幂等、风险服务端派生、propose 审计、deny 审计）；`GET /api/agent/proposals` 人类会话 |
+| 3 approve/reject+四眼 | **完成** | `POST /{id}/approve|reject`（人类会话）；owner/editor 可批准并执行写入，owner/editor/reviewer 可拒绝；提案者≠批准者；高风险第二人须不同人类；批准/拒绝/拒绝行审计 |
+| 4 apply+负向矩阵 | **完成** | `POST /{id}/apply`（服务 token，幂等）；校验批准记录/四眼；以**批准人**身份调用 `WorkItemService.create`（Domain 审计 `createdBy`=人类）；失败保留 `failed` 状态与审计；负向矩阵见 §7 与测试 |
+
+**实现与计划的偏差/决策（已记录）**
+
+1. P1 服务身份仍用本机服务 token + 配置的 agent 账号（ADR-0015 P2 替换为独立 OS 身份/凭据存储）。
+2. 批准执行写入要求 owner/editor（apply 复用现有 `WorkItemService.create` 的角色校验）；reviewer 可拒绝。P2/P3 引入专用服务写身份后可放宽。
+3. 高风险类别已在代码常量中实现（方案定版/交付结项/删除与批量/需求重大流转/数据导出），P1 仅开放 `work_item.create`（normal）；其余类型待逐个实现 payload schema 与 apply 写入。
+4. 审计链按每提案单调 `seq` 排序（避免 ISO 秒级时间戳的同秒排序歧义）。
+5. apply 的状态迁移拆为独立事务（markApplying/completeApplied/completeFailed），Domain 写入失败不会回滚掉失败证据。
+6. 测试：域服务全量 **160 tests** 通过（含新增 agentwrite 39 例：状态机/哈希/隔离/幂等/payload/成员/角色/四眼/失败态/审计链/接口鉴权）。
+
+**后续（P2–P4 + P3 集成）**：P2 OS 身份与凭据隔离；P3 DSH Bundle/工作台接入新 API 并删除 Spike 适配器写路径；P4 负向安全验收（含真实进程/OS 权限验证）；`work_item.update` 等类型、分页/限流、审计查询 API、迁移回滚演练。

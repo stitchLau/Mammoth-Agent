@@ -11,6 +11,7 @@ import com.mammoth.domain.service.AuthorizationService;
 import com.mammoth.domain.support.Ids;
 import com.mammoth.domain.web.ApiException;
 import com.mammoth.domain.workitem.WorkItem;
+import com.mammoth.domain.workitem.WorkItemService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -22,9 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * ADR-0015 P1: the agent-facing half of controlled writes.
  *
- * <p>The agent may only create proposals; it cannot approve or apply them. Every accepted propose
- * is recorded in the append-only {@code agent_write_audit} chain, and rejected attempts are audited
- * separately so denial evidence survives the failed transaction.
+ * <p>The agent may only create proposals; it cannot approve or apply them. Humans decide through
+ * {@link #approve}/{@link #reject} (four-eyes: proposer != approver, high-risk needs a second
+ * different human). The approval service applies an approved proposal through
+ * {@link #apply}, which writes through the existing Domain service as the approving human.
  */
 @Service
 public class AgentProposalService {
@@ -47,28 +49,58 @@ public class AgentProposalService {
       "work_item.major_transition",
       "data.export");
 
+  /** Approvers must be able to execute the write (owner/editor can create work items). */
+  private static final Set<String> APPROVE_ROLES = Set.of(
+      AuthorizationService.OWNER, AuthorizationService.EDITOR);
+  /** Reviewers may reject, but approval for execution needs write authority. */
+  private static final Set<String> REJECT_ROLES = Set.of(
+      AuthorizationService.OWNER, AuthorizationService.EDITOR,
+      AuthorizationService.REVIEWER);
   private static final Set<String> ANY_ROLES = Set.of(
       AuthorizationService.OWNER, AuthorizationService.EDITOR,
       AuthorizationService.REVIEWER, AuthorizationService.VIEWER);
   private static final int MAX_PAYLOAD_BYTES = 64 * 1024;
+  private static final String SERVICE_ACTOR = "approval-service";
 
   private final AgentProposalRepository proposalRepository;
-  private final AgentWriteAuditRepository auditRepository;
+  private final AgentProposalApprovalRepository approvalRepository;
+  private final AgentWriteAuditService auditService;
+  private final AgentProposalStateService stateService;
   private final AppUserRepository appUserRepository;
   private final ProjectRepository projectRepository;
   private final AuthorizationService authorizationService;
+  private final WorkItemService workItemService;
   private final ObjectMapper objectMapper;
 
   public AgentProposalService(AgentProposalRepository proposalRepository,
-      AgentWriteAuditRepository auditRepository, AppUserRepository appUserRepository,
+      AgentProposalApprovalRepository approvalRepository, AgentWriteAuditService auditService,
+      AgentProposalStateService stateService, AppUserRepository appUserRepository,
       ProjectRepository projectRepository, AuthorizationService authorizationService,
-      ObjectMapper objectMapper) {
+      WorkItemService workItemService, ObjectMapper objectMapper) {
     this.proposalRepository = proposalRepository;
-    this.auditRepository = auditRepository;
+    this.approvalRepository = approvalRepository;
+    this.auditService = auditService;
+    this.stateService = stateService;
     this.appUserRepository = appUserRepository;
     this.projectRepository = projectRepository;
     this.authorizationService = authorizationService;
+    this.workItemService = workItemService;
     this.objectMapper = objectMapper;
+  }
+
+  /** Result of applying an approved proposal; also used for idempotent repeats. */
+  public record ApplyResult(String proposalId, String status, String domainObjectType,
+      String domainObjectId, String domainObjectItemNo, String failureReason) {
+
+    static ApplyResult applied(String proposalId, String status, String domainObjectId,
+        String itemNo) {
+      return new ApplyResult(proposalId, status, "work_item", domainObjectId, itemNo, null);
+    }
+
+    static ApplyResult failed(String proposalId, String failureReason) {
+      return new ApplyResult(proposalId, AgentProposal.STATUS_FAILED, null, null, null,
+          failureReason);
+    }
   }
 
   /**
@@ -104,8 +136,8 @@ public class AgentProposalService {
         blankToNull(summary), AgentProposal.PROPOSER_AGENT, agent.getId(), blankToNull(agentRunRef),
         key, deriveRisk(type), Ids.nowIso());
     proposalRepository.save(proposal);
-    appendAudit(proposal.getId(), AgentWriteAudit.STAGE_PROPOSE, "agent", agent.getId(), "ok",
-        AuditHash.fingerprint(canonicalPayload), null);
+    auditService.append(proposal.getId(), AgentWriteAudit.STAGE_PROPOSE, "agent", agent.getId(),
+        "ok", AuditHash.fingerprint(canonicalPayload), null);
     return proposal;
   }
 
@@ -116,6 +148,121 @@ public class AgentProposalService {
     return proposalRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
   }
 
+  /** Record a human approval; a high-risk proposal needs a second, different human. */
+  @Transactional
+  public AgentProposal approve(AppUser human, String proposalId, String reason) {
+    AgentProposal proposal = requireProposal(proposalId);
+    authorizeDecider(human, proposal, APPROVE_ROLES, "approve");
+    if (!proposal.isOpen()) {
+      deny(human, proposal, "approve:not-open");
+      throw ApiException.conflict("cannot approve a proposal in status " + proposal.getStatus());
+    }
+    boolean second = AgentProposal.STATUS_AWAITING_SECOND.equals(proposal.getStatus());
+    if (second) {
+      AgentProposalApproval primary = requireApproval(proposal, AgentProposalApproval.ROLE_PRIMARY);
+      if (primary.getApproverUserId().equals(human.getId())) {
+        deny(human, proposal, "approve:second-approver-equal");
+        throw ApiException.forbidden(
+            "the second reviewer must differ from the primary approver");
+      }
+    }
+    if (second) {
+      proposal.approveSecond(human.getId(), Ids.nowIso());
+    } else {
+      proposal.approvePrimary(human.getId(), Ids.nowIso());
+    }
+    approvalRepository.save(new AgentProposalApproval(Ids.newId(), proposal.getId(),
+        human.getId(), AgentProposalApproval.DECISION_APPROVE, blankToNull(reason),
+        second ? AgentProposalApproval.ROLE_SECOND : AgentProposalApproval.ROLE_PRIMARY, null,
+        Ids.nowIso()));
+    proposalRepository.save(proposal);
+    auditService.append(proposal.getId(), AgentWriteAudit.STAGE_APPROVE, "human", human.getId(),
+        "ok", AuditHash.fingerprint(proposal.getPayloadJson()), null);
+    return proposal;
+  }
+
+  /** Record a human rejection (owner/editor/reviewer); no Domain write happens. */
+  @Transactional
+  public AgentProposal reject(AppUser human, String proposalId, String reason) {
+    AgentProposal proposal = requireProposal(proposalId);
+    authorizeDecider(human, proposal, REJECT_ROLES, "reject");
+    if (!proposal.isOpen()) {
+      deny(human, proposal, "reject:not-open");
+      throw ApiException.conflict("cannot reject a proposal in status " + proposal.getStatus());
+    }
+    boolean second = AgentProposal.STATUS_AWAITING_SECOND.equals(proposal.getStatus());
+    if (second) {
+      AgentProposalApproval primary = requireApproval(proposal, AgentProposalApproval.ROLE_PRIMARY);
+      if (primary.getApproverUserId().equals(human.getId())) {
+        deny(human, proposal, "reject:second-approver-equal");
+        throw ApiException.forbidden(
+            "the second reviewer must differ from the primary approver");
+      }
+    }
+    proposal.reject(reason, Ids.nowIso());
+    approvalRepository.save(new AgentProposalApproval(Ids.newId(), proposal.getId(),
+        human.getId(), AgentProposalApproval.DECISION_REJECT, blankToNull(reason),
+        second ? AgentProposalApproval.ROLE_SECOND : AgentProposalApproval.ROLE_PRIMARY, null,
+        Ids.nowIso()));
+    proposalRepository.save(proposal);
+    auditService.append(proposal.getId(), AgentWriteAudit.STAGE_REJECT, "human", human.getId(),
+        "ok", AuditHash.fingerprint(proposal.getPayloadJson()), null);
+    return proposal;
+  }
+
+  /**
+   * Apply an approved proposal through the existing Domain write service. Executed by the approval
+   * service identity; the business object is created as the approving human so Domain audits keep
+   * a human author. Idempotent: a second apply returns the already-created Domain object.
+   */
+  public ApplyResult apply(String proposalId, String serviceActor) {
+    AgentProposal proposal = requireProposal(proposalId);
+    if (AgentProposal.STATUS_APPLIED.equals(proposal.getStatus())) {
+      return ApplyResult.applied(proposal.getId(), proposal.getStatus(),
+          proposal.getDomainObjectId(), null);
+    }
+    if (!AgentProposal.STATUS_APPROVED.equals(proposal.getStatus())) {
+      auditService.appendIndependent(proposal.getId(), AgentWriteAudit.STAGE_APPLY, "service",
+          serviceActor == null ? SERVICE_ACTOR : serviceActor, "denied:not-approved", null, null);
+      throw ApiException.conflict("proposal is not approved: " + proposal.getStatus());
+    }
+    if (AgentProposal.STATUS_APPLYING.equals(proposal.getStatus())) {
+      throw ApiException.conflict("proposal is already being applied");
+    }
+    AgentProposalApproval primary = requireApproval(proposal, AgentProposalApproval.ROLE_PRIMARY);
+    if (proposal.isHighRisk()) {
+      AgentProposalApproval second = requireApproval(proposal, AgentProposalApproval.ROLE_SECOND);
+      if (second.getApproverUserId().equals(primary.getApproverUserId())) {
+        throw ApiException.forbidden("high-risk proposal requires two distinct human approvers");
+      }
+    }
+    AppUser approver = appUserRepository.findById(primary.getApproverUserId())
+        .filter(AppUser::isActive)
+        .orElseThrow(() -> ApiException.conflict("proposal approver is no longer active"));
+    String sourceNote = optionalPayloadText(proposal, "sourceNote");
+    String domainSourceNote = sourceNote == null
+        ? "mammoth-proposal:" + proposal.getId()
+        : sourceNote + " (mammoth-proposal:" + proposal.getId() + ")";
+    String actor = serviceActor == null ? SERVICE_ACTOR : serviceActor;
+
+    stateService.markApplying(proposal.getId());
+    try {
+      String title = requiredPayloadText(proposal, "title");
+      String summary = optionalPayloadText(proposal, "summary");
+      String priority = optionalPayloadText(proposal, "priority");
+      WorkItem item = workItemService.create(approver, proposal.getProjectId(), title, summary,
+          priority, domainSourceNote);
+      stateService.completeApplied(proposal.getId(), actor, item.getId(),
+          AuditHash.fingerprint(proposal.getPayloadJson()));
+      return ApplyResult.applied(proposal.getId(), AgentProposal.STATUS_APPLIED, item.getId(),
+          item.getItemNo());
+    } catch (RuntimeException error) {
+      String message = error.getMessage() == null ? "domain write failed" : error.getMessage();
+      stateService.completeFailed(proposal.getId(), actor, message);
+      return ApplyResult.failed(proposal.getId(), message);
+    }
+  }
+
   /**
    * Record a denial that happens before/around proposal creation (bad service token, malformed
    * request). Uses a separate transaction so the evidence survives the API error.
@@ -124,7 +271,7 @@ public class AgentProposalService {
   public void recordDenied(String actorUserId, String payloadForFingerprint, String reason) {
     String fingerprint = payloadForFingerprint == null
         ? null : AuditHash.fingerprint(payloadForFingerprint);
-    appendAudit("unresolved", AgentWriteAudit.STAGE_DENY, "agent", actorUserId,
+    auditService.append("unresolved", AgentWriteAudit.STAGE_DENY, "agent", actorUserId,
         "denied:" + (reason == null ? "unspecified" : reason), fingerprint, null);
   }
 
@@ -132,6 +279,33 @@ public class AgentProposalService {
   static String deriveRisk(String proposalType) {
     return HIGH_RISK_TYPES.contains(proposalType)
         ? AgentProposal.RISK_HIGH : AgentProposal.RISK_NORMAL;
+  }
+
+  private AgentProposal requireProposal(String proposalId) {
+    return proposalRepository.findById(proposalId)
+        .orElseThrow(() -> ApiException.notFound("proposal not found: " + proposalId));
+  }
+
+  private AgentProposalApproval requireApproval(AgentProposal proposal, String reviewerRole) {
+    return approvalRepository.findByProposalIdAndReviewerRole(proposal.getId(), reviewerRole)
+        .filter(record -> AgentProposalApproval.DECISION_APPROVE.equals(record.getDecision()))
+        .orElseThrow(() -> ApiException.conflict(
+            "proposal is missing the " + reviewerRole + " human approval"));
+  }
+
+  private void authorizeDecider(AppUser human, AgentProposal proposal, Set<String> roles,
+      String action) {
+    try {
+      authorizationService.requireProjectRole(human, proposal.getProjectId(), roles);
+    } catch (ApiException error) {
+      deny(human, proposal, action + ":forbidden");
+      throw error;
+    }
+  }
+
+  private void deny(AppUser human, AgentProposal proposal, String reason) {
+    auditService.appendIndependent(proposal.getId(), AgentWriteAudit.STAGE_DENY, "human",
+        human.getId(), "denied:" + reason, null, null);
   }
 
   private String requireSupportedType(String proposalType) {
@@ -183,6 +357,33 @@ public class AgentProposalService {
     return objectMapper.writeValueAsString(canonical);
   }
 
+  private String requiredPayloadText(AgentProposal proposal, String field) {
+    JsonNode payload = parseStoredPayload(proposal);
+    String value = optionalText(payload, field);
+    if (value == null || value.isEmpty()) {
+      throw ApiException.badRequest("stored payload is missing " + field);
+    }
+    return value;
+  }
+
+  private String optionalPayloadText(AgentProposal proposal, String field) {
+    return optionalText(parseStoredPayload(proposal), field);
+  }
+
+  private JsonNode parseStoredPayload(AgentProposal proposal) {
+    try {
+      JsonNode payload = objectMapper.readTree(proposal.getPayloadJson());
+      if (payload == null || !payload.isObject()) {
+        throw ApiException.badRequest("stored payload is not a JSON object");
+      }
+      return payload;
+    } catch (ApiException error) {
+      throw error;
+    } catch (RuntimeException error) {
+      throw ApiException.badRequest("stored payload is not valid JSON");
+    }
+  }
+
   private static String requiredText(JsonNode payload, String field) {
     String value = optionalText(payload, field);
     if (value == null || value.isEmpty()) {
@@ -212,17 +413,5 @@ public class AgentProposalService {
 
   private static String blankToNull(String value) {
     return value == null || value.isBlank() ? null : value.trim();
-  }
-
-  private void appendAudit(String proposalId, String stage, String actorKind, String actorUserId,
-      String outcome, String requestFingerprint, String domainObjectId) {
-    String prevHash = auditRepository.findFirstByProposalIdOrderByAtDescIdDesc(proposalId)
-        .map(AgentWriteAudit::getEntryHash)
-        .orElse(null);
-    String at = Ids.nowIso();
-    String entryHash = AuditHash.entryHash(prevHash, proposalId, stage, actorKind, actorUserId,
-        outcome, at);
-    auditRepository.save(new AgentWriteAudit(Ids.newId(), proposalId, stage, actorKind,
-        actorUserId, outcome, requestFingerprint, domainObjectId, prevHash, entryHash, at));
   }
 }

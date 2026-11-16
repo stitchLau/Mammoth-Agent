@@ -19,6 +19,8 @@ import com.mammoth.domain.support.Ids;
 import com.mammoth.domain.web.AgentProposalController;
 import com.mammoth.domain.web.ApiException;
 import com.mammoth.domain.web.ApiExceptionHandler;
+import com.mammoth.domain.workitem.WorkItem;
+import com.mammoth.domain.workitem.WorkItemRepository;
 import tools.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,7 +78,13 @@ class AgentProposalWorkflowTest {
   private AgentProposalRepository proposalRepository;
 
   @Autowired
+  private AgentProposalApprovalRepository approvalRepository;
+
+  @Autowired
   private AgentWriteAuditRepository auditRepository;
+
+  @Autowired
+  private WorkItemRepository workItemRepository;
 
   @Autowired
   private AgentWriteProperties properties;
@@ -115,6 +123,40 @@ class AgentProposalWorkflowTest {
     projectService.addMember(owner, project.getId(), agentId, AuthorizationService.VIEWER);
   }
 
+  private AppUser member(String prefix, String role) {
+    AppUser user = human(prefix);
+    projectService.addMember(owner, project.getId(), user.getId(), role);
+    return user;
+  }
+
+  private AgentProposal propose(String payload, String idempotencyKey) {
+    return proposalService.propose(agentId, project.getId(),
+        AgentProposalService.TYPE_WORK_ITEM_CREATE, payload, "summary", idempotencyKey, null);
+  }
+
+  private AgentProposal pendingHighRisk(String idempotencyKey) {
+    return proposalRepository.save(new AgentProposal("hr-" + UUID.randomUUID(), project.getId(),
+        AgentProposalService.TYPE_WORK_ITEM_CREATE,
+        "{\"title\":\"高风险需求\",\"priority\":\"high\"}", "high risk",
+        AgentProposal.PROPOSER_AGENT, agentId, null, idempotencyKey, AgentProposal.RISK_HIGH,
+        Ids.nowIso()));
+  }
+
+  private void assertAuditChain(String proposalId) {
+    List<AgentWriteAudit> rows = auditRepository.findByProposalIdOrderBySeqAsc(proposalId);
+    assertThat(rows).isNotEmpty();
+    String prev = null;
+    int expectedSeq = 1;
+    for (AgentWriteAudit row : rows) {
+      assertThat(row.getSeq()).isEqualTo(expectedSeq++);
+      assertThat(row.getPrevHash()).isEqualTo(prev);
+      assertThat(row.getEntryHash()).isEqualTo(AuditHash.entryHash(prev, row.getProposalId(),
+          row.getStage(), row.getActorKind(), row.getActorUserId(), row.getOutcome(),
+          row.getAt()));
+      prev = row.getEntryHash();
+    }
+  }
+
   @Test
   void proposeCreatesPendingProposalAndProposeAudit() {
     AgentProposal proposal = proposalService.propose(agentId, project.getId(),
@@ -132,7 +174,7 @@ class AgentProposalWorkflowTest {
         .doesNotContain("extra");
 
     List<AgentWriteAudit> audit =
-        auditRepository.findByProposalIdOrderByAtAscIdAsc(proposal.getId());
+        auditRepository.findByProposalIdOrderBySeqAsc(proposal.getId());
     assertThat(audit).hasSize(1);
     assertThat(audit.get(0).getStage()).isEqualTo(AgentWriteAudit.STAGE_PROPOSE);
     assertThat(audit.get(0).getActorKind()).isEqualTo("agent");
@@ -152,7 +194,7 @@ class AgentProposalWorkflowTest {
 
     assertThat(second.getId()).isEqualTo(first.getId());
     assertThat(proposalRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).hasSize(1);
-    assertThat(auditRepository.findByProposalIdOrderByAtAscIdAsc(first.getId())).hasSize(1);
+    assertThat(auditRepository.findByProposalIdOrderBySeqAsc(first.getId())).hasSize(1);
   }
 
   @Test
@@ -234,7 +276,7 @@ class AgentProposalWorkflowTest {
     proposalService.recordDenied(agentId, null, "invalid-agent-token");
 
     List<AgentWriteAudit> denials =
-        auditRepository.findByProposalIdOrderByAtAscIdAsc("unresolved");
+        auditRepository.findByProposalIdOrderBySeqAsc("unresolved");
     assertThat(denials).isNotEmpty();
     assertThat(denials.stream()
         .anyMatch(row -> AgentWriteAudit.STAGE_DENY.equals(row.getStage())
@@ -305,5 +347,180 @@ class AgentProposalWorkflowTest {
                 + "\"proposalType\":\"work_item.create\",\"payload\":{\"title\":\"x\"},"
                 + "\"idempotencyKey\":\"idem-unconfigured\"}"))
         .andExpect(status().isServiceUnavailable());
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // Slices 3/4: approvals, four-eyes, apply and the negative matrix.
+  // ---------------------------------------------------------------------------------------------
+
+  @Test
+  void normalApprovalThenApplyCreatesWorkItemAsTheApprovingHuman() {
+    AgentProposal proposal = propose(
+        "{\"title\":\"受控写入需求\",\"summary\":\"S\",\"priority\":\"high\"}", "idem-apply-1");
+    AgentProposal approved = proposalService.approve(owner, proposal.getId(), "同意");
+    assertThat(approved.getStatus()).isEqualTo(AgentProposal.STATUS_APPROVED);
+    assertThat(approved.getDecidedAt()).isNotNull();
+    List<AgentProposalApproval> approvals =
+        approvalRepository.findByProposalIdOrderByDecidedAtAsc(proposal.getId());
+    assertThat(approvals).hasSize(1);
+    assertThat(approvals.get(0).getApproverUserId()).isEqualTo(owner.getId());
+    assertThat(approvals.get(0).getReviewerRole()).isEqualTo(AgentProposalApproval.ROLE_PRIMARY);
+    assertThat(approvals.get(0).getDecision()).isEqualTo(AgentProposalApproval.DECISION_APPROVE);
+
+    assertThat(workItemRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).isEmpty();
+
+    AgentProposalService.ApplyResult result =
+        proposalService.apply(proposal.getId(), "approval-service");
+    assertThat(result.status()).isEqualTo(AgentProposal.STATUS_APPLIED);
+    assertThat(result.domainObjectItemNo()).isEqualTo("REQ-0001");
+    WorkItem item = workItemRepository.findById(result.domainObjectId()).orElseThrow();
+    assertThat(item.getCreatedBy()).isEqualTo(owner.getId());
+    assertThat(item.getTitle()).isEqualTo("受控写入需求");
+    assertThat(item.getPriority()).isEqualTo("high");
+    assertThat(item.getSourceNote()).contains(proposal.getId());
+
+    AgentProposalService.ApplyResult repeated =
+        proposalService.apply(proposal.getId(), "approval-service");
+    assertThat(repeated.domainObjectId()).isEqualTo(result.domainObjectId());
+    assertThat(workItemRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).hasSize(1);
+
+    List<AgentWriteAudit> audit = auditRepository.findByProposalIdOrderBySeqAsc(proposal.getId());
+    assertThat(audit).extracting(AgentWriteAudit::getStage)
+        .containsExactly(AgentWriteAudit.STAGE_PROPOSE, AgentWriteAudit.STAGE_APPROVE,
+            AgentWriteAudit.STAGE_APPLY);
+    assertThat(audit.get(2).getActorKind()).isEqualTo("service");
+    assertThat(audit.get(2).getDomainObjectId()).isEqualTo(item.getId());
+    assertAuditChain(proposal.getId());
+  }
+
+  @Test
+  void rejectionIsAuditedAndBlocksApply() {
+    AgentProposal proposal = propose("{\"title\":\"拒绝需求\"}", "idem-reject-1");
+    AgentProposal rejected = proposalService.reject(owner, proposal.getId(), "不需要");
+    assertThat(rejected.getStatus()).isEqualTo(AgentProposal.STATUS_REJECTED);
+    assertThat(rejected.getFailureReason()).isEqualTo("不需要");
+
+    assertThatThrownBy(() -> proposalService.apply(proposal.getId(), "approval-service"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("not approved");
+    assertThat(workItemRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).isEmpty();
+    List<AgentWriteAudit> audit =
+        auditRepository.findByProposalIdOrderBySeqAsc(proposal.getId());
+    assertThat(audit).extracting(AgentWriteAudit::getStage)
+        .containsExactly(AgentWriteAudit.STAGE_PROPOSE, AgentWriteAudit.STAGE_REJECT,
+            AgentWriteAudit.STAGE_APPLY);
+    assertThat(audit.get(2).getOutcome()).startsWith("denied:");
+    assertAuditChain(proposal.getId());
+  }
+
+  @Test
+  void approvalRequiresWriteCapableRoleAndProjectMembership() {
+    AgentProposal proposal = propose("{\"title\":\"角色测试\"}", "idem-role-1");
+    AppUser viewer = member("viewer", AuthorizationService.VIEWER);
+    assertThatThrownBy(() -> proposalService.approve(viewer, proposal.getId(), "ok"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("role viewer");
+
+    AppUser outsider = human("outsider-no-member");
+    assertThatThrownBy(() -> proposalService.approve(outsider, proposal.getId(), "ok"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("no access to project");
+
+    assertThat(approvalRepository.findByProposalIdOrderByDecidedAtAsc(proposal.getId())).isEmpty();
+    assertThat(auditRepository.findByProposalIdOrderBySeqAsc(proposal.getId()).stream()
+        .filter(row -> AgentWriteAudit.STAGE_DENY.equals(row.getStage()))
+        .count()).isEqualTo(2);
+  }
+
+  @Test
+  void agentAccountCannotApproveItsOwnProposal() {
+    AgentProposal proposal = propose("{\"title\":\"自批测试\"}", "idem-self-1");
+    AppUser agent = appUserRepository.findById(agentId).orElseThrow();
+    assertThatThrownBy(() -> proposalService.approve(agent, proposal.getId(), "self"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("role viewer");
+    assertThat(proposalRepository.findById(proposal.getId()).orElseThrow().getStatus())
+        .isEqualTo(AgentProposal.STATUS_PENDING);
+  }
+
+  @Test
+  void pendingProposalCannotBeAppliedDirectly() {
+    AgentProposal proposal = propose("{\"title\":\"待审\"}", "idem-pending-1");
+    assertThatThrownBy(() -> proposalService.apply(proposal.getId(), "approval-service"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("not approved");
+    assertThat(workItemRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).isEmpty();
+  }
+
+  @Test
+  void highRiskNeedsASecondDifferentHumanAndThenApplies() {
+    AgentProposal proposal = pendingHighRisk("idem-high-1");
+    AgentProposal primary = proposalService.approve(owner, proposal.getId(), "primary ok");
+    assertThat(primary.getStatus()).isEqualTo(AgentProposal.STATUS_AWAITING_SECOND);
+    assertThatThrownBy(() -> proposalService.approve(owner, proposal.getId(), "same human"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("second reviewer");
+
+    AppUser editor = member("editor", AuthorizationService.EDITOR);
+    AgentProposal approved = proposalService.approve(editor, proposal.getId(), "second ok");
+    assertThat(approved.getStatus()).isEqualTo(AgentProposal.STATUS_APPROVED);
+    assertThat(approvalRepository.findByProposalIdOrderByDecidedAtAsc(proposal.getId()))
+        .extracting(AgentProposalApproval::getReviewerRole)
+        .contains(AgentProposalApproval.ROLE_PRIMARY, AgentProposalApproval.ROLE_SECOND);
+
+    AgentProposalService.ApplyResult result =
+        proposalService.apply(proposal.getId(), "approval-service");
+    assertThat(result.status()).isEqualTo(AgentProposal.STATUS_APPLIED);
+    assertAuditChain(proposal.getId());
+  }
+
+  @Test
+  void highRiskWithoutSecondApprovalCannotApply() {
+    AgentProposal proposal = pendingHighRisk("idem-high-2");
+    proposalService.approve(owner, proposal.getId(), "primary");
+    assertThatThrownBy(() -> proposalService.apply(proposal.getId(), "approval-service"))
+        .isInstanceOf(ApiException.class)
+        .hasMessageContaining("not approved");
+    assertThat(workItemRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).isEmpty();
+  }
+
+  @Test
+  void applyFailureKeepsFailedStateAndAuditButWritesNothing() {
+    AgentProposal proposal = proposalRepository.save(new AgentProposal(
+        "bad-" + UUID.randomUUID(), project.getId(), AgentProposalService.TYPE_WORK_ITEM_CREATE,
+        "{}", "invalid payload", AgentProposal.PROPOSER_AGENT, agentId, null, "idem-bad-1",
+        AgentProposal.RISK_NORMAL, Ids.nowIso()));
+    proposalService.approve(owner, proposal.getId(), "approved");
+
+    AgentProposalService.ApplyResult result =
+        proposalService.apply(proposal.getId(), "approval-service");
+    assertThat(result.status()).isEqualTo(AgentProposal.STATUS_FAILED);
+    assertThat(result.failureReason()).contains("title");
+    assertThat(proposalRepository.findById(proposal.getId()).orElseThrow().getStatus())
+        .isEqualTo(AgentProposal.STATUS_FAILED);
+    assertThat(workItemRepository.findByProjectIdOrderByCreatedAtAsc(project.getId())).isEmpty();
+    assertThat(auditRepository.findByProposalIdOrderBySeqAsc(proposal.getId()))
+        .extracting(AgentWriteAudit::getStage)
+        .containsExactly(AgentWriteAudit.STAGE_APPROVE, AgentWriteAudit.STAGE_APPLY);
+  }
+
+  @Test
+  void controllerHumanEndpointsRequireASessionAndApplyRequiresTheServiceToken()
+      throws Exception {
+    properties.setAgentToken(TEST_TOKEN);
+    properties.setAgentUserId(agentId);
+    AgentProposal proposal = propose("{\"title\":\"接口鉴权\"}", "idem-endpoints-1");
+    AgentProposalController controller =
+        new AgentProposalController(proposalService, properties,
+            org.mockito.Mockito.mock(AuthorizationService.class), objectMapper);
+    MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        .setControllerAdvice(new ApiExceptionHandler())
+        .build();
+
+    mockMvc.perform(post("/api/agent/proposals/{id}/approve", proposal.getId())
+            .contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isUnauthorized());
+    mockMvc.perform(post("/api/agent/proposals/{id}/apply", proposal.getId()))
+        .andExpect(status().isUnauthorized());
   }
 }

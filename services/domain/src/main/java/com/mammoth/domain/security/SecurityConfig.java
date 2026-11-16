@@ -35,7 +35,8 @@ public class SecurityConfig {
             // the default XOR-masked handler would require server-rendered tokens instead.
             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
             // Login has no session yet; CSRF applies to all authenticated mutations.
-            .ignoringRequestMatchers("/api/auth/login", "/api/agent/proposals"))
+            .ignoringRequestMatchers("/api/auth/login", "/api/agent/proposals",
+                "/api/agent/proposals/*/apply"))
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             // No servlet session is used, so session-authentication strategies (notably CSRF token
@@ -56,8 +57,9 @@ public class SecurityConfig {
                 .hasAnyAuthority(SessionAuthenticationFilter.ROLE_USER,
                     SessionAuthenticationFilter.ROLE_PASSWORD_RESET_REQUIRED)
             // ADR-0015 P1: the agent proposal endpoint authenticates the machine-local service
-            // token itself (fail-closed when unconfigured); the human list endpoint stays below.
-            .requestMatchers(HttpMethod.POST, "/api/agent/proposals").permitAll()
+            // token itself (fail-closed when unconfigured); the human endpoints stay protected.
+            .requestMatchers(HttpMethod.POST, "/api/agent/proposals",
+                "/api/agent/proposals/*/apply").permitAll()
             .requestMatchers("/api/**").hasAuthority(SessionAuthenticationFilter.ROLE_USER)
             .anyRequest().authenticated())
         .exceptionHandling(handling -> handling.authenticationEntryPoint(

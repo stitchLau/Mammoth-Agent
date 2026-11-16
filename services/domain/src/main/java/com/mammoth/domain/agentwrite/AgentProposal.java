@@ -60,6 +60,8 @@ public class AgentProposal {
 
   private String failureReason;
 
+  private String domainObjectId;
+
   private String createdAt;
 
   private String decidedAt;
@@ -183,6 +185,7 @@ public class AgentProposal {
     }
     this.status = STATUS_APPLIED;
     this.appliedAt = now;
+    this.domainObjectId = domainObjectId;
     this.failureReason = null;
   }
 
@@ -266,6 +269,10 @@ public class AgentProposal {
 
   public String getFailureReason() {
     return failureReason;
+  }
+
+  public String getDomainObjectId() {
+    return domainObjectId;
   }
 
   public String getCreatedAt() {

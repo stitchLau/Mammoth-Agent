@@ -23,6 +23,9 @@ public class AgentWriteAudit {
 
   private String proposalId;
 
+  /** Monotonic per-proposal sequence; the hash chain follows this order. */
+  private int seq;
+
   private String stage;
 
   private String actorKind;
@@ -44,11 +47,12 @@ public class AgentWriteAudit {
   protected AgentWriteAudit() {
   }
 
-  public AgentWriteAudit(String id, String proposalId, String stage, String actorKind,
+  public AgentWriteAudit(String id, String proposalId, int seq, String stage, String actorKind,
       String actorUserId, String outcome, String requestFingerprint, String domainObjectId,
       String prevHash, String entryHash, String now) {
     this.id = id;
     this.proposalId = proposalId;
+    this.seq = seq;
     this.stage = stage;
     this.actorKind = actorKind;
     this.actorUserId = actorUserId;
@@ -66,6 +70,10 @@ public class AgentWriteAudit {
 
   public String getProposalId() {
     return proposalId;
+  }
+
+  public int getSeq() {
+    return seq;
   }
 
   public String getStage() {

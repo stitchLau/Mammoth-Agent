@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -62,6 +63,18 @@ public class AgentProposalController {
     }
   }
 
+  public record DecisionRequest(String reason) {
+  }
+
+  public record ApplyResponse(String proposalId, String status, String domainObjectType,
+      String domainObjectId, String domainObjectItemNo, String failureReason) {
+
+    static ApplyResponse from(AgentProposalService.ApplyResult result) {
+      return new ApplyResponse(result.proposalId(), result.status(), result.domainObjectType(),
+          result.domainObjectId(), result.domainObjectItemNo(), result.failureReason());
+    }
+  }
+
   @PostMapping
   public ProposalResponse propose(
       @RequestHeader(value = AGENT_TOKEN_HEADER, required = false) String serviceToken,
@@ -86,6 +99,31 @@ public class AgentProposalController {
     return proposalService.list(human, projectId).stream()
         .map(ProposalResponse::from)
         .toList();
+  }
+
+  @PostMapping("/{proposalId}/approve")
+  public ProposalResponse approve(@PathVariable String proposalId,
+      @RequestBody(required = false) DecisionRequest request) {
+    AppUser human = CurrentUser.require(authorizationService);
+    return ProposalResponse.from(proposalService.approve(human, proposalId,
+        request == null ? null : request.reason()));
+  }
+
+  @PostMapping("/{proposalId}/reject")
+  public ProposalResponse reject(@PathVariable String proposalId,
+      @RequestBody(required = false) DecisionRequest request) {
+    AppUser human = CurrentUser.require(authorizationService);
+    return ProposalResponse.from(proposalService.reject(human, proposalId,
+        request == null ? null : request.reason()));
+  }
+
+  /** Apply an approved proposal; executed by the approval service identity. */
+  @PostMapping("/{proposalId}/apply")
+  public ApplyResponse apply(
+      @RequestHeader(value = AGENT_TOKEN_HEADER, required = false) String serviceToken,
+      @PathVariable String proposalId) {
+    requireServiceToken(serviceToken);
+    return ApplyResponse.from(proposalService.apply(proposalId, "approval-service"));
   }
 
   private void requireServiceToken(String provided) {

@@ -14,6 +14,7 @@ CREATE TABLE agent_proposal (
   status            TEXT NOT NULL,
   risk_level        TEXT NOT NULL,
   failure_reason    TEXT,
+  domain_object_id  TEXT,
   created_at        TEXT NOT NULL,
   decided_at        TEXT,
   applied_at        TEXT,
@@ -43,6 +44,7 @@ CREATE INDEX idx_agent_proposal_approval_proposal ON agent_proposal_approval(pro
 CREATE TABLE agent_write_audit (
   id                  TEXT PRIMARY KEY,
   proposal_id         TEXT NOT NULL,
+  seq                 INTEGER NOT NULL,
   stage               TEXT NOT NULL,
   actor_kind          TEXT NOT NULL,
   actor_user_id       TEXT,
@@ -54,5 +56,5 @@ CREATE TABLE agent_write_audit (
   at                  TEXT NOT NULL
 );
 
-CREATE INDEX idx_agent_write_audit_proposal_at ON agent_write_audit(proposal_id, at);
+CREATE INDEX idx_agent_write_audit_proposal_at ON agent_write_audit(proposal_id, seq);
 CREATE INDEX idx_agent_write_audit_stage_at ON agent_write_audit(stage, at);
