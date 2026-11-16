@@ -81,33 +81,36 @@ if (-not (Get-Command $JavaExe -ErrorAction SilentlyContinue) -and -not (Test-Pa
   Fail "java executable not found: $JavaExe"
 }
 
-# 1. Dedicated local account.
-$existing = Get-LocalUser -Name $ServiceAccountName -ErrorAction SilentlyContinue
+# 1. Dedicated local account (ADSI; avoids the optional LocalAccounts module).
 $plainPassword = $null
-if ($null -eq $existing) {
-  if ($null -eq $ServiceAccountPassword) {
+if ($null -ne $ServiceAccountPassword) {
+  $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ServiceAccountPassword))
+}
+$computer = [ADSI]"WinNT://$env:COMPUTERNAME,computer"
+$existing = $computer.Children | Where-Object {
+  $_.SchemaClassName -eq 'User' -and $_.Name -eq $ServiceAccountName
+}
+if (-not $existing) {
+  if ($null -eq $plainPassword) {
     $bytes = New-Object byte[] 24
     [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
     $plainPassword = [Convert]::ToBase64String($bytes)
     Write-Host "[action] generated a random password for $account; store it in your password manager now:" -ForegroundColor Yellow
     Write-Host "         $plainPassword"
-  } else {
-    $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-      [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ServiceAccountPassword))
   }
-  $secure = ConvertTo-SecureString $plainPassword -AsPlainText -Force
-  New-LocalUser -Name $ServiceAccountName -Password $secure -FullName 'Mammoth Approval Service' `
-    -Description 'ADR-0015 isolated approval service account' -PasswordNeverExpires `
-    -AccountNeverExpires | Out-Null
+  $user = $computer.Create('User', $ServiceAccountName)
+  $user.SetPassword($plainPassword)
+  $user.Put('Description', 'ADR-0015 isolated approval service account')
+  # UF_SCRIPT (0x1) + UF_DONT_EXPIRE_PASSWD (0x10000)
+  $flags = [int]$user.Get('UserFlags')
+  $user.Put('UserFlags', ($flags -bor 0x1 -bor 0x10000))
+  $user.SetInfo()
   Write-Host "[action] created local user $account"
 } else {
   Write-Host "[skip] local user already exists: $account"
-  if ($RegisterScheduledTask -and $null -eq $ServiceAccountPassword) {
+  if ($RegisterScheduledTask -and $null -eq $plainPassword) {
     Fail '-RegisterScheduledTask needs -ServiceAccountPassword for an existing account'
-  }
-  if ($null -ne $ServiceAccountPassword) {
-    $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-      [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ServiceAccountPassword))
   }
 }
 
@@ -156,9 +159,9 @@ if ($RegisterScheduledTask) {
   $trigger = New-ScheduledTaskTrigger -AtStartup
   $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 3 `
     -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit (New-TimeSpan -Hours 0)
-  $principal2 = New-ScheduledTaskPrincipal -UserId $account -LogonType Password -RunLevel Highest
   Register-ScheduledTask -TaskName $taskName -TaskPath '\Mammoth\' -Action $action `
-    -Trigger $trigger -Settings $settings -Principal $principal2 -Password $plainPassword `
+    -Trigger $trigger -Settings $settings -User $account -Password $plainPassword `
+    -RunLevel Highest `
     -Description 'ADR-0015 approval service: apply human-approved proposals' -Force | Out-Null
   Write-Host "[action] registered scheduled task \Mammoth\$taskName"
 }
