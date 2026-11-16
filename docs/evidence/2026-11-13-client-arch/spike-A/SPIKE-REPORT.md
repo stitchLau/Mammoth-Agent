@@ -280,10 +280,9 @@ Agent 工具 mammoth_propose_work_item
 ## 13.1 决策落定（2026-11-16，追加）
 
 1. **ADR-0014 Accepted v1.1 已由项目负责人签署**：路线 A（DSH Desktop 宿主 + Mammoth 外部 Bundle）正式生效；S-A7 的真人批准条件由负责人本人批准提案 `db238b78` → `REQ-0003` 补齐。
-2. **ADR-0015 批准另立并起草（Proposed）**：`decisions/ADR-0015-AGENT-CONTROLLED-WRITE-AND-SERVICE-IDENTITY.md`。
-   - 目标：以**独立 Approval 服务身份** + Domain **提案/审批/写入 API** + **人类独占审批/四眼** + **审计三元组**，关闭"临时适配器与 Agent 同 OS 用户"的边界缺口；
-   - 关键决策项（待负责人批准）：propose-only 权限模型、V11 数据模型与 API、服务身份/凭据隔离、四眼范围、审计与幂等、回退方案 B（只读 + 人工 SPA 写）；
-   - 开放问题见该 ADR 文末（服务身份形式、四眼范围、人类身份来源、DSH 审批定位、团队模式优先级）。
+2. **ADR-0015 已 Accepted v1.0（2026-11-16 负责人确认决策项 1–5）**：`decisions/ADR-0015-AGENT-CONTROLLED-WRITE-AND-SERVICE-IDENTITY.md`。
+   - 已确认：本机独立 OS 账号/独立进程 + 凭据只存 OS 存储；远端随 M5；**全员四眼（提案者≠批准者）+ 高风险类别第二人复核**；人类审批走 Domain 会话/RBAC；DSH 工具审批保留为附加闸门；
+   - P1 实施计划：`docs/specs/ADR-0015-P1-CONTROLLED-WRITE-PLAN.md`（V11 模型/API/负向测试/回滚，待批准启动）。
 3. **文档同步**：ADR-0002 补充说明（UI 宿主修订、后端不变）、`docs/00-MASTER-GUIDE.md` §11、`docs/05-ARCHITECTURE-BASELINE.md`、`docs/12-ROADMAP.md`（M4.5 后客户端阶段）、`docs/13-OPEN-DECISIONS.md`、`docs/specs/UI-SPEC.md` 已更新。
 4. **后续**：ADR-0015 决策批准与实施（V11 迁移/Approval 服务/负向安全验收）；客户端正式迁移阶段编号；S-A8/S-A9/S-A10；`conversation.chat.node`、`composer.dock`、卡片跳转、Preset UI 验证。
 

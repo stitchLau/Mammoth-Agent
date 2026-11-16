@@ -49,8 +49,10 @@
    待负责人签署；生效条件加入"真人审批复验 + 写路径 ADR"。
 
 **仍未闭合（阻塞 ADR 生效）**：①~~负责人签署 ADR~~（**已完成**：2026-11-16 负责人签署 ADR-0014 Accepted v1.1）；
-②~~"Agent 受控写操作与服务身份"ADR~~（**已另立**：ADR-0015 Proposed，待负责人批准决策项与实施：独立 Approval 服务身份 + Domain 提案/审批/写入 API + 人类独占审批/四眼 + 审计三元组）；
+②~~"Agent 受控写操作与服务身份"ADR~~（**已完成**：ADR-0015 于 2026-11-16 经负责人确认决策项转为 Accepted v1.0；P1 实施计划 `docs/specs/ADR-0015-P1-CONTROLLED-WRITE-PLAN.md` 待批准启动）；
 ③S-A8/S-A9/S-A10、卡片跳转、`conversation.chat.node`、`composer.dock`、preset UI 验证为后续项。
+
+**ADR-0015 决策确认（2026-11-16）**：本机独立 OS 账号/独立进程 + OS 凭据存储；全员四眼（提案者≠批准者）+ 高风险类别（方案定版/交付结项/批量删除类/需求重大流转/真实客户数据导出）第二人复核；人类审批走 Domain 会话/RBAC；DSH 工具审批保留为附加闸门；远端方案随 M5。
 （原"负责人真人复验"条件**已闭合**：2026-11-16 11:13 负责人本人在工作台批准 `db238b78` → Domain `REQ-0003`，
 截图 18（修复前）/19（修复后）、`domain-after-approval.json`、`proposal-stub-state.json`。）
 
