@@ -48,9 +48,19 @@
 4. **ADR 修正**：删除"Accepted vs 待批准"矛盾；四眼/凭据/peerDependencies 表述改为与事实一致；签署改为
    待负责人签署；生效条件加入"真人审批复验 + 写路径 ADR"。
 
-**仍未闭合（阻塞 ADR 生效）**：①负责人签署；②负责人亲自完成一次"提案→批准→Domain 写入"复验并留痕；
-③"Agent 受控写操作与服务身份"ADR 关闭同 OS 用户边界缺口；④S-A8/S-A9/S-A10、卡片跳转、`conversation.chat.node`、
-`composer.dock`、preset UI 验证为后续项。
+**仍未闭合（阻塞 ADR 生效）**：①负责人签署 ADR；②"Agent 受控写操作与服务身份"ADR 关闭同 OS 用户边界缺口；
+③S-A8/S-A9/S-A10、卡片跳转、`conversation.chat.node`、`composer.dock`、preset UI 验证为后续项。
+（原"负责人真人复验"条件**已闭合**：2026-11-16 11:13 负责人本人在工作台批准 `db238b78` → Domain `REQ-0003`，
+截图 18（修复前）/19（修复后）、`domain-after-approval.json`、`proposal-stub-state.json`。）
+
+**2026-11-16 11:00–11:30 追加修复与验证**：
+
+- 工作台批准失败 `MAMMOTH_STUB_HTTP_ERROR … confirm-required`：Host 校验 `confirm` 后未转发给适配器 →
+  已修复（`10efdea`），负责人随后成功批准；
+- 提案页把 `domainObject` 等后端字段以原始 JSON 直出（用户发现）：判定为 **Spike 演示页 UI 缺陷**（非产品设计），
+  已修复为业务字段主视图 + 「技术信息」折叠 + 「在需求池查看 REQ-xxxx」入口（client-only，HMR 生效；
+  截图 18 修复前 / 19 修复后），并记入报告 §10/§15 与 `docs/DETAIL.md` 已知限制；
+- 真人批准补齐后，S-A7 从"机械链路演示"升级为"负责人本人真人批准已验证"，剩余条件收敛为 ADR 签署与写路径 ADR。
 
 ## 运行过的命令和结果
 

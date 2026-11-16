@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-11-16T03:20:24.672Z",
+  "verifiedAt": "2026-11-16T03:21:41.571Z",
   "note": "Adapter token-authenticated read. dshApproval is null on the historical record because the Host did not forward it before the hardening change; the Host audit records dshApproval=allowed-once for the same proposal id.",
   "proposals": [
     {
