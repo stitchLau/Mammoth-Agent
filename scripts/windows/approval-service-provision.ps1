@@ -153,24 +153,33 @@ $wrapper = "@echo off`r`n`"$JavaExe`" -jar `"$JarPath`" --approval-service --wat
 [IO.File]::WriteAllText($wrapperFile, $wrapper, (New-Object Text.UTF8Encoding($false)))
 Write-Host "[action] wrote token/config/wrapper (token value is only in $tokenFile)"
 
-# 3. Strict ACLs: inherited users are removed; only admins/SYSTEM/service account remain.
-$aclExit = Invoke-Native 'icacls.exe' @((Quote $InstallDir), '/inheritance:r')
-if ($aclExit -ne 0) { Fail "icacls inheritance failed for $InstallDir (exit $aclExit)" }
-$aclExit = Invoke-Native 'icacls.exe' @((Quote $InstallDir), '/grant:r',
-  '*S-1-5-32-544:(OI)(CI)F', 'NT AUTHORITY\SYSTEM:(OI)(CI)F', "${account}:(OI)(CI)RX")
-if ($aclExit -ne 0) { Fail "icacls grant failed for $InstallDir (exit $aclExit)" }
-foreach ($file in @($tokenFile, $configFile)) {
-  $aclExit = Invoke-Native 'icacls.exe' @((Quote $file), '/inheritance:r')
-  if ($aclExit -ne 0) { Fail "icacls inheritance failed for $file (exit $aclExit)" }
-  $aclExit = Invoke-Native 'icacls.exe' @((Quote $file), '/grant:r',
-    '*S-1-5-32-544:F', 'NT AUTHORITY\SYSTEM:F', "${account}:R")
-  if ($aclExit -ne 0) { Fail "icacls grant failed for $file (exit $aclExit)" }
+# 3. Strict ACLs: add our explicit ACEs first, then disable inheritance so inherited
+#    Users/Authenticated Users entries disappear while ours stay.
+#    icacls receives one grant spec per call; specs containing a space ("NT AUTHORITY\SYSTEM")
+#    must be quoted or icacls fails with exit 87 (parameter incorrect).
+$aclTargets = @(
+  @{ Path = $InstallDir; Grants = @('*S-1-5-32-544:(OI)(CI)F',
+      'NT AUTHORITY\SYSTEM:(OI)(CI)F', "${account}:(OI)(CI)RX") },
+  @{ Path = $tokenFile; Grants = @('*S-1-5-32-544:F', 'NT AUTHORITY\SYSTEM:F',
+      "${account}:R") },
+  @{ Path = $configFile; Grants = @('*S-1-5-32-544:F', 'NT AUTHORITY\SYSTEM:F',
+      "${account}:R") },
+  @{ Path = $wrapperFile; Grants = @('*S-1-5-32-544:RX', 'NT AUTHORITY\SYSTEM:RX',
+      "${account}:RX") }
+)
+foreach ($target in $aclTargets) {
+  foreach ($grant in $target.Grants) {
+    $grantArg = if ($grant -match '\s') { Quote $grant } else { $grant }
+    $aclExit = Invoke-Native 'icacls.exe' @((Quote $target.Path), '/grant:r', $grantArg)
+    if ($aclExit -ne 0) {
+      Fail "icacls grant failed for $($target.Path) spec=$grant (exit $aclExit)"
+    }
+  }
+  $aclExit = Invoke-Native 'icacls.exe' @((Quote $target.Path), '/inheritance:r')
+  if ($aclExit -ne 0) {
+    Fail "icacls inheritance failed for $($target.Path) (exit $aclExit)"
+  }
 }
-$aclExit = Invoke-Native 'icacls.exe' @((Quote $wrapperFile), '/inheritance:r')
-if ($aclExit -ne 0) { Fail "icacls inheritance failed for $wrapperFile (exit $aclExit)" }
-$aclExit = Invoke-Native 'icacls.exe' @((Quote $wrapperFile), '/grant:r',
-  '*S-1-5-32-544:RX', 'NT AUTHORITY\SYSTEM:RX', "${account}:RX")
-if ($aclExit -ne 0) { Fail "icacls grant failed for $wrapperFile (exit $aclExit)" }
 Write-Host '[action] applied strict ACLs (admins/SYSTEM full; service account read)'
 
 # 4. Optional scheduled task running the watch loop as the service account.
