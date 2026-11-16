@@ -210,8 +210,8 @@ if ($RegisterScheduledTask) {
 
 Write-Host ''
 Write-Host 'Provisioning complete. OWNER-ONLY next steps:' -ForegroundColor Green
-Write-Host '  1. As the Domain writer owner, set env MAMMOTH_AGENT_WRITE_APPLY_TOKEN to this value'
-Write-Host '     (read it as administrator: Get-Content -Raw ''' + $tokenFile + ''')'
+Write-Host "  1. As the Domain writer owner, set env MAMMOTH_AGENT_WRITE_APPLY_TOKEN to the token value"
+Write-Host "     (read it as administrator: Get-Content -Raw '$tokenFile')"
 Write-Host '  2. Restart the Domain writer so it picks up the apply token.'
 Write-Host '  3. Run scripts\windows\approval-service-verify.ps1 as the interactive (agent) user.'
-Write-Host '  4. If the scheduled task is registered: Start-ScheduledTask -TaskName ''' + $taskName + ''''
+Write-Host "  4. If the scheduled task is registered: schtasks /Run /TN $taskName"
