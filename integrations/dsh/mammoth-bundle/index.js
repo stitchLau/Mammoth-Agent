@@ -234,12 +234,20 @@ class ProposalStubClient {
 
   /** @param {string} id @param {string} approver */
   approve(id, approver) {
-    return this.request(`/proposals/${encodeURIComponent(id)}/approve`, { method: 'POST', body: { approver } })
+    // The adapter requires the decision to echo the exact pending proposal id
+    // it read; forward it along with the human approver identity.
+    return this.request(`/proposals/${encodeURIComponent(id)}/approve`, {
+      method: 'POST',
+      body: { approver, confirm: id },
+    })
   }
 
   /** @param {string} id @param {string} approver */
   reject(id, approver) {
-    return this.request(`/proposals/${encodeURIComponent(id)}/reject`, { method: 'POST', body: { approver } })
+    return this.request(`/proposals/${encodeURIComponent(id)}/reject`, {
+      method: 'POST',
+      body: { approver, confirm: id },
+    })
   }
 
   list() {

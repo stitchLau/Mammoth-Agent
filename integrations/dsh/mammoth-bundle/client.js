@@ -483,7 +483,10 @@ window.__ModuleLoader__.load({
           await loadProposals()
           await refreshAll()
         } catch (error) {
+          // Surface the failure both in the proposals page and in the page header,
+          // so a failed click never looks like "nothing happened".
           setProposals(current => ({ ...current, error: error.message }))
+          setMessage({ kind: 'error', text: error.message })
         }
       }, [loadProposals, refreshAll])
 
