@@ -50,7 +50,7 @@ public class SecurityConfig {
             .requestMatchers("/", "/index.html", "/assets/**", "/favicon.ico", "/error").permitAll()
             // SPA deep links must load the app shell; the SPA then renders login/setup or redirects.
             .requestMatchers("/login", "/setup", "/projects", "/projects/**", "/settings", "/403",
-                "/404").permitAll()
+                "/404", "/approval").permitAll()
             // Forced password change: a temporary-password session may only read itself, change its
             // password, log out or fetch a CSRF token. Everything else requires a full session.
             .requestMatchers("/api/auth/me", "/api/auth/password", "/api/auth/logout")
