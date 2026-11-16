@@ -527,6 +527,8 @@ window.__ModuleLoader__.load({
         t,
         proposals,
         message,
+        health,
+        projectId: snap.activeProjectId,
         onDecide: decideProposal,
         onRefresh: loadProposals,
         onOpenRequirements: projectId => setView({ name: 'requirements', projectId }),
@@ -723,7 +725,7 @@ window.__ModuleLoader__.load({
               : renderKnowledgeTable({ t, items: project.knowledge?.items ?? [] }))
     }
 
-    function renderProposals({ t, proposals, message, onDecide, onRefresh, onOpenRequirements }) {
+    function renderProposals({ t, proposals, message, health, projectId, onDecide, onRefresh, onOpenRequirements }) {
       const items = proposals.items
       const formatTime = value => {
         if (value === null || value === undefined || value === '') return null
@@ -739,6 +741,16 @@ window.__ModuleLoader__.load({
       return h('div', null,
         h(Section, { title: t('proposals'), actions: [h('button', { key: 'r', className: 'mammoth-btn', onClick: () => { void onRefresh() } }, t('refresh'))] },
           h('div', { className: 'mammoth-note', style: { marginBottom: '10px' } }, t('proposalsNote')),
+          (() => {
+            const base = health?.value?.domain?.baseUrl
+            if (typeof base !== 'string' || projectId === null || projectId === undefined) return null
+            return h('div', { className: 'mammoth-note', style: { marginBottom: '10px' } },
+              h('a', {
+                href: `${base}/approval?projectId=${encodeURIComponent(projectId)}`,
+                target: '_blank',
+                rel: 'noreferrer',
+              }, '在浏览器中打开人类审批页（Domain 会话）'))
+          })(),
           proposals.error === null ? null : h(ErrorNote, { error: proposals.error }),
           items.length === 0 ? h('div', { className: 'mammoth-note' }, t('noProposal'))
             : items.map(proposal => {
