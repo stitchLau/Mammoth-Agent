@@ -24,6 +24,7 @@
  *     --state-dir "C:\Users\...\AppData\Local\Temp\mammoth-spike"
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -59,6 +60,11 @@ if (!password) {
 
 const stateDir = resolve(args['state-dir'])
 const stubUrl = typeof args['stub-url'] === 'string' ? args['stub-url'] : 'http://127.0.0.1:18091'
+// Per-run shared secret between the Host bundle and the isolated proposal
+// adapter. It raises the bar over an unauthenticated loopback service but is NOT
+// a boundary against an agent with arbitrary shell access on the same machine;
+// the production write path needs the separate controlled-write ADR.
+const stubToken = process.env.MAMMOTH_STUB_TOKEN ?? randomUUID()
 mkdirSync(stateDir, { recursive: true })
 mkdirSync(join(bundleDir, 'local'), { recursive: true })
 
@@ -79,7 +85,7 @@ const config = {
     credentialsFile: join(stateDir, 'credentials.json'),
     timeoutMs: 8000,
   },
-  proposalStub: { baseUrl: stubUrl },
+  proposalStub: { baseUrl: stubUrl, token: stubToken },
   statePath: join(stateDir, 'state.json'),
   mcp: {
     serverName: 'mammoth_domain',
@@ -107,3 +113,6 @@ console.log(`  ${join(bundleDir, 'cordis.patch.yml')}`)
 console.log(`  ${join(bundleDir, 'local', 'config.json')}`)
 console.log(`  ${config.domain.credentialsFile}`)
 console.log(`  ${config.statePath}`)
+console.log('')
+console.log('Start the isolated proposal adapter with the same token, e.g. in PowerShell:')
+console.log(`  $env:MAMMOTH_STUB_TOKEN='${stubToken}'`)

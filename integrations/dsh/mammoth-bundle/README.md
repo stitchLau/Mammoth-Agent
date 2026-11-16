@@ -66,9 +66,16 @@ Agent 只能创建**待审核提案**；批准后由该适配器以**人类 Doma
 $env:MAMMOTH_DOMAIN_BASE = 'http://127.0.0.1:18090'
 $env:MAMMOTH_APPROVER_USERNAME = '<合成人类 approver>'
 $env:MAMMOTH_APPROVER_PASSWORD = '<合成人类 approver 密码>'
+$env:MAMMOTH_STUB_TOKEN = '<local/config.json 中 proposalStub.token 的值>'
 $env:MAMMOTH_STUB_STATE = 'C:\Users\<user>\AppData\Local\Temp\mammoth-spike\proposals.json'
 node <repo>/spike/dsh-desktop-integration/proposal-stub.mjs
 ```
+
+> 适配器要求共享 token（`x-mammoth-stub-token`），`/health` 之外的所有端点都鉴权，且不再返回任何
+> `Access-Control-Allow-*` 头；Host 在审批时必须回传它读到的待审核提案 id。
+> **安全边界说明**：该适配器与 Agent Runtime 同一 OS 用户，token/人类 Domain 凭据**不能**构成对
+> "能执行任意 shell 的 Agent"的边界；它是 Spike 夹具，正式写路径必须由独立 ADR 定义（隔离服务身份、
+> Domain 侧授权与人工独占审批）。
 
 ## 3. 安装到 DSH Desktop
 

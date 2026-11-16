@@ -1,0 +1,96 @@
+{
+  "capturedVia": "Win32 PrintWindow(PW_RENDERFULLCONTENT=2) on the real DSH Desktop window",
+  "window": "1296x828, DPI 96 (100%)",
+  "screenshots": [
+    {
+      "file": "00-plugin-manager-bundle-detail.png",
+      "sha256": "abef6d50ef5fe4853be496cb960bf412c7cf64fd2772f41d0efe612e0e5d089c",
+      "bytes": 92979
+    },
+    {
+      "file": "01-workbench-home-active-project.png",
+      "sha256": "a4f31667a8e73d1db005d5fdd2c2cf31eccb8b7b250c362d8be4244d2dd8f382",
+      "bytes": 57286
+    },
+    {
+      "file": "02-project-detail.png",
+      "sha256": "f92700fd130e755a4371915d52bb18ca06968d4c35681163306fc38c6e3dbc35",
+      "bytes": 52993
+    },
+    {
+      "file": "03-project-requirements.png",
+      "sha256": "de293609dceae98eeada22c927519f9815ec4685e998e7a64eb58bda32da5b04",
+      "bytes": 46963
+    },
+    {
+      "file": "04-project-knowledge.png",
+      "sha256": "b62bcdb015ca03f161e2f65a77b01e20183c564603d6dc7feacd5711a11bdff4",
+      "bytes": 47449
+    },
+    {
+      "file": "05-conversation-rightbar-project-context.png",
+      "sha256": "8042039416fa0bd27e2caf807738221aa26d8cbdcbf76d5a50a601fe748658cb",
+      "bytes": 101390
+    },
+    {
+      "file": "06-conversation-header-badge.png",
+      "sha256": "3cae96efe8799bf9d2442ba84989c5274f29d9e676fb3f8aed6f057e7ec72c54",
+      "bytes": 106689
+    },
+    {
+      "file": "07-workbench-entry-open.png",
+      "sha256": "9ec44965b47ac5af0caef0260b75bd2a978e3db403c5c53c417062b814bfa431",
+      "bytes": 54920
+    },
+    {
+      "file": "08-sidebar-entry-mammoth.png",
+      "sha256": "c1defe7736d8e5d89f3d83a3a7907b7a70a0d02709e36646db8e40c6bdea663c",
+      "bytes": 7096
+    },
+    {
+      "file": "09-proposal-pending.png",
+      "sha256": "dd8a0f2788378b6015aa6117f2a8b91f139c527edd84f80585a623200e2c17f8",
+      "bytes": 63960
+    },
+    {
+      "file": "10-proposal-approved-domain-write.png",
+      "sha256": "120c9464cdd18ba8ab5b129a71dccb660b3f23a59263a7221cef2e5234bbebe2",
+      "bytes": 119298
+    },
+    {
+      "file": "11-tool-card-mcp-knowledge.png",
+      "sha256": "6558aaeaac625d03750801fc07c3c515c71e58493d384f3119bd47246748cb48",
+      "bytes": 102147
+    },
+    {
+      "file": "12-diagnostics-host-route.png",
+      "sha256": "d7dc9848546c9d43f0bfa2b490741ba0b431df1a876e8b68f7fb0322b59d9eed",
+      "bytes": 66354
+    },
+    {
+      "file": "13-client-runtime-and-approval-audit.png",
+      "sha256": "fc5bb6d5b2640aaa6f6b2d16bf25b7c544b6dcdaf5bf280ceaf7c8a331b46ab4",
+      "bytes": 58042
+    },
+    {
+      "file": "14-tool-cards-failure-states.png",
+      "sha256": "46ce095b5bf2e59aaee0e9320a18c6d8df8dffd178b4849c4308f4162dd51d41",
+      "bytes": 108530
+    },
+    {
+      "file": "15-new-session-bound.png",
+      "sha256": "4f04c41430946b3c2ce8ec137190409274c4aa2cafb085c063586e964fbbdbb4",
+      "bytes": 49481
+    },
+    {
+      "file": "16-after-remove-bundle.png",
+      "sha256": "b4585a774ec5243ff00e240eb842d2da75bc7c8b3f69310998cbb7840e7c357f",
+      "bytes": 49308
+    },
+    {
+      "file": "17-after-reinstall.png",
+      "sha256": "788142bd14a2042b6a423b98a4bbf975f8526d8096e65515b5d3fc14dcb1a3b6",
+      "bytes": 49467
+    }
+  ]
+}

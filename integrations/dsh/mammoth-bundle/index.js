@@ -199,9 +199,10 @@ class DomainSession {
 
 /** Client for the isolated proposal stub that performs the approved Domain write. */
 class ProposalStubClient {
-  /** @param {{baseUrl: string}} config */
+  /** @param {{baseUrl: string, token: string}} config */
   constructor(config) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, '')
+    this.token = config.token
   }
 
   /** @param {string} path @param {{method?: string, body?: unknown}} [options] */
@@ -210,6 +211,7 @@ class ProposalStubClient {
       method: options.method ?? 'GET',
       headers: {
         accept: 'application/json',
+        ...(this.token === '' ? {} : { 'x-mammoth-stub-token': this.token }),
         ...(options.body === undefined ? {} : { 'content-type': 'application/json' }),
       },
       ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
@@ -273,7 +275,10 @@ export async function apply(ctx) {
     })
     : null
   const stub = isRecord(config)
-    ? new ProposalStubClient({ baseUrl: typeof config.proposalStub?.baseUrl === 'string' ? config.proposalStub.baseUrl : 'http://127.0.0.1:18091' })
+    ? new ProposalStubClient({
+      baseUrl: typeof config.proposalStub?.baseUrl === 'string' ? config.proposalStub.baseUrl : 'http://127.0.0.1:18091',
+      token: typeof config.proposalStub?.token === 'string' ? config.proposalStub.token : '',
+    })
     : null
   const mcp = isRecord(config) && isRecord(config.mcp) ? config.mcp : { serverName: 'mammoth_domain', toolNames: [] }
   const startedAt = new Date().toISOString()
@@ -633,15 +638,20 @@ export async function apply(ctx) {
         approval = 'unavailable'
         console.warn('[mammoth] approval request failed:', describeError(error))
       }
-      if (approval === 'rejected' || approval === 'cancelled') {
+      // Fail closed: only an explicit one-shot DSH approval may create a
+      // proposal. `unavailable`, `rejected`, `cancelled`, and unknown outcomes
+      // never reach the adapter.
+      if (approval !== 'allowed-once') {
         audit('proposal.blocked', { sessionId, projectId, title: args.title, approval })
         return {
-          status: 'rejected_by_approval_policy',
+          status: approval === 'rejected' || approval === 'cancelled' ? 'rejected_by_approval_policy' : 'approval_unavailable',
           approval,
           projectId,
           title: args.title,
           priority,
-          message: 'The DSH approval gate rejected this call, so no proposal was created. Ask the user to review and retry.',
+          message: approval === 'rejected' || approval === 'cancelled'
+            ? 'The DSH approval gate rejected this call, so no proposal was created. Ask the user to review and retry.'
+            : 'The DSH approval gate returned no decision (fail-closed), so no proposal was created.',
         }
       }
 
@@ -660,6 +670,7 @@ export async function apply(ctx) {
         summary: args.summary,
         priority,
         rationale: args.rationale ?? null,
+        dshApproval: approval,
         payload: {
           title: args.title,
           summary: args.summary,
@@ -807,12 +818,21 @@ export async function apply(ctx) {
     if (stub === null) throw mammothError('MAMMOTH_CONFIG_MISSING', configError ?? 'Mammoth bundle config missing')
     const proposalId = decodeURIComponent(match[1])
     const decision = match[2]
-    const approver = isRecord(body) && typeof body.approver === 'string' && body.approver !== ''
-      ? body.approver
-      : 'local-desktop-human'
+    // The approver identity is not client-supplied: this route is only reachable
+    // by an authenticated browser Peer (the DSH Desktop workbench), and the
+    // human decision must echo the exact pending proposal id it saw. The
+    // adapter additionally requires its own per-run token.
+    if (!isRecord(body) || body.confirm !== proposalId) {
+      throw mammothError('MAMMOTH_APPROVAL_CONFIRM_REQUIRED',
+        'the workbench must confirm the exact pending proposal id; approval cannot be triggered by a generic caller')
+    }
+    const approver = 'local-desktop-human'
     const local = state.proposals[proposalId]
     if (local !== undefined && local.status !== 'pending') {
       throw mammothError('MAMMOTH_PROPOSAL_NOT_PENDING', `proposal ${proposalId} is already ${local.status}`)
+    }
+    if (local !== undefined && local.proposer?.agentUserId === approver) {
+      throw mammothError('MAMMOTH_FOUR_EYES_VIOLATION', 'the proposing agent cannot approve its own proposal')
     }
     const result = decision === 'approve'
       ? await stub.approve(proposalId, approver)

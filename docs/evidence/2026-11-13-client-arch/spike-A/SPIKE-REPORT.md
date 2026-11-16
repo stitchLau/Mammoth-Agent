@@ -39,20 +39,20 @@
 
 | # | 验证内容 | 结果 | 证据 |
 |---|---|---|---|
-| S-A0 | 安装最小 bundle、工具出现、可卸载回滚 | **通过**。单包以 `link:` 装入 `desktop` profile；安装时遇到 raw schema 校验失败（`output.schema`），修复后重新激活；工具真实可用；卸载/回滚路径已在 README 记录（本次未在最终态卸载，因需保留验证环境） | 提交 `dec48c4`、安装返回 `application` 状态、工具调用记录 |
-| S-A0b | Host + Client + MCP + Preset 四合一 | **通过**。三个 Loader 行均 active；Client 半经 `dsh.client` 扫描并在真实 Desktop 渲染；`engines.dsh` 兼容；显示元数据/图标/详情文档正常 | 截图 00、01、12；`plugin_manager list_bundles` |
+| S-A0 | 安装最小 bundle、工具出现、可卸载回滚 | **通过**。单包以 `link:` 装入 `desktop` profile；执行了完整的 **卸载 → 验证入口/工具消失、profile 清单恢复 → 重装 → 验证三行重新 active** 往返；安装/激活/工具真实可用 | 截图 16（卸载后左栏无 Mammoth）、17（重装后恢复）；profile `package.json` 前后对比见 `plugin-lifecycle-evidence.md` |
+| S-A0b | Host + Client + MCP + Preset 四合一 | **通过**。三个 Loader 行均 active；Client 半经 `dsh.client` 扫描并在真实 Desktop 渲染；显示元数据/图标/详情文档正常；**`engines.dsh` 负向验证通过**：对 `engines.dsh: ">=9.0.0"` 的测试 bundle，安装被 `incompatible-version` 拒绝且未安装 | 截图 00、01、12；`plugin-lifecycle-evidence.md` |
 | S-A1 | 左栏入口 + `main` 整页 + 主题/locale | **通过**。Mammoth 左栏入口出现；点击打开全页工作台；沿用宿主主题 token；中英文文案均已注册（`ctx.locale`） | 截图 07、08、01 |
-| S-A2 | 完整项目面板 + 数据通道选型 | **通过（Go）**。面板读取真实 Domain Service 数据（项目/客户/成员/verified 知识/需求）；通道选型 = **C2 Host 桥**：Client 页面 origin 为 `dsh-app://app/`，经 Desktop shell fetch 桥对 Host 注册的同源路由发起相对 `fetch`，由 `ctx.connection.requestRejection` 认证；未使用浏览器直连 Domain（C1 不可行且不需要），无 CORS、无客户端凭据 | 截图 01–04、12、13；`tool-call-records.md` §5 |
-| S-A3 | 选择项目并建立会话上下文 | **通过**。工作台「设为当前项目」→ Host 记录 activeProjectId；新 Session 创建/首条用户消息时自动绑定；`systemPrompt.section` 注入项目卡（项目/客户/成员/知识标题/工作项/工具使用与写入纪律）；切换项目不串会话（绑定按 Session 固化） | 截图 01；`host-plugin-state.json`；本会话系统提示实际注入内容 |
-| S-A4 | 会话与项目关联可见 | **通过（部分）**。会话头部项目徽章 + 右栏项目上下文页（绑定状态、客户、成员、知识、工作项）；未实现从工作台"一键新建并进入会话"（受 composer 运行态与 UI 自动化限制，记为后续项） | 截图 05、06 |
-| S-A5 | Agent 使用 Mammoth 项目知识工具 | **通过**。现有 Domain MCP 的 3 个只读工具全部可用（3/3）；Agent 在真实会话中检索 verified 知识并拿到来源计数；非成员/草稿拒绝路径由 Domain MCP 内部强制（调研阶段已实测） | `tool-call-records.md` §2；截图 12 |
-| S-A6 | 渲染 Mammoth 业务结果卡片 | **通过**。`tool.call.toolview` 按 wire tool name 注册；MCP 知识检索卡片（标题/来源数/正文片段/错误兜底）在真实会话渲染；提案结果卡片与工作台提案页联动 | 截图 11；截图 09/10 |
-| S-A7 | 受控写与审批边界 | **通过**。三段闸门实测：①D SH 工具审批（策略 `ask` 时返回 `allowed-once`；策略 `never` 时 fail-closed 拒绝，未创建提案）②工作台人工批准（`local-desktop-human`）③隔离适配器以**人类** Domain 会话调用 Domain 现有写端点，生成 `REQ-0002`；`audit_log.actorUserId=spike_admin`，agent 账号不能登录（401）、无写路径、不能自批 | 截图 09、10、13；`domain-after-approval.json`；`proposal-stub-*`；`host-plugin-state.json` |
+| S-A2 | 完整项目面板 + 数据通道选型 | **通过（Go）**。面板读取真实 Domain Service 数据（项目/客户/成员/verified 知识/需求）；通道选型 = **C2 Host 桥**：Client 页面 origin 为 `dsh-app://app/`，经 Desktop shell fetch 桥对 Host 注册的同源路由发起相对 `fetch`，由 `ctx.connection.requestRejection` 认证；未使用浏览器直连 Domain（C1 不可行且不需要），无 CORS、无客户端凭据 | 截图 01–04、12、13；`tool-call-records.md` |
+| S-A3 | 选择项目并建立会话上下文 | **通过**。工作台「设为当前项目」→ Host 记录 activeProjectId；新建 Session 时自动绑定（`host-plugin-state.json` 中 2 个 `reason: session-created` 样本）并注入项目卡；切换项目不串会话 | 截图 01、15；`host-plugin-state.json` |
+| S-A4 | 会话与项目关联可见 | **部分通过**。会话头部项目徽章 + 右栏项目上下文页（绑定状态、客户、成员、知识、工作项）；未实现"从工作台一键新建并进入会话" | 截图 05、06 |
+| S-A5 | Agent 使用 Mammoth 项目知识工具 | **通过**。现有 Domain MCP 的 3 个只读工具全部可用（3/3）；Agent 在真实会话中读取 verified 知识/来源计数/需求 11 维就绪；**本轮补做负向**：非成员项目返回 `ApiException: no access to project`（MCP 侧拒绝） | `tool-call-records.md` §2；截图 14 |
+| S-A6 | 渲染 Mammoth 业务结果卡片 | **部分通过**。知识卡片（成功态）与 MCP 错误卡片（失败态，不 blank slot）在真实会话渲染；提案工具卡片为结构化结果（截图 09/10 的提案数据）；卡片内"跳转工作台"动作未实现 | 截图 11、14 |
+| S-A7 | 受控写与审批边界 | **条件通过**。机械链路已端到端执行：DSH 工具审批（策略 `ask` 时 `allowed-once`；策略 `never` 时 fail-closed 拒绝）→ 工作台批准 → 隔离适配器以人类 Domain 账号写入 `REQ-0002`；Domain `audit_log.actorUserId=spike_admin`；agent 账号登录 401。**但工作台"人工批准"点击由 Lead Agent 的 UI 自动化执行，不是独立人类动作**；且适配器与 Agent 同 OS 用户，不能构成对"能执行任意 shell 的 Agent"的安全边界（详见 §10/§15，已加固：fail-closed、token、去 CORS、confirm 回显） | 截图 09、10、13、14；`domain-after-approval.json`；`proposal-stub-*`；`proposal-stub-auth-negative.json` |
 | S-A8 | 桌面文件/目录/artifact 上传 | **未执行**（任务书 §四 未列；记为后续项，不影响路线 A 结论） | — |
 | S-A9 | DSH 升级回归 SOP | **未执行**（可延后；建议作为首个升级窗口的前置任务） | — |
 | S-A10 | 启动性能与包体测量 | **未执行**（记为后续项；当前 Client 为单文件 ~65KB，仅 `require('react')`，未观察到可感知首帧影响，但未测量） | — |
 
-**总体判定**：ADR-0014 的 Spike 门槛（S-A0b、S-A1–S-A7）全部通过；S-A2 数据通道 Go；S-A7 审批边界可接受；无触发"路线 A 不可行"决策门槛的证据。
+**总体判定（按独立评审整改后）**：路线 A 的**技术可行性可接受**——S-A0、S-A0b、S-A1–S-A3 通过，S-A4/S-A6 部分通过，S-A2 数据通道 Go，S-A5 通过（含负向）。**S-A7 为条件通过**：机械链路与审计已端到端验证，但"人工批准"未由独立人类完成、适配器不构成同用户 shell 的安全边界；这两点必须由"受控写操作与服务身份"独立 ADR 解决，并在正式版用真人审批复验。未触发"路线 A 技术不可行"的决策门槛；ADR-0014 以**定稿待负责人签署 + S-A7 条件**的形式交付。
 
 ---
 
@@ -164,9 +164,10 @@ Agent 工具 mammoth_propose_work_item
 | Agent 不能自批/不能直写 | Agent 账号 `account_type=agent` 被 Domain 登录层硬拒（401）；bundle 无 approve 工具；Agent 无 Domain 写凭据 |
 | 四眼 | proposer=agent 身份（`fb228729...`），approver=human（`local-desktop-human` → Domain `spike_admin`），适配器拒绝 approver==proposer |
 
-### 8.3 边界声明
+### 8.3 边界声明（独立评审后修订）
 
-- 本 Spike 的"人工批准"点击由 Lead Agent 通过 Windows UI 自动化在真实 DSH Desktop 窗口完成（为可重复取证），但**机制本身是用户独占动作**：批准按钮只在工作台 UI、`approve/reject` 只在 Bundle 的 Host/Client 通道内、Agent 工具面没有该能力。生产上必须由授权人亲自点击；这一点需在正式写路径 ADR 中固化为硬约束。
+- 本 Spike 的"人工批准"点击由 Lead Agent 通过 Windows UI 自动化在真实 DSH Desktop 窗口完成（为可重复取证）。**这不是独立人类的治理动作**：它只证明了"按钮 → Host → 适配器 → Domain 人类账号写入"的机械链路与审计链，不能证明"人类亲自作出了批准决定"。生产上必须由授权人亲自点击，并保留可核验的人类身份/签署记录。
+- 适配器与 Agent Runtime 运行在**同一 OS 用户**下：token 与人类 Domain 凭据可被具有任意 shell 的 Agent 读取，因此**适配器不是安全边界**。本 Spike 已做加固（DSH 审批 fail-closed 只接受 `allowed-once`、适配器 token 鉴权、移除 CORS `*`、审批必须回显提案 id、无鉴权列表接口关闭），但真正的边界必须来自：隔离服务身份/独立进程与权限、Domain 侧授权与审计、以及人类独占的审批通道（正式写路径 ADR）。
 - DSH 工具审批与 Domain 审批的组合行为需在正式实现中继续保留"缺一不可"；DSH 的 `never` 策略不能被视为业务审批的替代。
 
 ---
@@ -194,6 +195,31 @@ Agent 工具 mammoth_propose_work_item
 8. **未验证**：S-A8（桌面文件/目录/artifact 上传）、S-A9（升级回归）、S-A10（启动性能/包体阈值）；本地单机环境，未覆盖团队模式、多用户、网络/代理场景。
 9. **`/api/meta` 公开暴露本机路径**（Domain 既有行为）；Host 未把其暴露给模型，但建议在正式版评估收敛。
 10. **客户端激活错误不可见**是 DSH 0.2.2-rc.2 的 UX 空档（仅 console/boot audit）；本 bundle 内置诊断可缓解，长期需上游改进或统一插件健康页。
+11. **审批适配器不是安全边界（Spike 级）**：与 Agent 同 OS 用户，token/人类凭据对任意 shell 可读；本轮已加固（fail-closed、token、去 CORS、confirm 回显、关列表接口），但正式版必须由"受控写操作与服务身份"ADR 用隔离身份/Domain 授权/人类独占审批解决。
+12. **"人工批准"未由独立人类验证**：Spike 的批准点击由 Lead Agent UI 自动化完成；需在正式版由负责人亲自复验并留痕。
+13. **证据历史性缺口**：早期提案记录 `dshApproval` 为 null（当时 Host 尚未把该字段传给适配器，已在加固提交中修复；Host 审计同一提案有 `allowed-once`）；截图 14–17 为整改阶段补采。
+
+---
+
+## 15. 独立评审与整改记录（2026-11-16）
+
+独立评审子代理（只读）对本 Spike 的结论为**有条件接受**：技术可行性可接受，但 S-A7 的人工治理结论与 ADR Accepted 文本不可按原样接受。Lead 已按评审意见整改，并保留未满足项：
+
+| 评审发现 | 级别 | 整改 | 残留 |
+|---|---|---|---|
+| "人工批准"由 Lead Agent UI 自动化完成，却被其他文档写成已证实的人类批准 | BLOCKER | 报告/ADR/README 统一改为"机械链路演示；人工闸门未验证"，S-A7 降为条件通过 | 需负责人真人复验（后续项） |
+| 适配器 `approve` 无鉴权、CORS `*`、任意 `approver` 字符串、Host 接受任意 approver | BLOCKER | 适配器 token 鉴权（`/health` 外全部 401）、移除 CORS、approve/reject 必须回显提案 id、approver 固定为 `local-desktop-human`、Host 拒绝非 confirm 请求；负向测试见 `proposal-stub-auth-negative.json` | 同 OS 用户仍可读 token/凭据 → 正式 ADR 解决 |
+| DSH 审批闸门对 `unavailable`/未知结果 fail-open | MAJOR | 改为仅 `allowed-once` 才创建提案，否则 fail-closed | — |
+| S-A0 卸载未执行、`engines.dsh` 负向未测 | MAJOR | 补做卸载→验证→重装往返与 `engines.dsh >=9.0.0` 拒绝测试（`plugin-lifecycle-evidence.md`、截图 16/17） | — |
+| S-A3 自动绑定无证据 | MAJOR | 新建会话复验：`host-plugin-state.json` 出现 2 条 `reason: session-created` 绑定 | — |
+| S-A5 缺少本轮权限拒绝证据 | MAJOR | 补做非成员项目 MCP 调用：`ApiException: no access to project`（截图 14） | — |
+| S-A6 缺失败态/未实现跳转 | MAJOR | 补采失败态卡片（截图 14）；跳转动作仍为后续项 | 卡片跳转 |
+| 证据文件命名/内容错位、中文乱码 | MAJOR | 截图 sidecar 统一移入 `screenshots-metadata/`；运行时 JSON 用 Node 以 UTF-8 重新生成（`domain-after-approval.json` 等）；新增 `screenshot-manifest.json`（SHA-256） | — |
+| 适配器未记录 `dshApproval` | MINOR | Host 已把该字段传给适配器；历史记录保留 null 并在 `proposal-stub-state.json` 说明 | 历史记录 |
+| ADR 自相矛盾（Accepted vs "待负责人批准/保持 Proposed"）、Lead Agent 签署、四眼表述不准确、凭据例外未记录、peerDependencies 缺失 | MAJOR | ADR 已改为"定稿待负责人签署 + S-A7 条件"；删除矛盾表述；四眼改为"提案者身份=agent、批准侧=人类账号；Domain 双人审批待独立 ADR"；记录 Spike 明文凭据例外；说明 bundle 零 DSH 依赖故不声明 peerDependencies | 负责人签署 |
+| raw schema 本地 guard 对 object/array 上的 enum/const 存在防御缺口；自检脚本有激活副作用 | MINOR | 已记录为后续加固项（当前 3 个 schema 合法且 gate 有效） | 后续加固 |
+
+**整改后结论**：路线 A 技术可行性可接受；S-A7 为条件通过；ADR-0014 以"定稿待负责人签署 + 条件"交付。
 
 ---
 

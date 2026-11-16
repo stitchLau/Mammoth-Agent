@@ -144,6 +144,60 @@ POST /api/auth/login {"username":"spike_agent","password":"..."} → HTTP 401（
 {"at":"2026-11-16T02:07:18.021Z","action":"proposal.approved","detail":{"id":"50b44ed0-...","approver":"local-desktop-human","domainObject":{"id":"c5145f6d-...","itemNo":"REQ-0002","status":"draft"}}}
 ```
 
+## 6. 整改阶段补充调用（2026-11-16 10:20–10:35）
+
+### 6.1 MCP 非成员项目负向
+
+输入：`search_project_knowledge { projectId: "11111111-1111-1111-1111-111111111111", query: "non member project negative test" }`
+
+输出：
+
+```
+Error: ApiException: no access to project 11111111-1111-1111-1111-111111111111
+```
+
+真实会话中该结果由自定义卡片渲染为错误态（截图 14，未 blank slot）。结论：MCP 侧项目级权限校验生效。
+
+### 6.2 DSH 审批策略 `never` 下提案 fail-closed
+
+输入：`mammoth_propose_work_item { projectId: "a899ed37-...", title: "Spike 负向验证：策略 never 下提案应被拒绝", summary, priority: "low" }`
+
+输出：
+
+```
+No proposal was created (rejected_by_approval_policy): The DSH approval gate rejected this call,
+so no proposal was created. Ask the user to review and retry.
+```
+
+Host 审计：`proposal.blocked`（`approval: "rejected"`）。结论：DSH 审批不可用时不会触达 Domain、不会创建提案。
+
+### 6.3 会话自动绑定（S-A3）
+
+工作台当前项目已设置后，新建会话（含 2026-11-16 02:11:47Z / 02:16:31Z 两个样本），`host-plugin-state.json` 中记录：
+
+```json
+"2afaa516-ac2a-4eee-a3b7-f3aa93a8ba45": { "projectId": "a899ed37-...", "reason": "session-created" },
+"session-589056fa-eaca-4a14-a1ad-ad79b5c9408b": { "projectId": "a899ed37-...", "reason": "session-created" }
+```
+
+结论：`session/created` 时自动绑定当前项目并注入系统提示（新会话页面截图 15）。
+
+### 6.4 适配器鉴权负向（整改后）
+
+`proposal-stub-auth-negative.json`：
+
+```json
+{ "unauthenticatedProposals": 401, "unauthenticatedApprove": 401, "corsHeader": null }
+```
+
+结论：`/health` 之外全部要求 `x-mammoth-stub-token`；不再返回 `Access-Control-Allow-*`；审批必须回显提案 id。
+（残留风险：同 OS 用户可读取 token/凭据，见报告 §10/§15，正式版必须由独立 ADR 解决。）
+
+### 6.5 安装生命周期
+
+卸载 → 入口消失 / profile 恢复 → 重装 → 入口恢复；`engines.dsh: ">=9.0.0"` 负向安装被 `incompatible-version` 拒绝。
+详见 `plugin-lifecycle-evidence.md` 与截图 16/17。
+
 ## 5. 客户端运行时诊断（截图 13）
 
 ```json

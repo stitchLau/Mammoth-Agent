@@ -13,9 +13,14 @@
 
 ## 安全边界
 
-- Agent 只能创建**待审核提案**（`mammoth_propose_work_item`），不会直接写 Domain Service。正式写入由隔离的 Proposal 适配器在**人工批准后**以**人类 Domain 账号**调用 Domain REST 完成（四眼：提案者 = agent 身份，批准者 = 人类账号）。
+- Agent 只能创建**待审核提案**（`mammoth_propose_work_item`），不会直接写 Domain Service。DSH 工具审批闸门
+  采用 fail-closed（只有 `allowed-once` 才继续）；正式写入由隔离的 Proposal 适配器在**人工批准后**以
+  **人类 Domain 账号**调用 Domain REST 完成（提案者 = agent 身份，批准侧 = 人类账号）。
 - Host→Domain 的读取凭据（合成测试账号）保存在仓库外的机器本地文件，不进入 Client、不进入提示词、不进入会话日志。
-- Client → Host 的数据通道是 DSH 同源、经 DSH 浏览器 Cookie 鉴权的 HTTP 路由；Client 不持有 Domain 凭据。
+- Client → Host 的数据通道是 DSH 同源、经 DSH 浏览器 Peer 鉴权的路由；Client 不持有 Domain 凭据、不直连 Domain。
+- **Spike 限制（重要）**：Proposal 适配器与 Agent Runtime 运行在同一 OS 用户下，其 token/人类 Domain 凭据
+  对具有任意 shell 的 Agent 可读，因此适配器**不构成安全边界**；正式写路径必须由独立 ADR 定义隔离服务身份、
+  Domain 侧授权与人类独占审批。Spike 中"人工批准"点击由验证者 UI 自动化完成，不代表真人治理已验收。
 - 仅使用合成数据；不接触真实客户数据、`~/.dsh` 凭据或生产环境。
 
 ## 已知限制

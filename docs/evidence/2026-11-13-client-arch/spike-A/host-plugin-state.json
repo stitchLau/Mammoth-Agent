@@ -6,6 +6,16 @@
       "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
       "boundAt": "2026-11-16T01:49:28.629Z",
       "reason": "tool"
+    },
+    "2afaa516-ac2a-4eee-a3b7-f3aa93a8ba45": {
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "boundAt": "2026-11-16T02:11:47.820Z",
+      "reason": "session-created"
+    },
+    "session-589056fa-eaca-4a14-a1ad-ad79b5c9408b": {
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "boundAt": "2026-11-16T02:16:31.011Z",
+      "reason": "session-created"
     }
   },
   "proposals": {
@@ -122,6 +132,32 @@
         "proposalId": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
         "approver": "local-desktop-human",
         "result": "approved"
+      }
+    },
+    {
+      "at": "2026-11-16T02:23:07.703Z",
+      "action": "plugin.activated",
+      "detail": {
+        "bundle": "@mammoth/dsh-bundle",
+        "configError": null
+      }
+    },
+    {
+      "at": "2026-11-16T02:23:13.223Z",
+      "action": "proposal.blocked",
+      "detail": {
+        "sessionId": "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82",
+        "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+        "title": "Spike 负向验证：策略 never 下提案应被拒绝",
+        "approval": "rejected"
+      }
+    },
+    {
+      "at": "2026-11-16T02:25:13.757Z",
+      "action": "plugin.activated",
+      "detail": {
+        "bundle": "@mammoth/dsh-bundle",
+        "configError": null
       }
     }
   ]

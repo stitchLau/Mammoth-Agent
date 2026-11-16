@@ -1,0 +1,71 @@
+{
+  "audit": [
+    {
+      "at": "2026-11-13T09:35:31.474Z",
+      "action": "stub.started",
+      "detail": {
+        "port": 18091,
+        "domain": "http://127.0.0.1:18090"
+      }
+    },
+    {
+      "at": "2026-11-16T01:49:19.435Z",
+      "action": "stub.started",
+      "detail": {
+        "port": 18091,
+        "domain": "http://127.0.0.1:18090"
+      }
+    },
+    {
+      "at": "2026-11-16T02:05:30.844Z",
+      "action": "proposal.created",
+      "detail": {
+        "id": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+        "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+        "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+        "proposer": "fb228729-d64c-46ec-9345-d69e966069f3"
+      }
+    },
+    {
+      "at": "2026-11-16T02:07:18.021Z",
+      "action": "proposal.approved",
+      "detail": {
+        "id": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+        "approver": "local-desktop-human",
+        "domainObject": {
+          "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+          "itemNo": "REQ-0002",
+          "status": "draft",
+          "raw": {
+            "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+            "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+            "itemType": "requirement",
+            "itemNo": "REQ-0002",
+            "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+            "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+            "status": "draft",
+            "priority": "high",
+            "sourceNote": "mammoth-dsh-proposal:50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+            "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+            "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+            "priorStatus": null,
+            "readyConfirmedBy": null,
+            "readyConfirmedAt": null,
+            "contextSnapshotId": null,
+            "approvedSolutionVersionId": null,
+            "createdAt": "2026-11-16T02:07:18Z",
+            "updatedAt": "2026-11-16T02:07:18Z"
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-11-16T02:22:47.195Z",
+      "action": "stub.started",
+      "detail": {
+        "port": 18091,
+        "domain": "http://127.0.0.1:18090"
+      }
+    }
+  ]
+}

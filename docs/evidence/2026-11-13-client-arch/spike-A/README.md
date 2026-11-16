@@ -19,7 +19,8 @@
 | 会话 ↔ 项目上下文 | **能**。Host 插件按 DSH Session 记录当前项目；`systemPrompt.section` 注入项目卡；会话头部项目徽章 + 右栏项目上下文页 | 高；`host-plugin-state.json`、本会话系统提示注入、截图 05/06 |
 | Agent 经现有 MCP 读取项目知识 | **能**。`mcp__mammoth_domain__search_project_knowledge / get_knowledge_document / get_requirement_context` 全部可用（3/3） | 高；`tool-call-records.md`、截图 11/12 |
 | Agent 输出自定义结构化业务结果卡片 | **能**。`tool.call.toolview` 按工具 wire name 注册；Mammoth 知识/需求/提案卡片渲染成功 | 高；截图 11；提案卡片见 09/10 页面侧 |
-| Agent 创建待审核提案 + 人工批准后正式写入 | **能**。DSH 工具审批闸门返回 `allowed-once`；工作台人工批准（`local-desktop-human`）后由隔离适配器以**人类** Domain 会话写入 `REQ-0002`；`audit_log.actorUserId = spike_admin`，不是 agent | 高；`domain-after-approval.json`、`proposal-stub-*`、`host-plugin-state.json`、截图 09/10/13 |
+| Agent 创建待审核提案 + 人工批准后正式写入 | **条件通过（机械链路 + 审计已证；人工闸门未由独立人类验证）**。DSH 工具审批闸门返回 `allowed-once`；工作台批准后由隔离适配器以**人类** Domain 会话写入 `REQ-0002`；`audit_log.actorUserId = spike_admin`，不是 agent。但批准点击由 Lead Agent UI 自动化执行，且适配器与 Agent 同 OS 用户 → 不构成安全边界（详见报告 §8.3/§10/§15） | 高（链路）/ 中（治理）；`domain-after-approval.json`、`proposal-stub-*`、截图 09/10/13 |
+| 安装/卸载/重装与 `engines.dsh` 负向门禁 | **通过**。卸载后 profile 清单恢复、左栏入口消失；重装后恢复；`engines.dsh: >=9.0.0` 安装被 `incompatible-version` 拒绝 | 高；`plugin-lifecycle-evidence.md`、截图 16/17 |
 | 升级回归（S-A9）/ 启动性能（S-A10）/ 桌面文件目录（S-A8） | 未执行（不在本轮任务书 §四 范围；记为已知限制与后续项） | — |
 
 ## 2. 文件清单
@@ -42,6 +43,10 @@
 | `11-tool-card-mcp-knowledge.png` | Conversation 中 MCP 知识检索的自定义业务卡片（2 chunks、来源数、正文片段） | S-A6 |
 | `12-diagnostics-host-route.png` | 工作台诊断页：Host 网关健康、Domain 读取身份、MCP 工具 3/3、页面地址 | S-A2 |
 | `13-client-runtime-and-approval-audit.png` | 客户端运行时诊断（`dsh-app://app/`、same-origin `apiBase`、0 错误）+ 插件审计（`dshApproval: allowed-once`、approve 记录） | S-A2/S-A7 |
+| `14-tool-cards-failure-states.png` | 工具卡片失败态（MCP 非成员项目拒绝渲染为错误卡片；不 blank slot）；含 DSH 审批 `never` 下提案被拒的卡片字段 | S-A5/S-A6 |
+| `15-new-session-bound.png` | 新建会话页面（会话自动绑定当前项目，见 `host-plugin-state.json` 的 `session-created` 记录） | S-A3 |
+| `16-after-remove-bundle.png` | `remove_bundle` 后：左栏 Mammoth 入口消失、工作台不可达 | S-A0 |
+| `17-after-reinstall.png` | 重装后：入口恢复、bundle 行重新 active | S-A0 |
 
 ### 2.2 机器可读证据
 
@@ -50,7 +55,12 @@
 | `domain-after-approval.json` | Domain REST 复核：项目工作项 2 条（含 `REQ-0002`）、admin 审计（`work_item.create` actor=spike_admin） |
 | `host-plugin-state.json` | Host 插件的非权威本地状态：activeProjectId、Session↔项目绑定、提案镜像（approved + domainObject） |
 | `proposal-stub-state.json` | 隔离适配器的提案记录（pending→approved、approver、domainObject） |
-| `proposal-stub-audit.jsonl` | 适配器审计日志（proposal.created / proposal.approved） |
+| `proposal-stub-audit.jsonl` | 适配器原始审计日志（proposal.created / proposal.approved） |
+| `proposal-stub-audit.json` | 适配器审计的结构化读取（token 鉴权） |
+| `proposal-stub-auth-negative.json` | 适配器鉴权负向：无 token 的列表/审批均 401；无 CORS 头 |
+| `plugin-lifecycle-evidence.md` | 安装/卸载/重装/`engines.dsh` 负向门禁证据 |
+| `screenshot-manifest.json` | 全部截图的 SHA-256 与采集方式（可校验完整性） |
+| `screenshots-metadata/` | `capture-dsh.ps1` 的采集 sidecar（窗口/DPI/方法元数据，非运行时数据） |
 | `tool-call-records.md` | 本轮 Agent/MCP/Domain 真实调用记录摘要 |
 | `README.md`（本文件） | 索引、环境、组合结构、复现与回滚 |
 
@@ -103,6 +113,18 @@ spike/dsh-desktop-integration/proposal-stub.mjs   # Spike-only 隔离适配器�
    `actorUserId=spike_admin` 三段证据齐全；agent 账号无法登录 Domain（401），无法自批。
 5. **MCP 只读身份与 Host 读取身份分离**：MCP 用 `MAMMOTH_MCP_AGENT_USER_ID`（agent 账号，只读 DB）；
    Host 读取用合成人类项目成员账号（`spike_reviewer`），只存在于仓库外机器本地文件。
+
+## 4.1 独立评审后的修正（2026-11-16）
+
+- **S-A7 改为条件通过**：机械链路与审计已验证，但"人工批准"点击由 Lead Agent UI 自动化完成（非独立人类），
+  且适配器与 Agent 同 OS 用户、不构成安全边界。已加固：DSH 审批只接受 `allowed-once`（fail-closed）、
+  适配器 token 鉴权、移除 CORS `*`、审批必须回显提案 id；负向测试见 `proposal-stub-auth-negative.json`。
+  正式版必须由"受控写操作与服务身份"ADR + 负责人真人复验闭合。
+- **补齐证据**：卸载/重装与 `engines.dsh` 负向门禁（`plugin-lifecycle-evidence.md`、截图 16/17）；
+  会话自动绑定（2 条 `session-created`）；MCP 非成员拒绝（截图 14）；工具卡片失败态（截图 14）；
+  截图 sidecar 统一移入 `screenshots-metadata/`，并新增 `screenshot-manifest.json`（SHA-256）。
+- **更正**：此前版本把 11/12/13 的截图 sidecar 误当作运行时 JSON、把中文乱码归因于数据（实为 PowerShell 5.1
+  读取编码问题）；现已用 UTF-8 重新生成运行时 JSON。
 
 ## 5. 复现与回滚
 

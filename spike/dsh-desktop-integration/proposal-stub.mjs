@@ -17,9 +17,18 @@
  *   MAMMOTH_DOMAIN_BASE          default http://127.0.0.1:18090
  *   MAMMOTH_APPROVER_USERNAME    synthetic human Domain account (required)
  *   MAMMOTH_APPROVER_PASSWORD    its password (required; never logged)
+ *   MAMMOTH_STUB_TOKEN           per-run shared secret required on every non-health
+ *                                request (required; the Host bundle sends it)
  *   MAMMOTH_STUB_PORT            default 18091
  *   MAMMOTH_STUB_STATE           default %TEMP%/mammoth-spike/proposals.json
  *   MAMMOTH_STUB_MAX_BODY_BYTES  default 65536
+ *
+ * Security note: this adapter runs as the same OS user as the agent runtime, so
+ * the token and the human Domain credential are NOT a boundary against an agent
+ * that can execute arbitrary shell commands on this machine. It is a spike
+ * fixture: the production write path must be defined by the separate
+ * "controlled write / service identity" ADR (isolated service identity,
+ * Domain-side authorization, and human-only approval).
  */
 import { createServer } from 'node:http'
 import { mkdirSync, readFileSync, appendFileSync, writeFileSync } from 'node:fs'
@@ -29,6 +38,7 @@ import { tmpdir } from 'node:os'
 const DOMAIN_BASE = (process.env.MAMMOTH_DOMAIN_BASE ?? 'http://127.0.0.1:18090').replace(/\/+$/, '')
 const APPROVER_USERNAME = process.env.MAMMOTH_APPROVER_USERNAME ?? ''
 const APPROVER_PASSWORD = process.env.MAMMOTH_APPROVER_PASSWORD ?? ''
+const STUB_TOKEN = process.env.MAMMOTH_STUB_TOKEN ?? ''
 const PORT = Number(process.env.MAMMOTH_STUB_PORT ?? 18091)
 const HOST = '127.0.0.1'
 const STATE_PATH = process.env.MAMMOTH_STUB_STATE ?? join(tmpdir(), 'mammoth-spike', 'proposals.json')
@@ -37,6 +47,10 @@ const MAX_BODY = Number(process.env.MAMMOTH_STUB_MAX_BODY_BYTES ?? 65536)
 
 if (APPROVER_USERNAME === '' || APPROVER_PASSWORD === '') {
   console.error('[proposal-stub] MAMMOTH_APPROVER_USERNAME and MAMMOTH_APPROVER_PASSWORD are required')
+  process.exit(2)
+}
+if (STUB_TOKEN === '') {
+  console.error('[proposal-stub] MAMMOTH_STUB_TOKEN is required; the Mammoth Host bundle must send the same value')
   process.exit(2)
 }
 
@@ -152,9 +166,17 @@ function sendJson(res, status, value) {
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
-    'access-control-allow-origin': '*',
   })
   res.end(body)
+}
+
+/** Constant-time-ish comparison of the per-run adapter token. */
+function authorized(req) {
+  const supplied = req.headers['x-mammoth-stub-token']
+  if (typeof supplied !== 'string' || supplied.length !== STUB_TOKEN.length) return false
+  let mismatch = 0
+  for (let index = 0; index < STUB_TOKEN.length; index++) mismatch |= STUB_TOKEN.charCodeAt(index) ^ supplied.charCodeAt(index)
+  return mismatch === 0
 }
 
 /** @param {import('node:http').IncomingMessage} req */
@@ -182,15 +204,18 @@ const server = createServer(async (req, res) => {
   const path = url.pathname
   try {
     if (req.method === 'GET' && path === '/health') {
+      // Unauthenticated health is intentionally minimal: no endpoint, account,
+      // or proposal content. Every other route requires the shared token.
       sendJson(res, 200, {
         ok: true,
         service: 'mammoth-proposal-adapter',
         spike: true,
-        domainBase: DOMAIN_BASE,
-        approver: APPROVER_USERNAME,
-        proposalCount: store.proposals.length,
         pending: store.proposals.filter(proposal => proposal.status === 'pending').length,
       })
+      return
+    }
+    if (!authorized(req)) {
+      sendJson(res, 401, { error: 'unauthorized', message: 'missing or invalid adapter token' })
       return
     }
     if (req.method === 'GET' && path === '/proposals') {
@@ -240,12 +265,18 @@ const server = createServer(async (req, res) => {
       const proposal = findProposal(id)
       if (proposal === undefined) { sendJson(res, 404, { error: 'not-found', message: `unknown proposal ${id}` }); return }
       if (proposal.status !== 'pending') { sendJson(res, 409, { error: 'not-pending', message: `proposal ${id} is already ${proposal.status}` }); return }
-      const approver = typeof body.approver === 'string' && body.approver !== '' ? body.approver : 'local-desktop-human'
-      // Four-eyes: the approver is a human identity, never the proposing agent.
-      if (approver === proposal.proposer?.agentUserId) {
-        sendJson(res, 403, { error: 'four-eyes-violation', message: 'the proposer cannot approve their own proposal' })
+      // The human decision must echo the exact pending proposal it read, and the
+      // proposer must be the agent identity (a human Domain session is used only
+      // for the resulting write).
+      if (body.confirm !== id) {
+        sendJson(res, 400, { error: 'confirm-required', message: 'approval must echo the exact proposal id' })
         return
       }
+      if (proposal.proposer?.kind !== 'agent') {
+        sendJson(res, 403, { error: 'proposer-not-agent', message: 'only agent proposals may be approved through this adapter' })
+        return
+      }
+      const approver = 'local-desktop-human'
       // The formal write happens here, only after this human approval action.
       try {
         const session = await domainLogin()
@@ -273,9 +304,13 @@ const server = createServer(async (req, res) => {
       const proposal = findProposal(id)
       if (proposal === undefined) { sendJson(res, 404, { error: 'not-found', message: `unknown proposal ${id}` }); return }
       if (proposal.status !== 'pending') { sendJson(res, 409, { error: 'not-pending', message: `proposal ${id} is already ${proposal.status}` }); return }
+      if (body.confirm !== id) {
+        sendJson(res, 400, { error: 'confirm-required', message: 'rejection must echo the exact proposal id' })
+        return
+      }
       proposal.status = 'rejected'
       proposal.decidedAt = new Date().toISOString()
-      proposal.approver = typeof body.approver === 'string' ? body.approver : 'local-desktop-human'
+      proposal.approver = 'local-desktop-human'
       saveStore()
       audit('proposal.rejected', { id, approver: proposal.approver })
       sendJson(res, 200, proposal)
