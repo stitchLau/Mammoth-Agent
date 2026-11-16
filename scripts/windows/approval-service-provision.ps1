@@ -37,6 +37,7 @@ param(
   [SecureString]$ServiceAccountPassword,
   [switch]$RegisterScheduledTask,
   [switch]$RepairAcl,
+  [switch]$ResetServiceAccountPassword,
   [switch]$Force,
   [switch]$DryRun
 )
@@ -73,6 +74,7 @@ Write-Step "project id:    $ProjectId"
 Write-Step "poll seconds:  $PollSeconds"
 Write-Step "scheduled task: $taskName (registered: $($RegisterScheduledTask.IsPresent))"
 Write-Step "repair broken ACLs from a previous partial run: $($RepairAcl.IsPresent)"
+Write-Step "reset the service account password to the supplied one: $($ResetServiceAccountPassword.IsPresent)"
 Write-Step 'acl plan: disable inheritance; remove inherited users; Administrators=S-1-5-32-544 full; SYSTEM full; service account read'
 Write-Step 'next steps: set MAMMOTH_AGENT_WRITE_APPLY_TOKEN for the Domain writer to the token file value, restart Domain, then run approval-service-verify.ps1'
 
@@ -124,6 +126,19 @@ if (-not $accountExists) {
   Write-Host "[skip] local user already exists: $account"
   if ($RegisterScheduledTask -and $null -eq $plainPassword) {
     Fail '-RegisterScheduledTask needs -ServiceAccountPassword for an existing account'
+  }
+  if ($ResetServiceAccountPassword) {
+    if ($null -eq $plainPassword) {
+      Fail '-ResetServiceAccountPassword needs -ServiceAccountPassword'
+    }
+    if ($plainPassword -match '[\s"]') {
+      Fail 'password must not contain spaces or double quotes (provisioning uses net.exe)'
+    }
+    $resetExit = Invoke-Native 'net.exe' @('user', $ServiceAccountName, $plainPassword)
+    if ($resetExit -ne 0) {
+      Fail "net user <account> <password> failed (exit $resetExit); check the local password policy"
+    }
+    Write-Host "[action] reset password for $account (task credentials must be re-registered)"
   }
 }
 
