@@ -161,3 +161,6 @@ spike/dsh-desktop-integration/proposal-stub.mjs   # Spike-only 隔离适配器�
 - `c7da93a` / `6ad7ddc` — 证据包（截图/JSON/报告）
 - `5ea4d34` — 环境与回滚说明
 - `aea1d49` — 独立评审整改：审批 fail-closed + 适配器鉴权/去 CORS/confirm、证据补齐、ADR 改为条件定稿待签
+- `10efdea` — 修复 Host→适配器 `confirm` 转发缺陷（工作台批准 400 的根因）
+- `aa5d6b2` — 提案卡片可读性修复 + 负责人真人批准记录（`REQ-0003`）
+- `46af060` — 证据 sidecar 整理与交接文档更新
