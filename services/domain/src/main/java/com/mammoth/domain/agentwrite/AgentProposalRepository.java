@@ -13,4 +13,7 @@ public interface AgentProposalRepository extends JpaRepository<AgentProposal, St
   List<AgentProposal> findByProjectIdOrderByCreatedAtAsc(String projectId);
 
   List<AgentProposal> findByProjectIdAndStatusOrderByCreatedAtAsc(String projectId, String status);
+
+  List<AgentProposal> findByProjectIdAndProposerUserIdOrderByCreatedAtAsc(String projectId,
+      String proposerUserId);
 }

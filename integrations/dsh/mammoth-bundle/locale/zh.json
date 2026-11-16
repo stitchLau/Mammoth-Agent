@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "title": "Mammoth 项目工作台",
+    "description": "以项目为核心的领域工作台：Domain Service 业务数据页面、会话项目上下文、经 Mammoth Domain MCP 读取项目知识，以及需要人工审批的正式写入提案。",
+    "detail": "docs/DETAIL.md"
+  },
+  "panel": "Mammoth",
+  "workbench": "工作台",
+  "projectContext": "项目上下文",
+  "proposeTitle": "Mammoth 提案"
+}

@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "title": "Mammoth workbench",
+    "description": "Project-intelligence workbench: Domain Service data pages, per-session project context, knowledge tools through the Mammoth Domain MCP bridge, and human-approved write proposals.",
+    "detail": "docs/DETAIL.md"
+  },
+  "panel": "Mammoth",
+  "workbench": "Workbench",
+  "projectContext": "Project context",
+  "proposeTitle": "Mammoth proposal"
+}

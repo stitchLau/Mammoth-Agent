@@ -11,6 +11,8 @@ import com.mammoth.domain.service.AuthorizationService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,14 +57,27 @@ public class AgentProposalController {
 
   public record ProposalResponse(String id, String projectId, String proposalType, String summary,
       String status, String riskLevel, String proposerKind, String proposerUserId,
-      String createdAt, String decidedAt, String appliedAt) {
+      String createdAt, String decidedAt, String appliedAt, String title) {
 
     static ProposalResponse from(AgentProposal proposal) {
       return new ProposalResponse(proposal.getId(), proposal.getProjectId(),
           proposal.getProposalType(), proposal.getSummary(), proposal.getStatus(),
           proposal.getRiskLevel(), proposal.getProposerKind(), proposal.getProposerUserId(),
-          proposal.getCreatedAt(), proposal.getDecidedAt(), proposal.getAppliedAt());
+          proposal.getCreatedAt(), proposal.getDecidedAt(), proposal.getAppliedAt(),
+          titleOf(proposal.getPayloadJson()));
     }
+  }
+
+  private static final Pattern PAYLOAD_TITLE =
+      Pattern.compile("\"title\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+
+  /** Best-effort title for the workbench/approval UI; the payload is the source of truth. */
+  private static String titleOf(String payloadJson) {
+    if (payloadJson == null || payloadJson.isEmpty()) {
+      return null;
+    }
+    Matcher matcher = PAYLOAD_TITLE.matcher(payloadJson);
+    return matcher.find() ? matcher.group(1).replace("\\\"", "\"").replace("\\\\", "\\") : null;
   }
 
   public record DecisionRequest(String reason) {
@@ -110,6 +125,21 @@ public class AgentProposalController {
       @RequestParam String projectId) {
     requireApplyToken(applyToken);
     return proposalService.listApproved(projectId).stream()
+        .map(ProposalResponse::from)
+        .toList();
+  }
+
+  /**
+   * Host/agent read model (propose token only): proposals owned by the configured agent
+   * identity, optionally restricted to one DSH session (`agentRunRef`).
+   */
+  @GetMapping("/mine")
+  public List<ProposalResponse> mine(
+      @RequestHeader(value = AGENT_TOKEN_HEADER, required = false) String serviceToken,
+      @RequestParam String projectId,
+      @RequestParam(required = false) String agentRunRef) {
+    requireServiceToken(serviceToken);
+    return proposalService.listMine(properties.getAgentUserId(), projectId, agentRunRef).stream()
         .map(ProposalResponse::from)
         .toList();
   }

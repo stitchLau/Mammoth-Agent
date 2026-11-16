@@ -1,0 +1,40 @@
+{
+  "name": "@mammoth/dsh-bundle",
+  "description": "Mammoth project-intelligence workbench for DeepSeek Harness Desktop: Host plugin (Domain Service bridge, agent tools, session-project context, proposal gate), Web Client plugin (sidebar entry, workbench page, conversation project context, tool result cards), Mammoth Domain MCP bridge, and a Mammoth agent preset.",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check-tool-schemas.mjs"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "tool-schema.js",
+    "tool-parameters.js",
+    "client.js",
+    "cordis.patch.yml",
+    "scripts",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "README.md"
+  ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.2 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}
