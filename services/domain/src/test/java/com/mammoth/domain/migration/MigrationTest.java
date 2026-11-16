@@ -31,7 +31,8 @@ class MigrationTest {
       "project_repository", "project_baseline", "project_baseline_repo", "execution_record",
       "execution_change", "execution_task", "execution_deviation", "delivery_snapshot",
       "knowledge_update_proposal", "external_source", "import_batch", "external_record",
-      "notification", "notification_delivery", "server_job");
+      "notification", "notification_delivery", "server_job",
+      "agent_proposal", "agent_proposal_approval", "agent_write_audit");
 
   @TempDir
   Path tempDir;
@@ -45,8 +46,8 @@ class MigrationTest {
         .load();
 
     MigrateResult first = flyway.migrate();
-    assertThat(first.migrationsExecuted).isEqualTo(10);
-    assertThat(first.targetSchemaVersion).isEqualTo("10");
+    assertThat(first.migrationsExecuted).isEqualTo(11);
+    assertThat(first.targetSchemaVersion).isEqualTo("11");
 
     MigrateResult second = flyway.migrate();
     assertThat(second.migrationsExecuted).isZero();
@@ -65,6 +66,13 @@ class MigrationTest {
       assertThat(columns(statement, "app_user"))
           .contains("email", "account_type", "password_reset_required");
       assertThat(columns(statement, "session")).contains("password_reset_required");
+      assertThat(columns(statement, "agent_proposal"))
+          .contains("project_id", "proposal_type", "payload_json", "idempotency_key", "status",
+              "risk_level", "proposer_user_id");
+      assertThat(columns(statement, "agent_proposal_approval"))
+          .contains("proposal_id", "approver_user_id", "decision", "reviewer_role");
+      assertThat(columns(statement, "agent_write_audit"))
+          .contains("proposal_id", "stage", "outcome", "prev_hash", "entry_hash");
     }
   }
 
@@ -138,7 +146,7 @@ class MigrationTest {
         versions.add(resultSet.getString("version"));
         assertThat(resultSet.getBoolean("success")).isTrue();
       }
-      assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+      assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
     }
   }
 }

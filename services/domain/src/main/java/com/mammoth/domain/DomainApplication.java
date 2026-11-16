@@ -1,6 +1,7 @@
 package com.mammoth.domain;
 
 import com.mammoth.domain.admin.AdminRunner;
+import com.mammoth.domain.agentwrite.approval.ApprovalServiceMain;
 import com.mammoth.domain.mcp.McpServerMain;
 import java.util.Arrays;
 import org.springframework.boot.SpringApplication;
@@ -27,6 +28,11 @@ public class DomainApplication {
     }
     if (args.length > 0 && "--mcp".equals(args[0])) {
       McpServerMain.main(Arrays.copyOfRange(args, 1, args.length));
+      return;
+    }
+    if (args.length > 0 && "--approval-service".equals(args[0])) {
+      // ADR-0015 P2: isolated approval-service process; exits with its status code.
+      System.exit(ApprovalServiceMain.run(Arrays.copyOfRange(args, 1, args.length)));
       return;
     }
     SpringApplication.run(DomainApplication.class, args);
