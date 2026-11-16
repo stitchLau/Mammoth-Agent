@@ -33,6 +33,12 @@ public class ApprovalPageController {
       <h1>Mammoth 提案审批（人类会话）</h1>
       <p class="muted">此页面由 Domain Service 提供，使用你本人的 Domain 登录会话审批；DSH/Agent 无法代替你操作。
       批准后由独立审批服务自动应用并在 Domain 生成正式对象。合成数据环境。</p>
+      <div id="loginBox" style="display:none">
+        <p><input id="username" placeholder="Domain 用户名" size="20"/>
+           <input id="password" type="password" placeholder="密码" size="20"/>
+           <button id="loginBtn" class="primary">登录 Domain</button></p>
+        <p class="muted">本 Domain Service 不托管 SPA，因此登录直接在审批页内完成；登录后使用你自己的会话审批。</p>
+      </div>
       <p id="auth" class="muted">正在检查登录状态…</p>
       <p><label>项目 ID：<input id="projectId" size="40"/></label> <button id="refresh">刷新</button></p>
       <div id="list"></div>
@@ -64,10 +70,11 @@ public class ApprovalPageController {
         }
         async function load(){
           const user = await me();
+          document.getElementById('loginBox').style.display = user ? 'none' : 'block';
           document.getElementById('auth').textContent = user
             ? '已登录：' + (user.displayName || user.username) + '（' + (user.username || '') + '）'
-            : '未登录或会话已过期，请先在 /login 登录 Domain。';
-          if (!user) { document.getElementById('list').innerHTML = '<p><a href="/login">去登录</a></p>'; return; }
+            : '未登录或会话已过期，请在下方登录 Domain。';
+          if (!user) { document.getElementById('list').innerHTML = ''; return; }
           const projectId = projectInput.value.trim();
           if (!projectId) { document.getElementById('list').innerHTML = '<p class="muted">请输入项目 ID（工作台当前项目）。</p>'; return; }
           const r = await fetch('/api/agent/proposals?projectId=' + encodeURIComponent(projectId), { credentials:'same-origin' });
@@ -101,6 +108,20 @@ public class ApprovalPageController {
           }
         }
         document.getElementById('refresh').onclick = load;
+        document.getElementById('loginBtn').onclick = async () => {
+          const r = await fetch('/api/auth/login', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              username: document.getElementById('username').value,
+              password: document.getElementById('password').value,
+            }),
+          });
+          if (!r.ok) { alert('登录失败：HTTP ' + r.status); return; }
+          document.getElementById('password').value = '';
+          await load();
+        };
         load();
       </script></body></html>
       """;
