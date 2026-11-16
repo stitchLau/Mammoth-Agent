@@ -1,0 +1,49 @@
+﻿{
+    "tool":  "capture-dsh.ps1",
+    "timestamp":  "2026-11-16T11:17:05.4744009+08:00",
+    "host":  "DESKTOP-9OP303T",
+    "user":  "Lau",
+    "psPid":  10536,
+    "window":  {
+                   "hwnd":  "0x00050DF8",
+                   "hwndDec":  331256,
+                   "pid":  34384,
+                   "process":  "DeepSeek Harness",
+                   "className":  "Chrome_WidgetWin_1",
+                   "title":  "DeepSeek Harness",
+                   "visible":  true,
+                   "minimized":  false,
+                   "maximized":  false,
+                   "cloaked":  false,
+                   "rect":  {
+                                "y":  138,
+                                "w":  1296,
+                                "h":  828,
+                                "x":  696
+                            },
+                   "dwmFrame":  {
+                                    "y":  138,
+                                    "w":  1282,
+                                    "valid":  true,
+                                    "h":  821,
+                                    "x":  703
+                                },
+                   "dpi":  96,
+                   "scale":  1
+               },
+    "capture":  {
+                    "method":  "PrintWindow(PW_RENDERFULLCONTENT=2)",
+                    "dpiAwareness":  "per-monitor-aware",
+                    "region":  "",
+                    "png":  "E:\\MyProj\\MommothAgent\\code\\Mammoth-Agent\\docs\\evidence\\2026-11-13-client-arch\\spike-A\\19-workbench-approved-REQ0003.png",
+                    "width":  1296,
+                    "height":  828,
+                    "screenFrame":  null,
+                    "windowWasMinimized":  false,
+                    "minimizedStateRestored":  false
+                },
+    "printWindowRaw":  null,
+    "notes":  [
+                  "DPI awareness is \u0027per-monitor-aware\u0027 (requested api=4); screen-grab coordinates may be DPI-virtualized. PrintWindow path is unaffected."
+              ]
+}

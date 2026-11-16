@@ -1,0 +1,244 @@
+{
+  "verifiedAt": "2026-11-16T03:21:41.568Z",
+  "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+  "readIdentity": "spike_reviewer",
+  "auditIdentity": "spike_admin",
+  "workItems": [
+    {
+      "id": "fa17c5d2-345d-4ea7-860d-14879e6b89c8",
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "itemType": "requirement",
+      "itemNo": "REQ-0001",
+      "title": "Spike synthetic requirement",
+      "summary": "Synthetic requirement for Domain Service recon",
+      "status": "draft",
+      "priority": "high",
+      "sourceNote": "synthetic",
+      "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "priorStatus": null,
+      "readyConfirmedBy": null,
+      "readyConfirmedAt": null,
+      "contextSnapshotId": null,
+      "approvedSolutionVersionId": null,
+      "createdAt": "2026-11-13T09:25:11Z",
+      "updatedAt": "2026-11-13T09:25:11Z"
+    },
+    {
+      "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "itemType": "requirement",
+      "itemNo": "REQ-0002",
+      "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+      "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+      "status": "draft",
+      "priority": "high",
+      "sourceNote": "mammoth-dsh-proposal:50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+      "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "priorStatus": null,
+      "readyConfirmedBy": null,
+      "readyConfirmedAt": null,
+      "contextSnapshotId": null,
+      "approvedSolutionVersionId": null,
+      "createdAt": "2026-11-16T02:07:18Z",
+      "updatedAt": "2026-11-16T02:07:18Z"
+    },
+    {
+      "id": "8052479a-2bc3-4e2b-9114-a14b8a1ff7cf",
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "itemType": "requirement",
+      "itemNo": "REQ-0003",
+      "title": "急料维护列表新增“供应商名称”列",
+      "summary": "背景：客户提出在「品质管理 → 基础配置 → 急料维护」功能中，新增一列「供应商名称」。\n\n拟议范围：在上述页面的列表/查询结果中展示「供应商名称」列，保持急料维护现有字段语义与保存逻辑不变。\n\n待确认事项（建议评审时明确）：\n1. 展示方式：该列仅为只读展示，还是可从急料记录编辑/维护？\n2. 数据来源：急料记录当前是否已关联供应商（编码/名称）；若不存在关联字段，则需新增字段、数据模型迁移与后端接口调整，提案范围需相应扩大。\n3. 交互细节：列位置、是否支持排序/筛选/导出、无值时的占位显示规则、名称超长截断规则。\n4. 权限：是否对现有全部角色可见。\n5. 兼容性：是否需要同步调整列表接口返回结构、导出模板或打印模板。\n\n建议验收标准：进入「品质管理 → 基础配置 → 急料维护」页面后，列表出现「供应商名称」列且位置符合约定；已关联供应商的记录显示正确名称，未关联记录显示约定占位；原有查询、新增、编辑、保存功能行为不变；列表接口与导出结果保持兼容。",
+      "status": "draft",
+      "priority": "normal",
+      "sourceNote": "mammoth-dsh-proposal:db238b78-7834-4dcb-a86b-092f8451980d",
+      "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "priorStatus": null,
+      "readyConfirmedBy": null,
+      "readyConfirmedAt": null,
+      "contextSnapshotId": null,
+      "approvedSolutionVersionId": null,
+      "createdAt": "2026-11-16T03:13:00Z",
+      "updatedAt": "2026-11-16T03:13:00Z"
+    }
+  ],
+  "adminAudit": [
+    {
+      "id": "98d8c700-21a5-46b9-9a35-279373ac154d",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "work_item.create",
+      "objectType": "work_item",
+      "objectId": "8052479a-2bc3-4e2b-9114-a14b8a1ff7cf",
+      "at": "2026-11-16T03:13:00Z",
+      "detailJson": "{\"itemNo\":\"REQ-0003\",\"priority\":\"normal\"}"
+    },
+    {
+      "id": "eaf7751b-1c91-42f9-b8f1-3d26bfa255d2",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "work_item.create",
+      "objectType": "work_item",
+      "objectId": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+      "at": "2026-11-16T02:07:18Z",
+      "detailJson": "{\"itemNo\":\"REQ-0002\",\"priority\":\"high\"}"
+    },
+    {
+      "id": "26fb23ab-7cf4-4edc-8cbf-41c30281870d",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "knowledge.create",
+      "objectType": "knowledge_document",
+      "objectId": "95db8c1b-9db7-4356-9022-135035dfed26",
+      "at": "2026-11-13T09:27:02Z",
+      "detailJson": null
+    },
+    {
+      "id": "bc6c6b91-fa82-466c-9819-3bd9b6fda5ba",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "job.running",
+      "objectType": "server_job",
+      "objectId": "005e68cb-880d-421f-84f8-6818aaa5aa1a",
+      "at": "2026-11-13T09:25:26Z",
+      "detailJson": null
+    },
+    {
+      "id": "00a55667-95fd-4733-9da5-40d97df2cfe6",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "knowledge.create",
+      "objectType": "knowledge_document",
+      "objectId": "8800bafc-a7a0-4d53-b2e0-ad657e06ad30",
+      "at": "2026-11-13T09:25:23Z",
+      "detailJson": null
+    },
+    {
+      "id": "00e5a17f-5795-413e-895e-7075eef04fc9",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "knowledge.submit_review",
+      "objectType": "knowledge_document",
+      "objectId": "8800bafc-a7a0-4d53-b2e0-ad657e06ad30",
+      "at": "2026-11-13T09:25:23Z",
+      "detailJson": null
+    },
+    {
+      "id": "6c1fd232-27fe-4c17-a495-33bf6696cc4b",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "notification.create",
+      "objectType": "notification",
+      "objectId": "1ec1f2a1-8e0a-45e5-8d0c-01ead2923125",
+      "at": "2026-11-13T09:25:23Z",
+      "detailJson": "{\"type\":\"knowledge.review_requested\"}"
+    },
+    {
+      "id": "e0863055-b74c-46ad-b41e-121e3cc167fb",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "work_item.create",
+      "objectType": "work_item",
+      "objectId": "fa17c5d2-345d-4ea7-860d-14879e6b89c8",
+      "at": "2026-11-13T09:25:11Z",
+      "detailJson": "{\"itemNo\":\"REQ-0001\",\"priority\":\"high\"}"
+    },
+    {
+      "id": "f92c8139-49b2-4feb-b506-388a7c06237f",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "artifact.add",
+      "objectType": "artifact",
+      "objectId": "dc905d38-e578-4fca-83ae-7074c8f23b37",
+      "at": "2026-11-13T09:25:11Z",
+      "detailJson": null
+    },
+    {
+      "id": "90ca659f-1358-42db-828e-58697913677a",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "project.member.add",
+      "objectType": "project",
+      "objectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "at": "2026-11-13T09:25:00Z",
+      "detailJson": "{\"userId\":\"98d2cc12-4bab-4225-b179-bca36853837f\",\"role\":\"reviewer\"}"
+    },
+    {
+      "id": "3f1f362e-77af-4a23-a83a-f4244efa9275",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "user.create",
+      "objectType": "app_user",
+      "objectId": "98d2cc12-4bab-4225-b179-bca36853837f",
+      "at": "2026-11-13T09:24:59Z",
+      "detailJson": "{\"accountType\":\"human\"}"
+    },
+    {
+      "id": "95e3a40e-65e2-45ac-bc71-769ec5c27969",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "project.create",
+      "objectType": "project",
+      "objectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "at": "2026-11-13T09:24:59Z",
+      "detailJson": null
+    },
+    {
+      "id": "58982b19-ae88-4ee6-af9c-acda14db3ee1",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "project.member.add",
+      "objectType": "project",
+      "objectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "at": "2026-11-13T09:24:59Z",
+      "detailJson": "{\"userId\":\"fb228729-d64c-46ec-9345-d69e966069f3\",\"role\":\"viewer\"}"
+    },
+    {
+      "id": "cd0888c6-968d-45e3-95e2-f80735e51c4b",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "product.create",
+      "objectType": "product",
+      "objectId": "8b347e4a-c10b-48b3-9909-7e996c292e63",
+      "at": "2026-11-13T09:24:50Z",
+      "detailJson": null
+    },
+    {
+      "id": "f885a34c-ded0-4dec-a8ce-771fcce233e2",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "user.create",
+      "objectType": "app_user",
+      "objectId": "fb228729-d64c-46ec-9345-d69e966069f3",
+      "at": "2026-11-13T09:24:49Z",
+      "detailJson": "{\"accountType\":\"agent\"}"
+    },
+    {
+      "id": "f00a6f61-4863-45a0-991f-838c99ed69d4",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "customer.create",
+      "objectType": "customer",
+      "objectId": "bb4ffbdf-b51f-4106-a03c-931fb965e3a7",
+      "at": "2026-11-13T09:24:49Z",
+      "detailJson": null
+    },
+    {
+      "id": "8a48f8d4-d1e9-491c-a830-7841e59b6230",
+      "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "action": "user.create",
+      "objectType": "app_user",
+      "objectId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+      "at": "2026-11-13T09:24:42Z",
+      "detailJson": "{\"accountType\":\"human\"}"
+    }
+  ],
+  "assertions": {
+    "workItemCount": 3,
+    "req0002CreatedBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+    "workItemCreateAudit": [
+      {
+        "at": "2026-11-16T03:13:00Z",
+        "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+        "objectId": "8052479a-2bc3-4e2b-9114-a14b8a1ff7cf"
+      },
+      {
+        "at": "2026-11-16T02:07:18Z",
+        "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+        "objectId": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be"
+      },
+      {
+        "at": "2026-11-13T09:25:11Z",
+        "actorUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+        "objectId": "fa17c5d2-345d-4ea7-860d-14879e6b89c8"
+      }
+    ]
+  }
+}

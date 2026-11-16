@@ -17,6 +17,8 @@
 | ADR-0011 | 外部系统集成与凭据 | 只读文件导入 → 只读 API → 双向同步；M4 只做文件导入；外部记录=证据/候选；凭据只走环境/OS 存储 | Jira/CSM API、凭据、白名单、幂等、审计 | **Accepted v1.0（M4 S3/S4 文件导入范围）**；真实 Jira API/CSM 留 M4.5 |
 | ADR-0012 | 团队服务端与数据库演进 | 单节点 + 反向代理 TLS + SQLite；**PG 多实例 = M5**；服务器/证书暂不处理；M5 计划见 `docs/specs/M5-PHASE5-PLAN.md` | 多用户、TLS、备份、PG 迁移 | **Proposed**（M4 S6 文档化延期；待 M5） |
 | ADR-0013 | 通知与外部发送 | 站内默认启用；邮件/企微完整实现、默认关闭、配置后启用；内部通知边界 | SMTP/企微模板、审批、限速、审计 | **Accepted v1.0（M4 S5）**；真实启用/联调留 M4.5 |
+| ADR-0014 | 产品形态与客户端宿主 | DSH Desktop 宿主 + Mammoth 外部 Bundle（Host/Client/MCP/Preset）；SPA 保留为管理台/后备 Web；B/S 长期演进 | DSH 扩展面真实渲染、数据通道、会话↔项目、受控写 | **Accepted v1.1（2026-11-16 负责人签署）**；Spike A 报告 `docs/evidence/2026-11-13-client-arch/spike-A/` |
+| ADR-0015 | Agent 受控写操作与服务身份 | 独立 Approval 服务身份（本机独立 OS 账号/进程，凭据只存 OS 存储）+ Domain 提案/审批/写入 API + 人类独占审批/四眼（全员提案者≠批准者，高风险加第二人）+ 审计三元组；远端随 M5；回退方案 B（只读+人工 SPA 写） | 服务身份/凭据隔离、Domain 授权、四眼、幂等、审计、V11 迁移 | **Accepted v1.0（2026-11-16 负责人确认决策项 1–5）**；实施见 P1 计划 |
 
 每项决策必须使用 `docs/templates/ADR.md`，写明选项、证据、取舍、风险、验证结果和回滚/替代路径。
 

@@ -1,6 +1,6 @@
 # ADR-0002: 技术栈与 UI 形态
 
-- 状态：**Accepted v1.0**（2026-11-12 负责人批准）
+- 状态：**Accepted v1.0**（2026-11-12 负责人批准）；**2026-11-16 补充说明：UI 宿主经 ADR-0014 修订（另立 ADR 条款触发），后端技术栈/数据根决策不变**
 - 日期：2026-11-12
 - 决策人：项目负责人（2026-11-12 批准）
 - 相关需求/功能：M1 项目知识底座；DSH 集成（ADR-0001）
@@ -78,3 +78,9 @@ UI 子方案：B1 独立 SPA 由后端托管（建议）/ B2 嵌入 DSH Client s
 1. ~~负责人批准本 ADR~~ → 2026-11-12 已批准（Accepted v1.0）。
 2. 执行 ADR-0003（数据库/迁移）Spike，随后 ADR-0004/0006/0005。
 3. 建立 M1 工程骨架（`apps/web`、`services/domain`、`packages/contracts`），按 `docs/specs/M1-PHASE1-PLAN.md` T1 起实施。
+
+## 补充说明（2026-11-16，UI 宿主修订）
+
+- 本 ADR 的 **UI 子方案 B1（独立 SPA 为产品 UI 基座）已被 ADR-0014 修订**：产品形态确定为 **DSH Desktop 宿主 + Mammoth 外部 Bundle**，现有 SPA 保留为团队 Web 管理台/后备 Web 客户端与迁移参考。该修订走本 ADR"UI 如需嵌入 DSH → 另立 ADR 变更 B1 为 B2"的条款，经 ADR-0014（Accepted v1.1，2026-11-16 负责人签署）记录。
+- **不变**：Spring Boot 4.1.2 + Java 17 + Maven；REST API 作为 Domain 契约；数据根目录可配置与启动自检；DSH↔Domain 的 MCP 只读边界。
+- **新增边界**：Agent 受控写路径与服务身份由 **ADR-0015（Accepted v1.0，2026-11-16）** 定义：Agent 仅 propose；独立 Approval 服务身份执行已批准写入；人类独占审批 + 全员四眼 + 高风险第二人。实施（V11 迁移/P1–P4）完成前，Agent 写操作仅限 Spike 隔离环境。

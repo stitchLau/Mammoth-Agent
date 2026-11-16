@@ -1,0 +1,108 @@
+{
+  "verifiedAt": "2026-11-16T03:21:41.571Z",
+  "note": "Adapter token-authenticated read. dshApproval is null on the historical record because the Host did not forward it before the hardening change; the Host audit records dshApproval=allowed-once for the same proposal id.",
+  "proposals": [
+    {
+      "id": "db238b78-7834-4dcb-a86b-092f8451980d",
+      "type": "work-item.create",
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "status": "approved",
+      "title": "急料维护列表新增“供应商名称”列",
+      "summary": "背景：客户提出在「品质管理 → 基础配置 → 急料维护」功能中，新增一列「供应商名称」。\n\n拟议范围：在上述页面的列表/查询结果中展示「供应商名称」列，保持急料维护现有字段语义与保存逻辑不变。\n\n待确认事项（建议评审时明确）：\n1. 展示方式：该列仅为只读展示，还是可从急料记录编辑/维护？\n2. 数据来源：急料记录当前是否已关联供应商（编码/名称）；若不存在关联字段，则需新增字段、数据模型迁移与后端接口调整，提案范围需相应扩大。\n3. 交互细节：列位置、是否支持排序/筛选/导出、无值时的占位显示规则、名称超长截断规则。\n4. 权限：是否对现有全部角色可见。\n5. 兼容性：是否需要同步调整列表接口返回结构、导出模板或打印模板。\n\n建议验收标准：进入「品质管理 → 基础配置 → 急料维护」页面后，列表出现「供应商名称」列且位置符合约定；已关联供应商的记录显示正确名称，未关联记录显示约定占位；原有查询、新增、编辑、保存功能行为不变；列表接口与导出结果保持兼容。",
+      "priority": "normal",
+      "rationale": "1) 需求来源：客户在本次会话中直接提出（2026-11-16），无其他书面附件。\n2) 依据与缺口：项目 SPIKE1 Spike Demo Project（a899ed37-7e3a-488c-9c1b-16c97bfe0b11）经验证知识仅 1 篇《Spike Agent Knowledge Contract》（architecture，documentId 8800bafc-a7a0-4d53-b2e0-ad657e06ad30），内容仅说明 MCP 只读知识与“Agent 提案写入需人工审批”的链路，不含「急料维护」字段或供应商数据来源的领域规则；以“品质管理 基础配置 急料维护 供应商名称 列”检索经验证知识返回 0 条命中。故现有实现与字段结构无经验证依据，属待确认项。\n3) 去重检查不完整：以 REQ-0001 / REQ-0002 调用 get_requirement_context 均返回“requirement not found”，无法确认本需求是否与既有需求重复，请审批人一并核对。\n4) 合规说明：依项目约束，正式需求写入须经人工审批；本记录为待审核提案，尚未写入领域服务，也未自行批准。",
+      "proposer": {
+        "kind": "agent",
+        "dshSessionId": "session-589056fa-eaca-4a14-a1ad-ad79b5c9408b",
+        "agentUserId": "fb228729-d64c-46ec-9345-d69e966069f3",
+        "tool": "mammoth_propose_work_item"
+      },
+      "payload": {
+        "title": "急料维护列表新增“供应商名称”列",
+        "summary": "背景：客户提出在「品质管理 → 基础配置 → 急料维护」功能中，新增一列「供应商名称」。\n\n拟议范围：在上述页面的列表/查询结果中展示「供应商名称」列，保持急料维护现有字段语义与保存逻辑不变。\n\n待确认事项（建议评审时明确）：\n1. 展示方式：该列仅为只读展示，还是可从急料记录编辑/维护？\n2. 数据来源：急料记录当前是否已关联供应商（编码/名称）；若不存在关联字段，则需新增字段、数据模型迁移与后端接口调整，提案范围需相应扩大。\n3. 交互细节：列位置、是否支持排序/筛选/导出、无值时的占位显示规则、名称超长截断规则。\n4. 权限：是否对现有全部角色可见。\n5. 兼容性：是否需要同步调整列表接口返回结构、导出模板或打印模板。\n\n建议验收标准：进入「品质管理 → 基础配置 → 急料维护」页面后，列表出现「供应商名称」列且位置符合约定；已关联供应商的记录显示正确名称，未关联记录显示约定占位；原有查询、新增、编辑、保存功能行为不变；列表接口与导出结果保持兼容。",
+        "priority": "normal"
+      },
+      "dshApproval": "allowed-once",
+      "createdAt": "2026-11-16T03:09:57.006Z",
+      "decidedAt": "2026-11-16T03:13:00.791Z",
+      "approver": "local-desktop-human",
+      "domainObject": {
+        "id": "8052479a-2bc3-4e2b-9114-a14b8a1ff7cf",
+        "itemNo": "REQ-0003",
+        "status": "draft",
+        "raw": {
+          "id": "8052479a-2bc3-4e2b-9114-a14b8a1ff7cf",
+          "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+          "itemType": "requirement",
+          "itemNo": "REQ-0003",
+          "title": "急料维护列表新增“供应商名称”列",
+          "summary": "背景：客户提出在「品质管理 → 基础配置 → 急料维护」功能中，新增一列「供应商名称」。\n\n拟议范围：在上述页面的列表/查询结果中展示「供应商名称」列，保持急料维护现有字段语义与保存逻辑不变。\n\n待确认事项（建议评审时明确）：\n1. 展示方式：该列仅为只读展示，还是可从急料记录编辑/维护？\n2. 数据来源：急料记录当前是否已关联供应商（编码/名称）；若不存在关联字段，则需新增字段、数据模型迁移与后端接口调整，提案范围需相应扩大。\n3. 交互细节：列位置、是否支持排序/筛选/导出、无值时的占位显示规则、名称超长截断规则。\n4. 权限：是否对现有全部角色可见。\n5. 兼容性：是否需要同步调整列表接口返回结构、导出模板或打印模板。\n\n建议验收标准：进入「品质管理 → 基础配置 → 急料维护」页面后，列表出现「供应商名称」列且位置符合约定；已关联供应商的记录显示正确名称，未关联记录显示约定占位；原有查询、新增、编辑、保存功能行为不变；列表接口与导出结果保持兼容。",
+          "status": "draft",
+          "priority": "normal",
+          "sourceNote": "mammoth-dsh-proposal:db238b78-7834-4dcb-a86b-092f8451980d",
+          "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+          "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+          "priorStatus": null,
+          "readyConfirmedBy": null,
+          "readyConfirmedAt": null,
+          "contextSnapshotId": null,
+          "approvedSolutionVersionId": null,
+          "createdAt": "2026-11-16T03:13:00Z",
+          "updatedAt": "2026-11-16T03:13:00Z"
+        }
+      },
+      "domainError": null
+    },
+    {
+      "id": "50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+      "type": "work-item.create",
+      "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+      "status": "approved",
+      "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+      "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+      "priority": "high",
+      "rationale": "端到端验证 ADR-0014 S-A7：DSH 工具审批闸门 + 人工在工作台批准后由 Domain Service 以人类账号正式写入。仅合成数据。",
+      "proposer": {
+        "kind": "agent",
+        "dshSessionId": "session-0583b86e-1bcb-4ecb-93da-61b43d2dcc82",
+        "agentUserId": "fb228729-d64c-46ec-9345-d69e966069f3",
+        "tool": "mammoth_propose_work_item"
+      },
+      "payload": {
+        "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+        "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+        "priority": "high"
+      },
+      "dshApproval": null,
+      "createdAt": "2026-11-16T02:05:30.843Z",
+      "decidedAt": "2026-11-16T02:07:18.020Z",
+      "approver": "local-desktop-human",
+      "domainObject": {
+        "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+        "itemNo": "REQ-0002",
+        "status": "draft",
+        "raw": {
+          "id": "c5145f6d-7abc-41a7-82c0-e4e6b194a7be",
+          "projectId": "a899ed37-7e3a-488c-9c1b-16c97bfe0b11",
+          "itemType": "requirement",
+          "itemNo": "REQ-0002",
+          "title": "Spike 验收：新增需求冒烟（人工审批链路）",
+          "summary": "在 Spike 隔离环境中验证「Agent 创建待审核提案 → 人工在工作台批准 → Domain Service 以人类账号正式写入需求」的端到端链路。",
+          "status": "draft",
+          "priority": "high",
+          "sourceNote": "mammoth-dsh-proposal:50b44ed0-7ffd-476f-8e1d-d6c2711ee43a",
+          "ownerUserId": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+          "createdBy": "3b3e0c00-284d-4fdb-bd94-a0eb29400aac",
+          "priorStatus": null,
+          "readyConfirmedBy": null,
+          "readyConfirmedAt": null,
+          "contextSnapshotId": null,
+          "approvedSolutionVersionId": null,
+          "createdAt": "2026-11-16T02:07:18Z",
+          "updatedAt": "2026-11-16T02:07:18Z"
+        }
+      },
+      "domainError": null
+    }
+  ]
+}

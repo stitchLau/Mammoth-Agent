@@ -124,8 +124,8 @@ Agent 在任务开始时必须输出：
 
 不得假装以下决策已确定：
 
-- Mammoth 与 DSH 的集成形态：纯 DSH Bundle、DSH 扩展 + 独立 Domain API，还是更独立的桌面应用；
-- 前后端技术栈及 UI 扩展边界；
+- ~~Mammoth 与 DSH 的集成形态~~ → **已决定**：ADR-0014（Accepted v1.1，2026-11-16 负责人签署）＝ DSH Desktop 宿主 + Mammoth 外部 Bundle；现有 SPA 保留为管理台/后备 Web；
+- ~~前后端技术栈及 UI 扩展边界~~ → **已决定**：ADR-0002（技术栈，Accepted；UI 宿主经 ADR-0014 修订）；
 - 关系数据库选型、ORM 和迁移工具；
 - 文件存储后端；
 - 向量检索及全文检索技术；
@@ -134,6 +134,8 @@ Agent 在任务开始时必须输出：
 - 项目源码和知识文档的共享/同步策略。
 
 这些事项必须通过短技术 Spike 和 ADR 决定。不得因为 Agent 偏好某个框架就直接定案。
+
+**2026-11-16 更新**：客户端架构 Spike A 完成并通过技术可行性验证（S-A2 数据通道 **Go（Host 桥）**；负责人本人完成真人批准 `REQ-0003`）；**ADR-0014 Accepted v1.1 已签署**；同日负责人确认 **ADR-0015（Agent 受控写操作与服务身份）决策项并转为 Accepted v1.0**（本机独立 Approval 服务身份 + Domain 提案/审批/写入 API + 人类独占审批/四眼 + 审计三元组；远端随 M5）。客户端正式迁移阶段编号、S-A8/S-A9/S-A10、会话↔项目数据模型（V11）与 ADR-0015 的 P1–P4 实施仍待推进。证据：`docs/evidence/2026-11-13-client-arch/spike-A/`。
 
 **2026-11-13 更新**：M1–M4 已完成（M4 本机验收；S6 仅文档化延期）；M4 S0 定 ADR-0011（外部集成/凭据，Accepted v1.0 M4 范围）、ADR-0012（团队服务端；PG 多实例=M5，Proposed）、ADR-0013（通知/外发，Accepted v1.0 M4 范围），并增补 ADR-0006/0008。S1 落地 `org_admin`/用户停用重置/Agent 账号/强制改密（ADR-0006 v1.1）；S2 落地 BG-01 交接包 ZIP 与 MCP 审计（V8）；S3 落地 V9 只读导入（Jira 中文 CSV/GBK、幂等、证据映射）；S4 补强 BG-03 矩阵；S5 落地 V10 站内通知/邮件/企微（默认关闭）/任务；schema v10。M4 收敛为单节点协作 + 只读集成 + 站内通知 + 外部 Agent 只读交付；生产 API/真实外发/PG 多实例/远程网关见 `docs/specs/M4.5-PHASE45-PLAN.md`。应用内 LLM 仍需另立 ADR。
 

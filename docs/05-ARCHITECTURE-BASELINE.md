@@ -46,7 +46,7 @@
 ## 6. 关键架构决策待办
 
 - ADR-0001：DSH 集成策略（Bundle、Profile、Fork 或独立壳）。**Accepted v1.0**
-- ADR-0002：应用语言/框架及 UI 扩展边界。**Accepted v1.0**
+- ADR-0002：应用语言/框架及 UI 扩展边界。**Accepted v1.0**；**UI 宿主经 ADR-0014 修订（2026-11-16）**
 - ADR-0003：关系数据库、ORM 和迁移机制。**Accepted v1.0**
 - ADR-0004：文件存储与共享工作区。**Accepted v1.0**
 - ADR-0005：全文/向量检索引擎。**Accepted v1.0**
@@ -57,6 +57,8 @@
 - ADR-0011：外部系统集成与凭据边界（**Proposed**，2026-11-13）→ `decisions/ADR-0011-EXTERNAL-INTEGRATION.md`
 - ADR-0012：团队服务端部署与数据库演进（**Proposed**，PG 多实例=M5）→ `decisions/ADR-0012-TEAM-SERVER.md`；M5 计划 `docs/specs/M5-PHASE5-PLAN.md`
 - ADR-0013：通知与外部发送（**Proposed**，站内默认/邮件企微配置启用）→ `decisions/ADR-0013-NOTIFICATIONS.md`
+- ADR-0014：产品形态与客户端宿主（**Accepted v1.1**，2026-11-16 负责人签署；DSH Desktop 宿主 + Mammoth 外部 Bundle，SPA 保留为管理台/后备 Web）→ `decisions/ADR-0014-CLIENT-SHELL-AND-UI-EXTENSION.md`
+- ADR-0015：Agent 受控写操作与服务身份（**Accepted v1.0**，2026-11-16 负责人确认；本机独立 Approval 服务身份 + Domain 提案/审批/写入 API + 人类独占审批/四眼；远端随 M5）→ `decisions/ADR-0015-AGENT-CONTROLLED-WRITE-AND-SERVICE-IDENTITY.md`
 
 ## 6A. M4 逻辑组件（S0 草案）
 

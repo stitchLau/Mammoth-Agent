@@ -79,6 +79,12 @@
 
 **状态：未开始（规划已落盘 2026-11-13）** — 计划：[`docs/specs/M5-PHASE5-PLAN.md`](specs/M5-PHASE5-PLAN.md)。**PG 多实例明确在 M5 完成，不在 M4/M4.5**；触发条件、切片、迁移/备份/回滚与验收见该计划 §2/§5/§7，以及 ADR-0012。
 
+## M4.5 后：客户端架构重构（DSH Desktop 宿主，ADR-0014）
+
+产出：Mammoth 外部 Bundle（Host 插件 + Client 插件 + MCP 配置 + Agent Preset）、Mammoth 工作台、会话↔项目上下文、业务结果卡片、受控写提案与人工审批；现有 SPA 保留为团队 Web 管理台/后备 Web 与迁移参考。
+
+**状态：Spike A 已完成（2026-11-16）、ADR-0014 Accepted v1.1（负责人签署）；正式迁移阶段编号待负责人确认** — 证据 [`docs/evidence/2026-11-13-client-arch/spike-A/`](evidence/2026-11-13-client-arch/spike-A/README.md)；受控写与服务身份由 **ADR-0015（Accepted v1.0）** 决定，P1 实施计划见 [`docs/specs/ADR-0015-P1-CONTROLLED-WRITE-PLAN.md`](specs/ADR-0015-P1-CONTROLLED-WRITE-PLAN.md)（待批准启动）；S-A8/S-A9/S-A10、`conversation.chat.node`、`composer.dock`、卡片跳转为后续项；客户端正式迁移不得缩减既有业务模块（见 ADR-0014）。
+
 ## 每个里程碑的固定交付
 
 - 已更新的产品规格/领域/架构文档；
