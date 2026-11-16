@@ -42,7 +42,12 @@ final class AdminTables {
       "execution_task",
       "execution_deviation",
       "delivery_snapshot",
-      "knowledge_update_proposal");
+      "knowledge_update_proposal",
+      // ADR-0015 P1 control-plane tables: proposals, human approvals and the append-only write
+      // audit travel with the handoff package so a restored instance keeps its governance trail.
+      "agent_proposal",
+      "agent_proposal_approval",
+      "agent_write_audit");
 
   private AdminTables() {
   }

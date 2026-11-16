@@ -37,6 +37,11 @@ mammoth:
   web:
     # Optional explicit SPA dist directory; empty probes apps/web/dist relative to the working dir.
     dist: ${MAMMOTH_WEB_DIST:}
+  # ADR-0015 P1: service identity for agent proposal creation. A blank token disables the
+  # endpoint (fail-closed); P2 replaces this with an isolated OS identity + credential store.
+  agent-write:
+    agent-token: ${MAMMOTH_AGENT_WRITE_TOKEN:}
+    agent-user-id: ${MAMMOTH_AGENT_WRITE_AGENT_USER_ID:${MAMMOTH_MCP_AGENT_USER_ID:}}
   notifications:
     in-app:
       enabled: ${MAMMOTH_NOTIFICATIONS_IN_APP_ENABLED:true}
