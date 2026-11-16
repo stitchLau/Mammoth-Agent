@@ -1,0 +1,72 @@
+# Mammoth bundle patch layer — TEMPLATE.
+#
+# `scripts/configure.mjs` renders this file into ./cordis.patch.yml with machine
+# specific paths and values (the rendered file is git-ignored). One bundle
+# contributes three Loader-row families plus the browser half:
+#   1. mammoth-host        — the Host plugin (Domain bridge, agent tools, context)
+#   2. mammoth-domain-mcp  — the existing Mammoth Domain MCP server over stdio
+#   3. preset-mammoth      — an Agent preset carrying Mammoth guidance + tools
+#   4. (browser half)      — package.json "dsh.client" is scanned by client-modules;
+#                            it is not a Loader row.
+- insert:
+    - id: mammoth-host
+      name: '@mammoth/dsh-bundle'
+
+    - id: mammoth-domain-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: mammoth_domain
+        transport: stdio
+        command: '{{JAVA_EXE}}'
+        args:
+          - '-jar'
+          - '{{MAMMOTH_JAR}}'
+          - '--mcp'
+        env:
+          MAMMOTH_DATA_ROOT: '{{DATA_ROOT}}'
+          MAMMOTH_MCP_AGENT_USER_ID: '{{AGENT_USER_ID}}'
+        failOnStartupError: false
+
+    - id: preset-mammoth
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: mammoth
+        name: Mammoth
+        description: Mammoth 项目工作台：项目上下文、经验证知识检索与人工审批的正式写入提案。
+        order: 10
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |
+                你是 Mammoth 项目智能体，在 Mammoth 项目工作台中工作。
+                所有项目工作必须关联明确项目；执行分析前先获取项目、客户、需求与经验证知识上下文。
+                关键结论必须标注来源，区分已证实事实、合理推断、待确认事项与未知。
+                读取项目知识优先使用 mcp__mammoth_domain__ 工具（search_project_knowledge / get_knowledge_document / get_requirement_context），projectId 使用系统提示中给出的当前项目 ID。
+                正式业务状态变更（创建/修改需求、知识、方案、交付）不得直接写入：必须先调用 mammoth_propose_work_item 创建待审核提案，由人工在 Mammoth 工作台批准后由 Domain Service 执行。
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'

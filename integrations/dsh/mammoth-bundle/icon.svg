@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Mammoth">
+  <rect width="32" height="32" rx="8" fill="#12452f"/>
+  <path d="M7 23V11l5 6 4-8 4 8 5-6v12" fill="none" stroke="#f2e8c9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="16" cy="25.5" r="1.6" fill="#e0a33a"/>
+</svg>

@@ -1,5 +1,19 @@
 # Mammoth Agent — Repository Instructions
 
+## 最高优先级：DSH 工具 schema 与全局 Profile 变更（2026-11-13 事故后）
+
+以下规则优先于本文件其余工程约定；违反会造成所有 DSH 会话不可用。
+
+1. **工具 schema 是全局运行面。** 已安装到 DSH profile 的 bundle 中，一个非法的工具 `parameters` 会让 Provider 拒绝**每一次**模型请求（`Invalid schema for function ...`），影响所有项目、所有会话、所有子 Agent，而不只是出错的那一次调用。
+2. **不要指望 DSH 拦住。** 本机 DSH 0.2.2-rc.2 的 `ctx.tools.register()` 只校验 `output.schema`，不校验 `parameters`（`@deepseek-ai/dsh-tools/lib/index.js`）。
+3. **两套 schema 不能混用。** `defineTool()` 的 author DSL 可以在属性上写 `required: true`；直接传给 `ctx.tools.register()` 的 raw JSON Schema 必须把 `required` 写成对象根级字符串数组，例如 `required: ['title', 'summary']`。
+4. **link 进 profile 的 bundle 按生产变更处理。** 其源码就是运行时。修改 `index.js` 或工具 schema 前：备份并确认回滚 → `node --check` → 运行该 bundle 的 schema 自检（如 `node scripts/check-tool-schemas.mjs`）→ 重载 profile → 发一条最小请求验证 → 记录结果。
+5. **见到 `Invalid schema for function` 立即回滚。** 恢复最近可用 schema 或卸载/移除该 bundle；不要重试，不要把它当作模型、网络或限流故障。
+6. **开发中的 `link:` bundle 不进入唯一/日常 profile。** 优先专用 dev profile；必须共用时，按全局生产变更对待。
+7. **全局插件源码必须有可追溯备份。** 未提交/未跟踪的 bundle 不得作为长期状态；至少保留可还原备份、变更记录和回滚步骤。
+
+复盘与证据见主仓库 `../Mammoth-Agent/docs/quality/INCIDENT-2026-11-13-DSH-TOOL-SCHEMA.md`（本仓库 `docs/` 是旧快照，不重复维护）。
+
 ## 每次工作必须遵守
 
 - 开始任何工作前，先阅读 `docs/00-MASTER-GUIDE.md`，并按任务读取相关产品、领域、架构、质量和安全文档。
