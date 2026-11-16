@@ -141,3 +141,12 @@ apply:    需要 approved + approver≠proposer (+ 高风险第二人)；幂等�
 - 本 ADR 已 Accepted；后续：P1 V11 迁移与提案/审批/写入 API 规格 → P2 Approval 服务（独立身份）→ P3 Bundle 改造 → P4 负向安全验收 → P5 随 M5 的远端模式。
 - 更新 ADR-0001（§6.3 边界扩展说明）、ADR-0014（写路径条件项状态）、`docs/05`、`docs/08`、`docs/13`，并新增 V11 迁移方案与 P1 实施计划。
 - 在 P1/P2 完成并通过负向验收前，Agent 的正式写入仍仅限 Spike 隔离环境，不得进入产品代码/真实数据。
+
+## 实施状态（2026-11-16，P1–P3 已完成并实测）
+
+- **代码分支**（本地，未合并 main）：`feature/adr-0015-p1-controlled-write`（P1+P2）、`feature/adr-0015-p3-bundle-integration`（P3，基于 P1/P2）。
+- **P1**：V11（`agent_proposal`/`agent_proposal_approval`/`agent_write_audit`）、propose-only API、人类审批+四眼、guarded apply（以批准人身份写 Domain，失败独立事务留 failed）；域服务 168 tests 通过。
+- **P2**：propose/apply 双 token 分离（`X-Mammoth-Agent-Token` / `X-Mammoth-Apply-Token`）、已批准队列、`ApprovalServiceMain`（单提案/watch）、管理员 provisioning/verify 脚本；实测：人类批准后 SYSTEM 审批任务 ≤5s 自动 apply，agent token 调 apply 返回 401 并留 deny 审计；agent 用户无法读取 apply token（ACL 隔离）。
+- **P3**：Host 改为 `AgentProposalClient`（只持 propose token，创建提案 + `GET /api/agent/proposals/mine` 读取；删除 Host approve/reject 与 Spike 适配器写路径）；工作台提案页只读并含 `/approval` 链接；Domain 提供最小人类审批页 `/approval`（浏览器人类会话+CSRF，内嵌登录）。
+- **端到端实测**（真实 DSH Desktop + P3 Domain）：Host 工具 `mammoth_propose_work_item` → Domain pending → 人类在 `/approval` 浏览器点击批准 → SYSTEM 审批服务自动 apply → Domain 生成 `REQ-0006/0007/0008`（`createdBy`=人类 `spike_admin`），审计三段 `propose(agent)→approve(human)→apply(service)`。
+- **已知遗留**：Domain 提案响应缺 `title`（前端暂用 summary 兜底）；工作台 `/approval` 链接已加但需刷新验证；P2.1 待把审批任务从 SYSTEM 收紧回专用 `MammothApproval`；Spike 适配器文件作为历史保留在 `spike/dsh-desktop-integration` 分支并标记退役。
