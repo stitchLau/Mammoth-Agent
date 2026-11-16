@@ -36,6 +36,7 @@ param(
   [int]$PollSeconds = 5,
   [SecureString]$ServiceAccountPassword,
   [switch]$RegisterScheduledTask,
+  [switch]$RepairAcl,
   [switch]$Force,
   [switch]$DryRun
 )
@@ -71,6 +72,7 @@ Write-Step "domain base:   $DomainBase"
 Write-Step "project id:    $ProjectId"
 Write-Step "poll seconds:  $PollSeconds"
 Write-Step "scheduled task: $taskName (registered: $($RegisterScheduledTask.IsPresent))"
+Write-Step "repair broken ACLs from a previous partial run: $($RepairAcl.IsPresent)"
 Write-Step 'acl plan: disable inheritance; remove inherited users; Administrators=S-1-5-32-544 full; SYSTEM full; service account read'
 Write-Step 'next steps: set MAMMOTH_AGENT_WRITE_APPLY_TOKEN for the Domain writer to the token file value, restart Domain, then run approval-service-verify.ps1'
 
@@ -125,13 +127,23 @@ if (-not $accountExists) {
   }
 }
 
+# 0. Repair a directory left partially provisioned (empty/denying DACL) by an earlier failed
+#    run. -RepairAcl is safe to combine with -Force; it only touches our install directory.
+if ($RepairAcl -and [IO.Directory]::Exists($InstallDir)) {
+  Write-Host "[action] repairing ACLs under $InstallDir (takeown + icacls /reset)"
+  Invoke-Native 'takeown.exe' @('/F', (Quote $InstallDir), '/R', '/D', 'Y') | Out-Null
+  Invoke-Native 'icacls.exe' @((Quote $InstallDir), '/reset', '/T', '/C') | Out-Null
+}
+
 # 2. Install dir + token + config + wrapper.
-if (-not (Test-Path -LiteralPath $InstallDir)) {
+# Use .NET existence checks: Test-Path can throw AccessDenied on directories/files whose DACL was
+# left broken by a failed partial run.
+if (-not [IO.Directory]::Exists($InstallDir)) {
   New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
   Write-Host "[action] created $InstallDir"
 }
-if ((Test-Path -LiteralPath $tokenFile) -and -not $Force) {
-  Fail "token file already exists; re-run with -Force to rotate it: $tokenFile"
+if ([IO.File]::Exists($tokenFile) -and -not $Force) {
+  Fail "token file already exists; re-run with -Force to rotate it (add -RepairAcl if a previous partial run left broken ACLs): $tokenFile"
 }
 $tokenBytes = New-Object byte[] 32
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($tokenBytes)
