@@ -522,12 +522,29 @@ window.__ModuleLoader__.load({
       else if (view.name === 'customers') content = renderCatalog({ t, title: t('customers'), items: catalog.customers, error: catalog.error })
       else if (view.name === 'products') content = renderCatalog({ t, title: t('products'), items: catalog.products, error: catalog.error })
       else content = renderSettings({ t, health, snap, audit, location: typeof location === 'undefined' ? '' : location.href })
+      const clientInfo = {
+        location: typeof location === 'undefined' ? 'unknown' : location.href,
+        transportPresent: typeof globalThis.__DSH_TRANSPORT__ === 'object' && globalThis.__DSH_TRANSPORT__ !== null,
+        streamBaseUrl: globalThis.__DSH_TRANSPORT__?.streamBaseUrl ?? null,
+        apiBase: api.base,
+        apiBaseError: api.baseError,
+        diagnostics: clientDiagnostics,
+      }
+      if (view.name === 'settings') content = renderSettings({ t, health, snap, audit, location: typeof location === 'undefined' ? '' : location.href, clientInfo })
+      else if (view.name === 'home' || view.name === 'projects' || view.name === 'project' || view.name === 'requirements' || view.name === 'knowledge' || view.name === 'proposals' || view.name === 'customers' || view.name === 'products') {
+        // content already selected above; the diagnostics live in Settings.
+      } else content = renderSettings({ t, health, snap, audit, location: typeof location === 'undefined' ? '' : location.href, clientInfo })
 
       return h('div', { className: 'mammoth-root' },
         h(Styles),
         h('div', { className: 'mammoth-shell' },
           h('nav', { className: 'mammoth-nav' }, navItems),
           h('div', { className: 'mammoth-main' },
+            clientDiagnostics.errors.length > 0
+              ? h('div', { className: 'mammoth-error', 'data-mammoth-diag': 'errors' },
+                `Mammoth client diagnostics (${clientDiagnostics.errors.length}): `,
+                clientDiagnostics.errors.map((entry, index) => h('div', { key: index }, `${entry.phase}: ${entry.message}`)))
+              : null,
             h('div', { className: 'mammoth-header' },
               h('h2', { className: 'mammoth-title' }, t('workbench')),
               h('span', { className: 'mammoth-sub' }, `${t('activeProject')}: ${activeProjectLabel}`),
@@ -738,7 +755,7 @@ window.__ModuleLoader__.load({
             h('td', null, item.status ?? '')))))))
     }
 
-    function renderSettings({ t, health, snap, audit, location }) {
+    function renderSettings({ t, health, snap, audit, location, clientInfo }) {
       return h('div', null,
         h(Section, { title: t('diagnostics') },
           h('div', { className: 'mammoth-card' },
@@ -760,7 +777,9 @@ window.__ModuleLoader__.load({
             h('div', { className: 'mammoth-pre', style: { marginTop: '10px' } }, JSON.stringify(health.value ?? { error: health.error }, null, 2))),
           h('div', { className: 'mammoth-note', style: { marginTop: '8px' } }, t('history')),
           h('div', { className: 'mammoth-pre' }, JSON.stringify(audit.items.slice(-12), null, 2)),
-          audit.error === null ? null : h(ErrorNote, { error: audit.error })))
+          audit.error === null ? null : h(ErrorNote, { error: audit.error }),
+          h('div', { className: 'mammoth-section' }, 'Client runtime'),
+          h('div', { className: 'mammoth-pre' }, JSON.stringify(clientInfo ?? {}, null, 2))))
     }
 
     // ---------------------------------------------------------------------
@@ -1027,6 +1046,25 @@ window.__ModuleLoader__.load({
       }
     }
 
+    // Client-side diagnostics: every registration step is attempted
+    // independently and failures are recorded so the workbench can show them
+    // inside the product UI (there is no accessible browser console in the
+    // Desktop shell for this spike).
+    const clientDiagnostics = { errors: [], notes: [], startedAt: new Date().toISOString() }
+    function recordDiag(phase, error) {
+      const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+      clientDiagnostics.errors.push({ phase, message })
+      console.warn(`[mammoth] client registration failed in ${phase}:`, error)
+    }
+    function guardDiag(phase, fn) {
+      try {
+        return fn()
+      } catch (error) {
+        recordDiag(phase, error)
+        return undefined
+      }
+    }
+
     // Surface bindings: assigned by `apply` (which closes over the Cordis
     // context) and read by the proxy components registered into slots.
     const MainBindings = { openConversation: () => {}, openWorkbench: () => {} }
@@ -1039,73 +1077,77 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'locale', 'layout', 'sidebarRightTabs', 'sidebarRight'],
       apply(ctx) {
-        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'mammoth: locale dictionaries')
-        const t = ctx.locale.bind(NS)
+        clientDiagnostics.notes.push('apply entered')
+        // 1) Locale first; a failure must not stop the UI registrations below.
+        const t = guardDiag('locale.register', () => {
+          ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'mammoth: locale dictionaries')
+          return ctx.locale.bind(NS)
+        }) ?? (key => key)
 
-        // The right-sidebar extension seat: a tab type (kind) plus its keyed
-        // body slot entry. Never replaces the shipped `rightbar` slots.
-        ctx.effect(() => ctx.sidebarRightTabs.register({
+        // 2) The two registrations that make the entry visible at all.
+        guardDiag('slots.inject(sidebar.panellist)', () => ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
+          name: 'sidebar.panellist',
+          id: PANEL_ID,
+          order: 10,
+          label: () => t('panel'),
+          locale: NS,
+        }, MammothIcon)))
+        clientDiagnostics.notes.push('sidebar.panellist injected')
+
+        guardDiag('slots.inject(main)', () => ctx.slots.inject('main', () => ctx.slots.register({
+          name: 'main',
+          key: PANEL_ID,
+          locale: NS,
+        }, WorkbenchPageProxy)))
+        clientDiagnostics.notes.push('main injected')
+
+        // 3) Optional product surfaces: each failure is isolated.
+        guardDiag('sidebarRightTabs.register', () => ctx.effect(() => ctx.sidebarRightTabs.register({
           id: TAB_TYPE_ID,
           kind: RIGHT_TAB_KIND,
           title: () => t('projectContext'),
-          guide: {
+          // The official registry shape is an ARRAY of guide entries; each entry
+          // carries its own id and order (verified against
+          // @deepseek-ai/dsh-client-ui-sidebar-right tab-registry.ts).
+          guide: [{
+            id: 'mammoth-project-context',
             order: 10,
             title: () => t('projectContext'),
             description: () => t('guideHint'),
-          },
-        }), 'mammoth: right sidebar tab type')
+          }],
+        }), 'mammoth: right sidebar tab type'))
 
         const openProjectTab = () => {
           try {
             ctx.sidebarRight.openTab(RIGHT_TAB_KIND)
           } catch (error) {
-            console.warn('[mammoth] unable to open the project context tab:', error)
+            recordDiag('sidebarRight.openTab', error)
           }
         }
         const openWorkbench = () => {
-          try { ctx.layout.selectPanel(PANEL_ID) } catch (error) { console.warn('[mammoth] unable to open the workbench panel:', error) }
+          try { ctx.layout.selectPanel(PANEL_ID) } catch (error) { recordDiag('layout.selectPanel', error) }
         }
         const openConversation = () => {
-          try { ctx.layout.selectPanel(null) } catch (error) { console.warn('[mammoth] unable to return to the conversation:', error) }
+          try { ctx.layout.selectPanel(null) } catch (error) { recordDiag('layout.selectPanel(null)', error) }
         }
         MainBindings.openConversation = openConversation
         MainBindings.openWorkbench = openWorkbench
         HeaderBindings.openProjectTab = openProjectTab
         PanelBindings.openWorkbench = openWorkbench
 
-        // Left-sidebar entry + full main workbench page (same id in both slots).
-        // `slots.inject` runs the callback for each declaration lifetime and its
-        // registrations are effect-owned by this plugin context.
-        ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-          name: 'sidebar.panellist',
-          id: PANEL_ID,
-          order: 10,
-          label: () => t('panel'),
-          locale: NS,
-        }, MammothIcon))
-
-        ctx.slots.inject('main', () => ctx.slots.register({
-          name: 'main',
-          key: PANEL_ID,
-          locale: NS,
-        }, WorkbenchPageProxy))
-
-        // Conversation header project badge.
-        ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
+        guardDiag('slots.inject(conversation.session.header.actions)', () => ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
           name: 'conversation.session.header.actions',
           id: 'mammoth-project-badge',
           order: 20,
           locale: NS,
-        }, ProjectHeaderBadgeProxy))
+        }, ProjectHeaderBadgeProxy)))
 
-        // Right-sidebar tab body.
-        ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+        guardDiag('slots.inject(sidebar.right.pane.tab)', () => ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
           name: 'sidebar.right.pane.tab',
           key: TAB_TYPE_ID,
           locale: NS,
-        }, ProjectContextPanelProxy))
+        }, ProjectContextPanelProxy)))
 
-        // Wire tool name → business result card.
         const cards = [
           [TOOL_PROPOSE, ToolCardProposal],
           [TOOL_MCP_SEARCH, ToolCardKnowledgeSearch],
@@ -1113,14 +1155,14 @@ window.__ModuleLoader__.load({
           [TOOL_MCP_REQUIREMENT, ToolCardRequirementContext],
         ]
         for (const [toolName, Card] of cards) {
-          ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
+          guardDiag(`slots.inject(tool.call.toolview:${toolName})`, () => ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
             name: 'tool.call.toolview',
             key: toolName,
             locale: NS,
-          }, Card))
+          }, Card)))
         }
 
-        console.log('[mammoth] client plugin active')
+        console.log('[mammoth] client plugin active', JSON.stringify(clientDiagnostics))
       },
     }
 
