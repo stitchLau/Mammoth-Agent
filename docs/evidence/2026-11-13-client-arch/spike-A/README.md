@@ -146,3 +146,7 @@ spike/dsh-desktop-integration/proposal-stub.mjs   # Spike-only 隔离适配器�
 - `dec48c4` — Mammoth bundle 主体 + 工具 schema 注册前防护 + 自检脚本（15 files，+3014）
 - `74128cf` — 隔离 Proposal 适配器（Spike-only）
 - `c5fa625` — 客户端 UI 修复：入口优先注册/逐面隔离、guide 数组、内置诊断
+- `70f2e5a` — bundle README 记录 Spike 实测结论与纪律
+- `c7da93a` / `6ad7ddc` — 证据包（截图/JSON/报告）
+- `5ea4d34` — 环境与回滚说明
+- `aea1d49` — 独立评审整改：审批 fail-closed + 适配器鉴权/去 CORS/confirm、证据补齐、ADR 改为条件定稿待签
