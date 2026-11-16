@@ -155,6 +155,23 @@ public class AgentProposalService {
         AgentProposal.STATUS_APPROVED);
   }
 
+  /**
+   * Host/agent read model: proposals proposed by the configured agent identity (optionally
+   * restricted to one DSH session). Read-only; no human session needed.
+   */
+  @Transactional(readOnly = true)
+  public List<AgentProposal> listMine(String agentUserId, String projectId, String agentRunRef) {
+    List<AgentProposal> proposals =
+        proposalRepository.findByProjectIdAndProposerUserIdOrderByCreatedAtAsc(projectId,
+            agentUserId);
+    if (agentRunRef == null || agentRunRef.isBlank()) {
+      return proposals;
+    }
+    return proposals.stream()
+        .filter(proposal -> agentRunRef.equals(proposal.getAgentRunRef()))
+        .toList();
+  }
+
   /** Record a human approval; a high-risk proposal needs a second, different human. */
   @Transactional
   public AgentProposal approve(AppUser human, String proposalId, String reason) {

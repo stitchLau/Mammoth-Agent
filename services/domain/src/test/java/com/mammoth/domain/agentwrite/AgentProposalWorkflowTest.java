@@ -2,6 +2,7 @@ package com.mammoth.domain.agentwrite;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -560,5 +561,28 @@ class AgentProposalWorkflowTest {
             .header(AgentProposalController.APPLY_TOKEN_HEADER, TEST_APPLY_TOKEN))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(AgentProposal.STATUS_APPLIED));
+  }
+
+  @Test
+  void hostReadModelListsOwnProposalsWithAgentToken() throws Exception {
+    properties.setAgentToken(TEST_TOKEN);
+    properties.setAgentUserId(agentId);
+    propose("{\"title\":\"mine-1\"}", "idem-mine-1");
+    propose("{\"title\":\"mine-2\"}", "idem-mine-2");
+    AgentProposalController controller =
+        new AgentProposalController(proposalService, properties,
+            org.mockito.Mockito.mock(AuthorizationService.class), objectMapper);
+    MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        .setControllerAdvice(new ApiExceptionHandler())
+        .build();
+
+    mockMvc.perform(get("/api/agent/proposals/mine")
+            .param("projectId", project.getId())
+            .header(AgentProposalController.AGENT_TOKEN_HEADER, TEST_TOKEN))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2));
+
+    mockMvc.perform(get("/api/agent/proposals/mine").param("projectId", project.getId()))
+        .andExpect(status().isUnauthorized());
   }
 }

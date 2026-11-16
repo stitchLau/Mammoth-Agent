@@ -114,6 +114,21 @@ public class AgentProposalController {
         .toList();
   }
 
+  /**
+   * Host/agent read model (propose token only): proposals owned by the configured agent
+   * identity, optionally restricted to one DSH session (`agentRunRef`).
+   */
+  @GetMapping("/mine")
+  public List<ProposalResponse> mine(
+      @RequestHeader(value = AGENT_TOKEN_HEADER, required = false) String serviceToken,
+      @RequestParam String projectId,
+      @RequestParam(required = false) String agentRunRef) {
+    requireServiceToken(serviceToken);
+    return proposalService.listMine(properties.getAgentUserId(), projectId, agentRunRef).stream()
+        .map(ProposalResponse::from)
+        .toList();
+  }
+
   @PostMapping("/{proposalId}/approve")
   public ProposalResponse approve(@PathVariable String proposalId,
       @RequestBody(required = false) DecisionRequest request) {

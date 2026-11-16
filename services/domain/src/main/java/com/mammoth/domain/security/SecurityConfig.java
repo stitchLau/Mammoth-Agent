@@ -61,6 +61,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/agent/proposals",
                 "/api/agent/proposals/*/apply").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/agent/proposals/approved").permitAll()
+            // ADR-0015 P3: the Host read model (propose token) for the workbench.
+            .requestMatchers(HttpMethod.GET, "/api/agent/proposals/mine").permitAll()
             .requestMatchers("/api/**").hasAuthority(SessionAuthenticationFilter.ROLE_USER)
             .anyRequest().authenticated())
         .exceptionHandling(handling -> handling.authenticationEntryPoint(
