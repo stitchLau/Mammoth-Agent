@@ -591,7 +591,7 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'mammoth-note' }, t('noProposal'))
               : h('ul', { className: 'mammoth-list' }, pending.slice(0, 4).map(proposal => h('li', { key: proposal.id },
                 h('div', { className: 'mammoth-inline' },
-                  h('span', null, `${proposal.title} · ${proposal.status}`),
+                  h('span', null, `${proposal.title ?? proposal.summary ?? '(untitled)'} · ${proposal.status}`),
                   h('span', { className: 'mammoth-note' }, t('approveNote')))))),
             h('div', { className: 'mammoth-note' }, t('proposalsNote'))),
           h('div', { className: 'mammoth-card' },
@@ -757,7 +757,7 @@ window.__ModuleLoader__.load({
               }
               return h('div', { key: proposal.id, className: 'mammoth-card', style: { marginBottom: '10px' } },
                 h('div', { className: 'mammoth-card-title' },
-                  h('span', null, proposal.title ?? '(untitled)'),
+                  h('span', null, proposal.title ?? proposal.summary ?? '(untitled)'),
                   h(Chip, { tone: proposal.status === 'pending' ? 'warn' : proposal.status === 'approved' ? 'ok' : proposal.status === 'rejected' ? 'error' : 'plain' }, statusLabel(proposal.status))),
                 // Human-readable business fields only. Raw IDs and the Domain
                 // JSON response live in the collapsed technical section below.
